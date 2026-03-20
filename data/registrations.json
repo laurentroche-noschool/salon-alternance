@@ -1,0 +1,44 @@
+{
+  "1": [
+    {
+      "id": "sp_1773960104976",
+      "nom": "ROCHE",
+      "prenom": "LAURENT",
+      "formation": "BTS MCO",
+      "email": "laurent.roche@will.school",
+      "phone": "0695284192",
+      "spontaneous": true,
+      "cre": "",
+      "createdAt": "2026-03-19T22:41:44.990Z"
+    },
+    {
+      "id": "1773990395317",
+      "nom": "AKONO",
+      "prenom": "Nelson",
+      "formation": "Bts assurances",
+      "cre": "",
+      "createdAt": "2026-03-20T07:06:35.317Z"
+    },
+    {
+      "id": "sp_1773999520491",
+      "nom": "BOUHOUFANI",
+      "prenom": "Maud",
+      "formation": "BTS BANQUE",
+      "email": "",
+      "phone": "",
+      "spontaneous": true,
+      "cre": "",
+      "createdAt": "2026-03-20T09:38:40.491Z"
+    }
+  ],
+  "3": [
+    {
+      "id": "1773961496011",
+      "nom": "TOTO",
+      "prenom": "Raimond",
+      "formation": "Bachelor RH",
+      "cre": "Annick",
+      "createdAt": "2026-03-19T23:04:56.011Z"
+    }
+  ]
+}

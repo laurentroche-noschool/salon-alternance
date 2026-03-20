@@ -1,0 +1,24 @@
+{
+  "1": {
+    "sp_1773960104976": {
+      "met": true,
+      "rating": "hire",
+      "comment": "Super profil ",
+      "updatedAt": "2026-03-19T23:05:59.057Z"
+    },
+    "1773990395317": {
+      "met": false,
+      "rating": "refused",
+      "comment": "Aucune motivation ",
+      "updatedAt": "2026-03-20T09:39:51.896Z"
+    }
+  },
+  "3": {
+    "1773961496011": {
+      "met": true,
+      "rating": "maybe",
+      "comment": "A revoir car doute sur sa mobilité",
+      "updatedAt": "2026-03-19T23:05:41.717Z"
+    }
+  }
+}

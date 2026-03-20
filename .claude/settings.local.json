@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import json; d=json.load\\(open\\(''C:/Users/Laurent ROCHE/salon-alternance/data/companies.json''\\)\\); print\\(f''{len\\(d\\)} entreprises''\\); [print\\(f\"\"{c[''id'']}. {c[''nom'']} \\({c[''filiere'']}\\)\"\"\\) for c in d]\")",
+      "Bash(node -e \"const d=require\\(''./data/companies.json''\\); console.log\\(d.length+'' entreprises''\\); d.forEach\\(c=>console.log\\(c.id+''. ''+c.nom+'' \\(''+c.filiere+''\\)''\\)\\)\")",
+      "Bash(npm install:*)",
+      "Bash(curl -s http://localhost:3000/api/companies)",
+      "Bash(node server.js)",
+      "Bash(node -e \"const d=require\\(''./data/companies.json''\\); console.log\\(d.map\\(c=>c.name\\).join\\(''\\\\n''\\)\\)\")",
+      "Bash(node -e \":*)",
+      "WebSearch",
+      "Bash(node download-logos.js)",
+      "WebFetch(domain:chubbfs.com)",
+      "WebFetch(domain:enetco-sa.com)",
+      "Bash(python3:*)",
+      "WebFetch(domain:enetcoenergy.com)",
+      "WebFetch(domain:www.pappers.fr)",
+      "WebFetch(domain:www.anosta.fr)",
+      "WebFetch(domain:fr.linkedin.com)",
+      "WebFetch(domain:bordeauximmo9.com)",
+      "WebFetch(domain:enetco.ae)",
+      "WebFetch(domain:www.groupe-cassous.com)",
+      "WebFetch(domain:cassous.nous-recrutons.fr)",
+      "WebFetch(domain:rocketreach.co)",
+      "Bash(node -e \"const d=JSON.parse\\(require\\(''fs''\\).readFileSync\\(''C:/Users/Laurent ROCHE/salon-alternance/data/companies.json'',''utf8''\\)\\); d.filter\\(c=>c.nom.toUpperCase\\(\\).includes\\(''SG''\\)||c.nomAffichage&&c.nomAffichage.toUpperCase\\(\\).includes\\(''SG''\\)||c.nom.toUpperCase\\(\\).includes\\(''GENERALE''\\)\\).forEach\\(c=>console.log\\(c.id,c.nom,c.nomAffichage,c.logoFile\\)\\)\")",
+      "Bash(\"C:/Users/Laurent ROCHE/salon-alternance/public/images/logos/48.svg\":*)",
+      "WebFetch(domain:chubbfiresecurity.wd3.myworkdayjobs.com)",
+      "Bash(\"C:/Users/Laurent ROCHE/salon-alternance/public/images/logos/37.svg\":*)",
+      "Bash(netstat -ano)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "WebFetch(domain:docs.google.com)",
+      "WebFetch(domain:doc-10-18-sheets.googleusercontent.com)",
+      "Bash(node --check server.js)",
+      "Bash(node -e \"const h=require\\(''http''\\);h.get\\(''http://localhost:3000/api/sheet-candidates/list?pin=CRE2026'',r=>{let d='''';r.on\\(''data'',c=>d+=c\\);r.on\\(''end'',\\(\\)=>console.log\\(''Status:'',r.statusCode,''Items:'',JSON.parse\\(d\\).length\\)\\)}\\).on\\(''error'',e=>console.log\\(''ERR:'',e.message\\)\\)\")",
+      "Bash(node -e \"require\\(''http''\\).get\\(''http://localhost:3000/api/admin/students?pin=NS2026'',r=>{let d='''';r.on\\(''data'',c=>d+=c\\);r.on\\(''end'',\\(\\)=>{const j=JSON.parse\\(d\\);console.log\\(''Étudiants:'',j.total\\)}\\)}\\).on\\(''error'',e=>console.log\\(''ERR'',e.message\\)\\)\")",
+      "Bash(\"C:\\\\Users\\\\Laurent ROCHE\\\\salon-alternance\\\\public\\\\css\\\\style.css\":*)",
+      "Bash(taskkill //PID 16884 //F)",
+      "Bash(where git:*)",
+      "Bash(where gh:*)"
+    ]
+  }
+}
