@@ -1007,7 +1007,7 @@ body {
   .home-title { font-size: 2rem; }
   .companies-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; padding: 0.75rem; }
   .modal-box { border-radius: var(--radius) var(--radius) 0 0; margin: 0; position: fixed; bottom: 0; left: 0; right: 0; max-height: 90vh; overflow-y: auto; }
-  .modal-overlay { padding: 0; display: flex; align-items: flex-end; }
+  .modal-overlay { padding: 0; display: none; align-items: flex-end; }
   .modal-overlay.open { display: flex; }
   .student-form { grid-template-columns: 1fr; }
   .header-title { display: none; }
