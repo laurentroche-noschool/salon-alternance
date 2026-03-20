@@ -170,6 +170,24 @@ body {
 .btn-cre        { border-left: 3px solid #002FA7; }
 .btn-admin      { border-left: 3px solid #1C1C1E; }
 
+/* Icône Apple-style — carré arrondi coloré */
+.btn-home-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  color: #fff;
+  margin-right: 0.1rem;
+}
+.btn-student    .btn-home-icon { background: linear-gradient(145deg, #F5D033, #e6ba00); color: #1C1C1E; }
+.btn-entreprise .btn-home-icon { background: linear-gradient(145deg, #FF1AA8, #cc007f); }
+.btn-cre        .btn-home-icon { background: linear-gradient(145deg, #002FA7, #0040d0); }
+.btn-admin      .btn-home-icon { background: linear-gradient(145deg, #3a3a3c, #1C1C1E); }
+
 .btn-home-info {
   display: flex;
   flex-direction: column;
