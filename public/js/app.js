@@ -37,8 +37,54 @@ async function init() {
     const res = await fetch('/api/companies');
     companies = await res.json();
     updateFilterCounts();
+    await restoreSession();
   } catch (e) {
     console.error('Erreur chargement entreprises:', e);
+  }
+}
+
+// ===== RESTAURATION SESSION (survit au rafraîchissement) =====
+async function restoreSession() {
+  const screen = sessionStorage.getItem('currentScreen');
+  if (!screen || screen === 'screen-home') return;
+
+  if (screen === 'screen-student' && sessionStorage.getItem('ss_authStudent')) {
+    enterStudentMode();
+  } else if (screen === 'screen-selfregister' && sessionStorage.getItem('ss_authSelfReg')) {
+    enterSelfRegisterMode();
+  } else if (screen === 'screen-cre') {
+    const pin = sessionStorage.getItem('ss_crePin');
+    if (pin) {
+      crePin = pin;
+      creAuthenticated = true;
+      enterCREMode();
+      document.getElementById('cre-login').style.display = 'none';
+      document.getElementById('cre-dashboard').style.display = 'block';
+      await loadRegistrations();
+      renderCREGrid(companies);
+      updateCREStats();
+      loadAutocompleteList(pin);
+    }
+  } else if (screen === 'screen-admin') {
+    const pin = sessionStorage.getItem('ss_adminPin');
+    if (pin) {
+      adminPin = pin;
+      enterAdminMode();
+      document.getElementById('admin-login').style.display = 'none';
+      document.getElementById('admin-dashboard').style.display = 'block';
+      await loadAdminStats();
+    }
+  } else if (screen === 'screen-entreprise') {
+    const pin = sessionStorage.getItem('ss_entPin');
+    if (pin) {
+      entPin = pin;
+      entAuthenticated = true;
+      enterEntrepriseMode();
+      document.getElementById('ent-login').style.display = 'none';
+      document.getElementById('ent-selection').style.display = 'block';
+      renderEntSelection(companies);
+      loadAutocompleteList(pin);
+    }
   }
 }
 
@@ -46,6 +92,7 @@ async function init() {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  sessionStorage.setItem('currentScreen', id);
 }
 
 function openPlanSalon() {
@@ -58,6 +105,13 @@ function closePlanSalon() {
 function goHome() {
   showScreen('screen-home');
   currentMode = null;
+  // Effacer la session sauvegardée
+  sessionStorage.removeItem('currentScreen');
+  sessionStorage.removeItem('ss_authStudent');
+  sessionStorage.removeItem('ss_authSelfReg');
+  sessionStorage.removeItem('ss_crePin');
+  sessionStorage.removeItem('ss_adminPin');
+  sessionStorage.removeItem('ss_entPin');
 
   // Reset CRE
   creAuthenticated = false;
@@ -105,6 +159,7 @@ function verifyStudentPin() {
   const pin = document.getElementById('student-pin-input').value.trim();
   if (pin === '2026') {
     closeStudentPin();
+    sessionStorage.setItem('ss_authStudent', '1');
     enterStudentMode();
   } else {
     document.getElementById('student-pin-error').style.display = 'block';
@@ -135,6 +190,7 @@ let srCurrentFiliere = 'all';
 
 function enterSelfRegisterMode() {
   currentMode = 'selfregister';
+  sessionStorage.setItem('ss_authSelfReg', '1');
   showScreen('screen-selfregister');
   srRenderCompaniesGrid(companies);
   srUpdateFilterCounts();
@@ -808,6 +864,7 @@ async function verifyCRE() {
   if (data.valid) {
     crePin = pin;
     creAuthenticated = true;
+    sessionStorage.setItem('ss_crePin', pin);
     document.getElementById('cre-login').style.display = 'none';
     document.getElementById('cre-dashboard').style.display = 'block';
     await loadRegistrations();
@@ -1088,6 +1145,7 @@ async function verifyAdmin() {
   const data = await res.json();
   if (data.valid) {
     adminPin = pin;
+    sessionStorage.setItem('ss_adminPin', pin);
     document.getElementById('admin-login').style.display = 'none';
     document.getElementById('admin-dashboard').style.display = 'block';
     await loadAdminStats();
@@ -1636,6 +1694,7 @@ async function verifyEntreprise() {
   if (data.valid) {
     entPin = pin;
     entAuthenticated = true;
+    sessionStorage.setItem('ss_entPin', pin);
     document.getElementById('ent-login').style.display = 'none';
     document.getElementById('ent-selection').style.display = 'block';
     renderEntSelection(companies);
