@@ -278,12 +278,12 @@ function openSrDetail(company) {
     webEl.style.display = 'none';
   }
 
-  document.getElementById('modal-sr-detail').style.display = 'flex';
+  document.getElementById('modal-sr-detail').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 
 function closeSrDetail() {
-  document.getElementById('modal-sr-detail').style.display = 'none';
+  document.getElementById('modal-sr-detail').classList.remove('open');
   document.body.style.overflow = '';
 }
 
@@ -2578,13 +2578,13 @@ function openSrForm(companyId) {
     header.style.display = 'none';
   }
 
-  modal.style.display = 'flex';
+  modal.classList.add('open');
   document.body.style.overflow = 'hidden';
   setTimeout(() => { const el = document.getElementById('sr-nom'); if (el) el.focus(); }, 100);
 }
 
 function closeSrForm() {
-  document.getElementById('modal-sr-form').style.display = 'none';
+  document.getElementById('modal-sr-form').classList.remove('open');
   document.body.style.overflow = '';
 }
 
@@ -2627,7 +2627,7 @@ async function submitSelfReg() {
       errEl.style.display = 'block';
     } else {
       closeSrForm();
-      document.getElementById('modal-sr-success').style.display = 'flex';
+      document.getElementById('modal-sr-success').classList.add('open');
     }
   } catch(e) {
     errEl.textContent = 'Erreur réseau. Vérifiez votre connexion.';
@@ -2638,14 +2638,14 @@ async function submitSelfReg() {
 }
 
 function closeSrSuccess() {
-  document.getElementById('modal-sr-success').style.display = 'none';
+  document.getElementById('modal-sr-success').classList.remove('open');
 }
 function closeSrSuccessAndStay() {
-  document.getElementById('modal-sr-success').style.display = 'none';
+  document.getElementById('modal-sr-success').classList.remove('open');
   _srCurrentCompany = null;
 }
 function closeSrSuccessGoHome() {
-  document.getElementById('modal-sr-success').style.display = 'none';
+  document.getElementById('modal-sr-success').classList.remove('open');
   goHome();
 }
 
