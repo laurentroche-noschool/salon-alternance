@@ -167,8 +167,8 @@ body {
 /* Barre colorée gauche par bouton */
 .btn-student    { border-left: 3px solid #F5D033; }
 .btn-entreprise { border-left: 3px solid #FF1AA8; }
-.btn-cre        { border-left: 3px solid #34C759; }
-.btn-admin      { border-left: 3px solid #8E8E93; }
+.btn-cre        { border-left: 3px solid #002FA7; }
+.btn-admin      { border-left: 3px solid #1C1C1E; }
 
 .btn-home-info {
   display: flex;
