@@ -1023,28 +1023,33 @@ body {
 @media (max-width: 640px) {
   .home-title { font-size: 2rem; }
   .companies-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; padding: 0.75rem; }
-  /* Modal en bottom sheet sur mobile */
-  .modal-overlay { padding: 0; display: none; align-items: flex-end; }
-  .modal-overlay.open { display: flex; }
+
+  /* Modal plein écran sur mobile */
+  .modal-overlay { padding: 0; display: none; }
+  .modal-overlay.open { display: block; }
   .modal-box {
-    border-radius: var(--radius) var(--radius) 0 0;
+    border-radius: 0;
     margin: 0;
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-height: 92vh;
+    top: 0; bottom: 0; left: 0; right: 0;
+    max-height: 100vh;
+    height: 100%;
     overflow-y: auto;
+    padding-top: max(1rem, env(safe-area-inset-top, 1rem));
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  /* Bouton fermer collé en haut de la bottom sheet, toujours visible */
+  /* Bouton X FIXE en haut à droite — toujours visible peu importe le scroll */
   .modal-close {
-    position: sticky;
-    top: 0.75rem;
-    float: right;
-    margin: 0.75rem 0.75rem 0 0;
-    z-index: 20;
-    background: rgba(0,0,0,0.12);
+    position: fixed;
+    top: max(0.75rem, env(safe-area-inset-top, 0.75rem));
+    right: 0.75rem;
+    z-index: 500;
+    width: 36px;
+    height: 36px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    border-radius: 50%;
   }
   .student-form { grid-template-columns: 1fr; }
   .header-title { display: none; }
