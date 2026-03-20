@@ -42,34 +42,12 @@ body {
 .screen { display: none; min-height: 100vh; }
 .screen.active { display: block; }
 
-/* ===== HOME ===== */
+/* ===== HOME — Style Apple iOS ===== */
 .home-bg {
   position: fixed;
   inset: 0;
-  background: linear-gradient(160deg, #0D0D1A 0%, #16103a 55%, #0a0820 100%);
+  background: #F2F2F7; /* Fond gris iOS */
   z-index: 0;
-}
-/* Halo décoratif jaune */
-.home-bg::before {
-  content: '';
-  position: absolute;
-  top: -15%;
-  right: -15%;
-  width: 65%;
-  height: 65%;
-  background: radial-gradient(circle, rgba(245,208,51,0.13) 0%, transparent 65%);
-  pointer-events: none;
-}
-/* Halo décoratif rose */
-.home-bg::after {
-  content: '';
-  position: absolute;
-  bottom: -10%;
-  left: -10%;
-  width: 55%;
-  height: 50%;
-  background: radial-gradient(circle, rgba(255,26,168,0.09) 0%, transparent 65%);
-  pointer-events: none;
 }
 
 #screen-home { position: relative; align-items: center; justify-content: center; }
@@ -80,179 +58,136 @@ body {
   position: relative;
   z-index: 1;
   text-align: center;
-  padding: 2.5rem 1.5rem 2rem;
+  padding: 3rem 1.5rem 2rem;
   width: 100%;
-  max-width: 520px;
+  max-width: 480px;
 }
 
-/* ── Logos écoles ── */
+/* ── Logos ── */
 .schools-logos {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 1.8rem;
-  margin-bottom: 2.2rem;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 50px;
-  padding: 0.75rem 2rem;
-  backdrop-filter: blur(12px);
+  gap: 1.6rem;
+  margin-bottom: 2rem;
+  background: #fff;
+  border-radius: 20px;
+  padding: 0.9rem 2rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
-
 .school-logo { width: auto; object-fit: contain; }
-
-/* Logo NoSchool : blanc sur fond sombre */
-.noschool-logo {
-  max-height: 32px;
-  filter: brightness(0) invert(1);
-}
-/* Logo Will.school : couleurs d'origine */
-.willschool-logo {
-  max-height: 44px;
-}
-
-/* Séparateur logos */
+.noschool-logo  { max-height: 30px; filter: none; }
+.willschool-logo { max-height: 42px; }
 .schools-separator {
-  width: 1px;
-  height: 30px;
-  background: rgba(255,255,255,0.18);
-  border-radius: 2px;
+  width: 1px; height: 28px;
+  background: #E5E5EA;
+  border-radius: 1px;
 }
 
-/* ── Badge événement ── */
+/* ── Event tag ── */
 .home-event-tag {
-  display: inline-block;
-  background: rgba(245,208,51,0.10);
-  border: 1px solid rgba(245,208,51,0.28);
-  color: #F5D033;
-  font-size: 0.70rem;
-  font-weight: 700;
-  letter-spacing: 0.13em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 0.32rem 1rem;
-  border-radius: 50px;
-  margin-bottom: 1.3rem;
+  color: #FF1AA8;
+  margin-bottom: 0.5rem;
 }
 
 /* ── Titre ── */
 .home-title {
-  font-size: 3.6rem;
-  font-weight: 900;
-  color: #ffffff;
-  letter-spacing: -2px;
-  line-height: 0.93;
-  margin-bottom: 0.7rem;
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: #1C1C1E;
+  letter-spacing: -1.5px;
+  line-height: 1.05;
+  margin-bottom: 0.5rem;
 }
-.home-title-accent { color: #F5D033; }
-
-/* ── Diviseur ── */
-.home-divider {
-  width: 36px;
-  height: 3px;
-  background: linear-gradient(90deg, #F5D033, #FF1AA8);
-  border-radius: 2px;
-  margin: 1rem auto 1.1rem;
-}
+.home-title-accent { color: #F5C400; } /* Jaune NoSchool, légèrement assombri pour lisibilité */
 
 /* ── Description ── */
 .home-desc {
   font-size: 0.88rem;
-  color: rgba(255,255,255,0.42);
+  color: #8E8E93; /* Gris secondaire iOS */
   margin-bottom: 2rem;
   font-weight: 400;
-  letter-spacing: 0.01em;
 }
 
-/* ── Boutons — cartes horizontales ── */
+/* ── Boutons — cartes iOS ── */
 .home-buttons {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0;
   width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  margin-bottom: 0;
 }
 
 .btn-home {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.95rem 1.1rem;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.07);
+  padding: 1rem 1.1rem;
+  border: none;
+  border-bottom: 1px solid #F2F2F7;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: background 0.15s ease;
   text-align: left;
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(10px);
-  position: relative;
-  overflow: hidden;
+  background: #fff;
   width: 100%;
+  position: relative;
 }
-.btn-home:hover {
-  transform: translateX(5px);
-  border-color: rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.09);
+.btn-home:last-child { border-bottom: none; }
+.btn-home:active { background: #F2F2F7; }
+
+/* Icône dans carré arrondi coloré — style iOS app icon */
+.btn-home-icowrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
 }
 
-/* Barre colorée gauche */
-.btn-home-accent {
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  border-radius: 3px 0 0 3px;
-}
-
-.btn-home-icon { font-size: 1.5rem; flex-shrink: 0; }
+.btn-student    .btn-home-icowrap { background: #1C1C1E; }
+.btn-entreprise .btn-home-icowrap { background: linear-gradient(145deg, #FF1AA8, #c40082); }
+.btn-cre        .btn-home-icowrap { background: linear-gradient(145deg, #34C759, #28a046); }
+.btn-admin      .btn-home-icowrap { background: linear-gradient(145deg, #636366, #3a3a3c); }
 
 .btn-home-info {
   display: flex;
   flex-direction: column;
-  gap: 0.08rem;
+  gap: 0.1rem;
   flex: 1;
+  min-width: 0;
 }
-
 .btn-home-label {
-  font-size: 0.97rem;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 0.01em;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1C1C1E;
+  letter-spacing: -0.01em;
 }
-
 .btn-home-sub {
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.38);
+  font-size: 0.73rem;
+  color: #8E8E93;
   font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
 .btn-home-arrow {
-  font-size: 1.4rem;
-  color: rgba(255,255,255,0.22);
-  font-weight: 300;
+  font-size: 1.2rem;
+  color: #C7C7CC;
+  font-weight: 400;
   flex-shrink: 0;
-  transition: transform 0.18s, color 0.18s;
   line-height: 1;
 }
-.btn-home:hover .btn-home-arrow {
-  transform: translateX(4px);
-  color: rgba(255,255,255,0.65);
-}
-
-/* ── Couleurs accent par bouton ── */
-.btn-student .btn-home-accent { background: #F5D033; }
-.btn-student:hover { border-color: rgba(245,208,51,0.28); background: rgba(245,208,51,0.07); }
-.btn-student:hover .btn-home-label { color: #F5D033; }
-.btn-student:hover .btn-home-arrow { color: #F5D033; }
-
-.btn-entreprise .btn-home-accent { background: #FF1AA8; }
-.btn-entreprise:hover { border-color: rgba(255,26,168,0.28); background: rgba(255,26,168,0.07); }
-.btn-entreprise:hover .btn-home-label { color: #FF1AA8; }
-.btn-entreprise:hover .btn-home-arrow { color: #FF1AA8; }
-
-.btn-cre .btn-home-accent { background: #4ade80; }
-.btn-cre:hover { border-color: rgba(74,222,128,0.28); background: rgba(74,222,128,0.06); }
-.btn-cre:hover .btn-home-label { color: #4ade80; }
-.btn-cre:hover .btn-home-arrow { color: #4ade80; }
 
 /* ===== HEADER ===== */
 .app-header {
@@ -1085,10 +1020,7 @@ body {
 /* ======================================================
    BOUTON ADMIN (cube aligné avec les autres)
    ====================================================== */
-.btn-admin .btn-home-accent { background: rgba(255,255,255,0.35); }
-.btn-admin:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.09); }
-.btn-admin:hover .btn-home-label { color: rgba(255,255,255,0.9); }
-.btn-admin:hover .btn-home-arrow { color: rgba(255,255,255,0.7); }
+/* btn-admin géré via .btn-home-icowrap ci-dessus */
 
 /* ======================================================
    DASHBOARD ADMIN
@@ -1969,8 +1901,7 @@ body {
 
 /* ── Tablette ── */
 @media (max-width: 1024px) {
-  .home-title { font-size: 3rem; }
-  .home-buttons { gap: 0.5rem; }
+  .home-title { font-size: 2.6rem; }
   .companies-grid { grid-template-columns: repeat(3, 1fr); }
   .admin-kpi-grid { grid-template-columns: repeat(3, 1fr); }
   .sheet-table th:nth-child(5),
@@ -1993,15 +1924,15 @@ body {
   .btn-plan-salon { font-size: 0.72rem; padding: 0.3rem 0.6rem; }
 
   /* Page accueil */
-  .home-title    { font-size: 2.8rem; letter-spacing: -1.5px; }
+  .home-title    { font-size: 2.4rem; letter-spacing: -1px; }
   .home-desc     { font-size: 0.83rem; margin-bottom: 1.6rem; }
-  .schools-logos { padding: 0.6rem 1.4rem; gap: 1.4rem; margin-bottom: 1.8rem; }
-  .noschool-logo { max-height: 28px; }
-  .willschool-logo { max-height: 40px; }
-  .btn-home      { padding: 0.85rem 1rem; gap: 0.8rem; }
-  .btn-home-icon { font-size: 1.3rem; }
-  .btn-home-label { font-size: 0.9rem; }
-  .btn-home-sub   { font-size: 0.68rem; }
+  .schools-logos { padding: 0.7rem 1.6rem; gap: 1.4rem; margin-bottom: 1.6rem; }
+  .noschool-logo { max-height: 26px; }
+  .willschool-logo { max-height: 36px; }
+  .btn-home      { padding: 0.9rem 1rem; gap: 0.85rem; }
+  .btn-home-icowrap { width: 40px; height: 40px; font-size: 1.2rem; }
+  .btn-home-label { font-size: 0.95rem; }
+  .btn-home-sub   { font-size: 0.7rem; }
 
   /* Grille entreprises */
   .companies-grid { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; padding: 0.8rem; }
@@ -2075,9 +2006,9 @@ body {
 
 /* ── Très petit mobile (< 375px) ── */
 @media (max-width: 375px) {
-  .home-title  { font-size: 2.2rem; letter-spacing: -1px; }
-  .btn-home    { padding: 0.8rem 0.9rem; }
+  .home-title  { font-size: 2rem; letter-spacing: -0.8px; }
   .btn-home-sub { display: none; }
+  .btn-home-icowrap { width: 38px; height: 38px; border-radius: 10px; font-size: 1.1rem; }
   .companies-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
 }
 
