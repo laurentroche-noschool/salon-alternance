@@ -14,29 +14,59 @@
   <div id="screen-home" class="screen active">
     <div class="home-bg"></div>
     <div class="home-content">
+
+      <!-- Logos écoles -->
       <div class="schools-logos">
         <img src="/images/logo-noschool.svg" alt="NoSchool Bordeaux" class="school-logo noschool-logo" />
+        <div class="schools-separator"></div>
         <img src="/images/logo-willschool.svg" alt="Will.School Bordeaux" class="school-logo willschool-logo" />
       </div>
-      <h1 class="home-title">Salon Alternance</h1>
-      <p class="home-subtitle">Job Dating Bordeaux</p>
-      <p class="home-desc">Préparez votre entretien, trouvez votre entreprise idéale</p>
+
+      <!-- Badge événement -->
+      <div class="home-event-tag">⚡ Job Dating · Bordeaux 2026</div>
+
+      <!-- Titre -->
+      <h1 class="home-title">Salon<br><span class="home-title-accent">Alternance</span></h1>
+      <div class="home-divider"></div>
+      <p class="home-desc">Trouvez votre entreprise idéale et décrochez votre alternance</p>
+
+      <!-- Boutons d'accès -->
       <div class="home-buttons">
         <button class="btn-home btn-student" onclick="showStudentPin()">
-          <span class="btn-icon">🎓</span>
-          <span class="btn-label">Candidat(e)</span>
+          <span class="btn-home-accent"></span>
+          <span class="btn-home-icon">🎓</span>
+          <div class="btn-home-info">
+            <span class="btn-home-label">Candidat(e)</span>
+            <span class="btn-home-sub">Accédez aux entreprises participantes</span>
+          </div>
+          <span class="btn-home-arrow">›</span>
         </button>
         <button class="btn-home btn-entreprise" onclick="enterEntrepriseMode()">
-          <span class="btn-icon">🏢</span>
-          <span class="btn-label">Entreprise</span>
+          <span class="btn-home-accent"></span>
+          <span class="btn-home-icon">🏢</span>
+          <div class="btn-home-info">
+            <span class="btn-home-label">Entreprise</span>
+            <span class="btn-home-sub">Gérez votre stand et vos candidats</span>
+          </div>
+          <span class="btn-home-arrow">›</span>
         </button>
         <button class="btn-home btn-cre" onclick="enterCREMode()">
-          <span class="btn-icon">👔</span>
-          <span class="btn-label">CRE</span>
+          <span class="btn-home-accent"></span>
+          <span class="btn-home-icon">👔</span>
+          <div class="btn-home-info">
+            <span class="btn-home-label">CRE</span>
+            <span class="btn-home-sub">Gestion et validation des candidats</span>
+          </div>
+          <span class="btn-home-arrow">›</span>
         </button>
         <button class="btn-home btn-admin" onclick="enterAdminMode()">
-          <span class="btn-icon">🔐</span>
-          <span class="btn-label">Admin</span>
+          <span class="btn-home-accent"></span>
+          <span class="btn-home-icon">🔐</span>
+          <div class="btn-home-info">
+            <span class="btn-home-label">Admin</span>
+            <span class="btn-home-sub">Tableau de bord & statistiques</span>
+          </div>
+          <span class="btn-home-arrow">›</span>
         </button>
       </div>
 
@@ -51,6 +81,7 @@
           <span class="btn-sr-arrow">→</span>
         </button>
       </div>
+
     </div>
   </div>
 
