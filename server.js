@@ -734,23 +734,58 @@ app.post('/api/cre/presence/:companyId', async (req, res) => {
   }
 });
 
+// GET company notes (CRE)
+app.get('/api/cre/company-notes', async (req, res) => {
+  try {
+    const { pin } = req.query;
+    if (pin !== CRE_PIN) return res.status(401).json({ error: 'Non autorisé' });
+    const local = await getSheetLocal();
+    const notes = {};
+    Object.keys(local).forEach(k => {
+      if (k.startsWith('co_note_')) {
+        const id = parseInt(k.replace('co_note_', ''));
+        if (id) notes[id] = local[k].notesCRE || '';
+      }
+    });
+    res.json(notes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST save company note (CRE)
+app.post('/api/cre/company-notes/:id', async (req, res) => {
+  try {
+    const { pin, note } = req.body;
+    if (pin !== CRE_PIN) return res.status(401).json({ error: 'Non autorisé' });
+    const id = parseInt(req.params.id);
+    await setSheetLocalKey('co_note_' + id, { notesCRE: (note || '').trim() });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET export présence (CRE)
 app.get('/api/cre/presence/export', async (req, res) => {
   try {
     const { pin } = req.query;
     if (pin !== CRE_PIN) return res.status(401).json({ error: 'Non autorisé' });
-    const [companies, presence] = await Promise.all([getCompanies(), getPresence()]);
-    const rows = [['Entreprise', 'Filière', 'Présent', 'Nb personnes sur le stand', 'Dernière MAJ']];
+    const [companies, presence, localMap] = await Promise.all([getCompanies(), getPresence(), getSheetLocal()]);
+    const rows = [['Entreprise', 'Filière', 'Présent', 'Nb personnes sur le stand', 'Dernière MAJ', 'Note CRE']];
     [...companies]
       .sort((a, b) => (a.nomAffichage || a.nom).localeCompare(b.nomAffichage || b.nom))
       .forEach(c => {
         const p = presence[c.id] || { present: false, nbPersonnes: 0 };
+        const noteKey = 'co_note_' + c.id;
+        const note = (localMap[noteKey] && localMap[noteKey].notesCRE) || '';
         rows.push([
           c.nomAffichage || c.nom,
           c.filiere || '',
           p.present ? 'Oui' : 'Non',
           p.present ? (p.nbPersonnes || 0) : '',
-          p.updatedAt ? new Date(p.updatedAt).toLocaleString('fr-FR') : ''
+          p.updatedAt ? new Date(p.updatedAt).toLocaleString('fr-FR') : '',
+          note
         ]);
       });
     const date = new Date().toISOString().slice(0, 10);

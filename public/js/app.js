@@ -2300,6 +2300,7 @@ function exportCRECandidates() {
 
 // ===== CRE : ONGLET PRÉSENCE =====
 let presenceData = {};
+let companyNotes = {};
 let currentCREView = 'positionnements';
 
 let _sheetAutoRefreshTimer = null;
@@ -2333,9 +2334,13 @@ function switchCREView(view) {
 
 async function loadPresenceTab() {
   try {
-    const res = await fetch(`/api/cre/presence?pin=${encodeURIComponent(crePin)}`);
-    presenceData = await res.json();
-  } catch(e) { presenceData = {}; }
+    const [r1, r2] = await Promise.all([
+      fetch(`/api/cre/presence?pin=${encodeURIComponent(crePin)}`),
+      fetch(`/api/cre/company-notes?pin=${encodeURIComponent(crePin)}`)
+    ]);
+    presenceData  = await r1.json();
+    companyNotes  = await r2.json();
+  } catch(e) { presenceData = {}; companyNotes = {}; }
   renderPresenceTab();
 }
 
@@ -2384,11 +2389,12 @@ function renderPresenceTab() {
 
   wrap.innerHTML = `<table class="presence-table">
     <thead><tr>
-      <th>Entreprise</th><th>Filière</th><th>Présent ?</th><th>Nb personnes sur le stand</th>
+      <th>Entreprise</th><th>Filière</th><th>Présent ?</th><th>Nb personnes sur le stand</th><th class="th-note">Note CRE</th>
     </tr></thead>
     <tbody>${sorted.map(c => {
       const p = presenceData[c.id] || { present: false, nbPersonnes: 0 };
-      return `<tr class="${p.present ? 'row-present' : ''}">
+      const note = companyNotes[c.id] || '';
+      return `<tr class="${p.present ? 'row-present' : ''}" id="prow-${c.id}">
         <td class="ptd-name">${c.nomAffichage || c.nom}</td>
         <td><span class="filiere-badge-sm" style="background:${FILIERE_COLORS[c.filiere]||'#94a3b8'}">${c.filiere || '-'}</span></td>
         <td class="ptd-check">
@@ -2402,6 +2408,11 @@ function renderPresenceTab() {
           <input type="number" id="nb-${c.id}" class="nb-input" value="${p.nbPersonnes}" min="0" max="20"
             onchange="updatePresence(${c.id}, document.getElementById('nb-${c.id}').closest('tr').querySelector('input[type=checkbox]').checked, this.value)"
             ${!p.present ? 'disabled' : ''} />
+        </td>
+        <td class="td-note">
+          <button class="btn-note-cre${note ? ' has-note' : ''}"
+            onclick="togglePresenceNoteRow(this, ${c.id})"
+            title="${note ? note.substring(0,80) : 'Ajouter une note'}">${note ? '📝' : '✏️'}</button>
         </td>
       </tr>`;
     }).join('')}</tbody>
@@ -2418,6 +2429,61 @@ async function updatePresence(companyId, present, nbPersonnes) {
     presenceData[companyId] = { present, nbPersonnes: parseInt(nbPersonnes) || 0 };
     renderPresenceTab();
   } catch(e) { showToast('Erreur sauvegarde présence', 'error'); }
+}
+
+function togglePresenceNoteRow(btn, companyId) {
+  const existing = document.querySelector('.note-expand-row[data-coid]');
+  if (existing) {
+    if (existing.dataset.coid === String(companyId)) { existing.remove(); return; }
+    existing.remove();
+  }
+  const currentNote = companyNotes[companyId] || '';
+  const tr = btn.closest('tr');
+  const cols = tr.querySelectorAll('td').length;
+  const expandRow = document.createElement('tr');
+  expandRow.className = 'note-expand-row';
+  expandRow.dataset.coid = String(companyId);
+  expandRow.innerHTML =
+    '<td colspan="' + cols + '" class="note-expand-cell">' +
+      '<div class="note-expand-inner">' +
+        '<textarea class="note-textarea" placeholder="Note sur l\'entreprise..." id="pnote-ta-' + companyId + '">' +
+          currentNote.replace(/</g,'&lt;').replace(/>/g,'&gt;') +
+        '</textarea>' +
+        '<div style="display:flex;flex-direction:column;gap:0.4rem">' +
+          '<button class="btn-sm btn-primary" onclick="savePresenceNote(' + companyId + ')">💾 Sauvegarder</button>' +
+          '<button class="btn-sm" onclick="this.closest(\'.note-expand-row\').remove()">✕ Fermer</button>' +
+        '</div>' +
+      '</div>' +
+    '</td>';
+  tr.insertAdjacentElement('afterend', expandRow);
+  document.getElementById('pnote-ta-' + companyId).focus();
+}
+
+async function savePresenceNote(companyId) {
+  const ta = document.getElementById('pnote-ta-' + companyId);
+  if (!ta) return;
+  const note = ta.value.trim();
+  try {
+    await fetch('/api/cre/company-notes/' + companyId, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: crePin, note })
+    });
+    companyNotes[companyId] = note;
+    // Update button icon without full re-render
+    const row = document.getElementById('prow-' + companyId);
+    if (row) {
+      const btn = row.querySelector('.btn-note-cre');
+      if (btn) {
+        btn.textContent = note ? '📝' : '✏️';
+        btn.title = note ? note.substring(0,80) : 'Ajouter une note';
+        if (note) btn.classList.add('has-note'); else btn.classList.remove('has-note');
+      }
+    }
+    const expandRow = document.querySelector('.note-expand-row[data-coid="' + companyId + '"]');
+    if (expandRow) expandRow.remove();
+    showToast('Note sauvegardée ✓', 'success');
+  } catch(e) { showToast('Erreur sauvegarde note', 'error'); }
 }
 
 // ===== TOAST =====
