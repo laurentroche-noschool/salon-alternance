@@ -313,97 +313,159 @@ body {
 }
 .search-input:focus { outline: none; border-color: var(--primary); }
 
-/* ===== COMPANY GRID ===== */
+/* ===== COMPANY LIST - Grouped by filière ===== */
 .companies-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 1rem;
-  padding: 1rem 1.25rem 2rem;
+  padding: 0.5rem 0 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.filiere-section {
+  margin-bottom: 1.5rem;
+}
+
+.filiere-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem 0.4rem;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+
+.filiere-section-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.filiere-section-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  flex: 1;
+}
+
+.filiere-section-count {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .company-card {
   background: var(--white);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
   cursor: pointer;
-  transition: all 0.22s ease;
-  overflow: hidden;
-  border: 2px solid transparent;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 1.25rem 0.75rem 1rem;
-  text-align: center;
-  gap: 0.6rem;
+  gap: 0.85rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
   position: relative;
+  border-left: 3px solid transparent;
 }
-.company-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--accent);
-}
-.company-card.hidden { display: none; }
 
-.card-logo-wrap {
-  width: 72px;
-  height: 72px;
-  border-radius: 12px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f8fafc;
-  border: 1px solid var(--border);
-  flex-shrink: 0;
+.company-card:first-of-type {
+  border-top: 1px solid var(--border);
 }
-.card-logo { width: 100%; height: 100%; object-fit: contain; padding: 6px; }
-.card-logo-fallback {
-  width: 72px;
-  height: 72px;
-  border-radius: 12px;
+
+.company-card:hover {
+  background: #f8fafc;
+  border-left-color: var(--card-color, #e2e8f0);
+}
+
+.company-card.hidden { display: none !important; }
+
+/* Logo area - square 48px */
+.card-logo-area {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f1f5f9;
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
+}
+
+.card-logo-area img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.card-logo-area .card-logo-fallback-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
   font-weight: 800;
   color: #fff;
-  flex-shrink: 0;
+}
+
+/* Card info */
+.card-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .card-name {
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: var(--text);
-  line-height: 1.3;
-  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.card-filiere-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin: auto;
-}
-
-.card-stand {
-  font-size: 0.7rem;
+.card-tagline {
+  font-size: 0.73rem;
   color: var(--text-muted);
-  background: #f1f5f9;
-  padding: 2px 8px;
-  border-radius: 10px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* CRE card extras */
-.cre-grid .company-card { padding-bottom: 0.75rem; }
-.card-student-count {
-  font-size: 0.72rem;
-  background: var(--primary);
-  color: #fff;
-  padding: 3px 10px;
-  border-radius: 10px;
-  font-weight: 600;
+/* Right side elements */
+.card-arrow {
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  flex-shrink: 0;
 }
-.card-student-count.has-students { background: #10b981; }
+
+.card-student-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: #e2e8f0;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.card-student-pill.has-students {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Legacy — keep for backwards compat in case referenced elsewhere */
+.card-logo-wrap { display: none; }
+.card-filiere-dot { display: none; }
+.card-stand { display: none; }
+.card-student-count { display: none; }
 
 /* ===== FILIERE BADGE ===== */
 .filiere-badge {
@@ -1026,7 +1088,7 @@ body {
 /* ===== RESPONSIVE ===== */
 @media (max-width: 640px) {
   .home-title { font-size: 2rem; }
-  .companies-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; padding: 0.75rem; }
+  /* .companies-grid is now a flex column list — no grid overrides needed */
 
   /* Modal plein écran sur mobile */
   .modal-overlay { padding: 0; display: none; }
@@ -1060,11 +1122,11 @@ body {
 }
 
 @media (min-width: 768px) {
-  .companies-grid { grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); }
+  /* .companies-grid is now a flex column list — no grid overrides needed */
 }
 
 @media (min-width: 1024px) {
-  .companies-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); padding: 1.25rem 2rem 3rem; }
+  /* .companies-grid is now a flex column list — no grid overrides needed */
   .filter-bar, .search-bar-wrap, .cre-controls { padding-left: 2rem; padding-right: 2rem; }
 }
 
@@ -1953,7 +2015,7 @@ body {
 /* ── Tablette ── */
 @media (max-width: 1024px) {
   .home-title { font-size: 2.6rem; }
-  .companies-grid { grid-template-columns: repeat(3, 1fr); }
+  /* .companies-grid is now a flex column list — no grid overrides needed */
   .admin-kpi-grid { grid-template-columns: repeat(3, 1fr); }
   .sheet-table th:nth-child(5),
   .sheet-table td:nth-child(5) { display: none; } /* Masque "Situation" */
@@ -1986,11 +2048,9 @@ body {
   .btn-home-label { font-size: 0.95rem; }
   .btn-home-sub   { font-size: 0.7rem; }
 
-  /* Grille entreprises */
-  .companies-grid { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; padding: 0.8rem; }
-  .company-card   { padding: 0.8rem 0.6rem; }
-  .company-logo-wrap { width: 52px; height: 52px; border-radius: 10px; margin-bottom: 0.5rem; }
-  .company-name   { font-size: 0.78rem; }
+  /* Grille entreprises — now a flex column list, no grid overrides */
+  .company-card { padding: 0.65rem 1rem; gap: 0.7rem; }
+  .card-logo-area { width: 42px; height: 42px; }
 
   /* Filtres */
   .filter-bar { padding: 0.4rem 0.6rem; }
@@ -2006,7 +2066,7 @@ body {
   .cre-view-tabs { gap: 0.3rem; padding: 0.5rem 0.6rem; }
   .cre-view-tab  { font-size: 0.75rem; padding: 0.4rem 0.7rem; }
   .cre-filter-bar { flex-wrap: wrap; gap: 0.4rem; }
-  .companies-grid.cre-grid { grid-template-columns: repeat(2, 1fr); }
+  /* .companies-grid.cre-grid is now a flex column list — no grid overrides needed */
 
   /* Tableau Sheet Candidats — colonnes prioritaires sur mobile */
   .sheet-table { font-size: 0.72rem; }
@@ -2065,7 +2125,7 @@ body {
   .btn-sr-icon { font-size: 1.5rem; }
   .btn-sr-label { font-size: 0.95rem; }
   .btn-sr-sub { font-size: 0.68rem; }
-  .companies-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  /* .companies-grid is now a flex column list — no grid overrides needed */
 }
 
 

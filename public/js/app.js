@@ -31,6 +31,50 @@ const FILIERE_COLORS = {
   'AUTRE':                  '#94a3b8'
 };
 
+const FILIERE_ORDER = [
+  'COMMERCE NS',
+  'COMMERCE WILL',
+  'COMMERCE',
+  'IMMOBILIER',
+  'BANQUE / ASSURANCE',
+  'MARKETING / COM / SOCIAL',
+  'RH / TOURISME',
+  'SOCIAL'
+];
+
+function groupAndSort(list) {
+  // Sort alphabetically by display name
+  const sorted = [...list].sort((a, b) => {
+    const nameA = (a.nomAffichage || a.nom).toLowerCase();
+    const nameB = (b.nomAffichage || b.nom).toLowerCase();
+    return nameA.localeCompare(nameB, 'fr');
+  });
+
+  // Group by filière following FILIERE_ORDER
+  const groups = {};
+  sorted.forEach(company => {
+    const f = company.filiere || 'AUTRE';
+    if (!groups[f]) groups[f] = [];
+    groups[f].push(company);
+  });
+
+  // Build result in FILIERE_ORDER order, then any remaining filières
+  const result = [];
+  const handled = new Set();
+  FILIERE_ORDER.forEach(f => {
+    if (groups[f] && groups[f].length > 0) {
+      result.push({ filiere: f, color: FILIERE_COLORS[f] || '#94a3b8', companies: groups[f] });
+      handled.add(f);
+    }
+  });
+  Object.keys(groups).forEach(f => {
+    if (!handled.has(f) && groups[f].length > 0) {
+      result.push({ filiere: f, color: FILIERE_COLORS[f] || '#94a3b8', companies: groups[f] });
+    }
+  });
+  return result;
+}
+
 // ===== INIT =====
 async function init() {
   try {
@@ -324,39 +368,66 @@ function applyFilters(filiere, search) {
     const searchOk = !search || cardName.includes(search);
     card.classList.toggle('hidden', !(filiereOk && searchOk));
   });
+  // Hide sections that have no visible cards
+  document.querySelectorAll('#companies-grid .filiere-section').forEach(section => {
+    const hasVisible = Array.from(section.querySelectorAll('.company-card')).some(c => !c.classList.contains('hidden'));
+    section.style.display = hasVisible ? 'block' : 'none';
+  });
 }
 
 // ===== RENDER STUDENT GRID =====
 function renderCompaniesGrid(list) {
   const grid = document.getElementById('companies-grid');
   grid.innerHTML = '';
-  list.forEach(company => {
-    const color = FILIERE_COLORS[company.filiere] || '#94a3b8';
-    const initials = getInitials(company.nomAffichage || company.nom);
-    const standTxt = getStandText(company.stand);
+  const grouped = groupAndSort(list);
+  grouped.forEach(({ filiere, color, companies: groupCompanies }) => {
+    const section = document.createElement('div');
+    section.className = 'filiere-section';
+    section.dataset.filiere = filiere;
 
-    const card = document.createElement('div');
-    card.className = 'company-card';
-    card.dataset.filiere = company.filiere;
-    card.dataset.name = (company.nom + ' ' + (company.nomAffichage || '')).toLowerCase();
-    card.onclick = () => openStudentModal(company);
-
-    card.innerHTML = `
-      ${company.logoFile
-        ? `<div class="card-logo-wrap">
-            <img class="card-logo"
-              src="/images/logos/${company.logoFile}"
-              alt="${company.nomAffichage || company.nom}"
-              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
-            <div class="card-logo-fallback" style="display:none;background:${color};width:72px;height:72px;border-radius:12px;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;color:#fff">${initials}</div>
-           </div>`
-        : `<div class="card-logo-fallback" style="background:${color}">${initials}</div>`
-      }
-      <div class="card-name">${company.nomAffichage || company.nom}</div>
-      <div class="card-filiere-dot" style="background:${color}"></div>
-      ${standTxt ? `<div class="card-stand">📍 ${standTxt}</div>` : ''}
+    const count = groupCompanies.length;
+    const header = document.createElement('div');
+    header.className = 'filiere-section-header';
+    header.innerHTML = `
+      <div class="filiere-section-dot" style="background:${color}"></div>
+      <span class="filiere-section-name">${filiere}</span>
+      <span class="filiere-section-count">${count} entreprise${count > 1 ? 's' : ''}</span>
     `;
-    grid.appendChild(card);
+    section.appendChild(header);
+
+    groupCompanies.forEach(company => {
+      const cardColor = FILIERE_COLORS[company.filiere] || '#94a3b8';
+      const initials = getInitials(company.nomAffichage || company.nom);
+      const standTxt = getStandText(company.stand);
+      const tagline = [company.tagline || company.secteur, standTxt].filter(Boolean).join(' • ');
+
+      const card = document.createElement('div');
+      card.className = 'company-card';
+      card.dataset.filiere = company.filiere;
+      card.dataset.name = (company.nom + ' ' + (company.nomAffichage || '')).toLowerCase();
+      card.style.setProperty('--card-color', cardColor);
+      card.onclick = () => openStudentModal(company);
+
+      card.innerHTML = `
+        <div class="card-logo-area">
+          ${company.logoFile
+            ? `<img src="/images/logos/${company.logoFile}"
+                alt="${company.nomAffichage || company.nom}"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
+               <div class="card-logo-fallback-inner" style="display:none;background:${cardColor}">${initials}</div>`
+            : `<div class="card-logo-fallback-inner" style="background:${cardColor}">${initials}</div>`
+          }
+        </div>
+        <div class="card-info">
+          <div class="card-name">${company.nomAffichage || company.nom}</div>
+          ${tagline ? `<div class="card-tagline">${tagline}</div>` : ''}
+        </div>
+        <div class="card-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      `;
+      section.appendChild(card);
+    });
+
+    grid.appendChild(section);
   });
 }
 
@@ -890,36 +961,57 @@ async function loadRegistrations() {
 function renderCREGrid(list) {
   const grid = document.getElementById('cre-companies-grid');
   grid.innerHTML = '';
-  list.forEach(company => {
-    const color = FILIERE_COLORS[company.filiere] || '#94a3b8';
-    const initials = getInitials(company.nomAffichage || company.nom);
-    const count = (registrations[company.id] || []).length;
+  const grouped = groupAndSort(list);
+  grouped.forEach(({ filiere, color, companies: groupCompanies }) => {
+    const section = document.createElement('div');
+    section.className = 'filiere-section';
+    section.dataset.filiere = filiere;
 
-    const card = document.createElement('div');
-    card.className = 'company-card';
-    card.dataset.filiere = company.filiere;
-    card.dataset.name = (company.nom + ' ' + (company.nomAffichage || '')).toLowerCase();
-    card.dataset.cre = (company.cre || '').toLowerCase();
-    card.onclick = () => openCREModal(company);
-
-    card.innerHTML = `
-      ${company.logoFile
-        ? `<div class="card-logo-wrap">
-            <img class="card-logo"
-              src="/images/logos/${company.logoFile}"
-              alt="${company.nomAffichage || company.nom}"
-              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
-            <div class="card-logo-fallback" style="display:none;background:${color};width:72px;height:72px;border-radius:12px;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;color:#fff">${initials}</div>
-           </div>`
-        : `<div class="card-logo-fallback" style="background:${color}">${initials}</div>`
-      }
-      <div class="card-name">${company.nomAffichage || company.nom}</div>
-      <div class="card-filiere-dot" style="background:${color}"></div>
-      <div class="card-student-count ${count > 0 ? 'has-students' : ''}">
-        ${count > 0 ? `${count} étudiant${count > 1 ? 's' : ''}` : 'Aucun positionné'}
-      </div>
+    const count = groupCompanies.length;
+    const header = document.createElement('div');
+    header.className = 'filiere-section-header';
+    header.innerHTML = `
+      <div class="filiere-section-dot" style="background:${color}"></div>
+      <span class="filiere-section-name">${filiere}</span>
+      <span class="filiere-section-count">${count} entreprise${count > 1 ? 's' : ''}</span>
     `;
-    grid.appendChild(card);
+    section.appendChild(header);
+
+    groupCompanies.forEach(company => {
+      const cardColor = FILIERE_COLORS[company.filiere] || '#94a3b8';
+      const initials = getInitials(company.nomAffichage || company.nom);
+      const studentCount = (registrations[company.id] || []).length;
+
+      const card = document.createElement('div');
+      card.className = 'company-card';
+      card.dataset.filiere = company.filiere;
+      card.dataset.name = (company.nom + ' ' + (company.nomAffichage || '')).toLowerCase();
+      card.dataset.cre = (company.cre || '').toLowerCase();
+      card.style.setProperty('--card-color', cardColor);
+      card.onclick = () => openCREModal(company);
+
+      card.innerHTML = `
+        <div class="card-logo-area">
+          ${company.logoFile
+            ? `<img src="/images/logos/${company.logoFile}"
+                alt="${company.nomAffichage || company.nom}"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
+               <div class="card-logo-fallback-inner" style="display:none;background:${cardColor}">${initials}</div>`
+            : `<div class="card-logo-fallback-inner" style="background:${cardColor}">${initials}</div>`
+          }
+        </div>
+        <div class="card-info">
+          <div class="card-name">${company.nomAffichage || company.nom}</div>
+          ${company.cre ? `<div class="card-tagline">CRE: ${company.cre}</div>` : ''}
+        </div>
+        <div class="card-student-pill ${studentCount > 0 ? 'has-students' : ''}">
+          ${studentCount > 0 ? studentCount + ' positionné' + (studentCount > 1 ? 's' : '') : 'Aucun positionné'}
+        </div>
+      `;
+      section.appendChild(card);
+    });
+
+    grid.appendChild(section);
   });
 }
 
@@ -931,6 +1023,11 @@ function filterCRECompanies() {
     const fOk = filiere === 'all' || card.dataset.filiere === filiere;
     const sOk = !search || card.dataset.name.includes(search) || card.dataset.cre.includes(search);
     card.classList.toggle('hidden', !(fOk && sOk));
+  });
+  // Hide sections that have no visible cards
+  document.querySelectorAll('#cre-companies-grid .filiere-section').forEach(section => {
+    const hasVisible = Array.from(section.querySelectorAll('.company-card')).some(c => !c.classList.contains('hidden'));
+    section.style.display = hasVisible ? 'block' : 'none';
   });
 }
 
@@ -1099,12 +1196,12 @@ function refreshCRECardCount(companyId) {
   cards.forEach(card => {
     if (card.onclick.toString().includes(`id:${companyId}`) ||
         (currentCRECompany && card.dataset.name.includes((currentCRECompany.nomAffichage || currentCRECompany.nom).toLowerCase()))) {
-      const badge = card.querySelector('.card-student-count');
-      if (badge) {
-        badge.textContent = count > 0
-          ? `${count} étudiant${count > 1 ? 's' : ''}`
+      const pill = card.querySelector('.card-student-pill');
+      if (pill) {
+        pill.textContent = count > 0
+          ? `${count} positionné${count > 1 ? 's' : ''}`
           : 'Aucun positionné';
-        badge.classList.toggle('has-students', count > 0);
+        pill.classList.toggle('has-students', count > 0);
       }
     }
   });
@@ -1727,26 +1824,53 @@ async function verifyEntreprise() {
 function renderEntSelection(list) {
   const grid = document.getElementById('ent-companies-grid');
   grid.innerHTML = '';
-  list.forEach(company => {
-    const color = FILIERE_COLORS[company.filiere] || '#94a3b8';
-    const initials = getInitials(company.nomAffichage || company.nom);
-    const card = document.createElement('div');
-    card.className = 'company-card ent-select-card';
-    card.dataset.name = (company.nom + ' ' + (company.nomAffichage || '')).toLowerCase();
-    card.onclick = () => openEntDashboard(company);
-    card.innerHTML = `
-      ${company.logoFile
-        ? `<div class="card-logo-wrap">
-            <img class="card-logo" src="/images/logos/${company.logoFile}" alt="${company.nomAffichage || company.nom}"
-              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
-            <div class="card-logo-fallback" style="display:none;background:${color};width:72px;height:72px;border-radius:12px;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;color:#fff">${initials}</div>
-           </div>`
-        : `<div class="card-logo-fallback" style="background:${color}">${initials}</div>`
-      }
-      <div class="card-name">${company.nomAffichage || company.nom}</div>
-      <div class="card-filiere-dot" style="background:${color}"></div>
+  const grouped = groupAndSort(list);
+  grouped.forEach(({ filiere, color, companies: groupCompanies }) => {
+    const section = document.createElement('div');
+    section.className = 'filiere-section';
+    section.dataset.filiere = filiere;
+
+    const count = groupCompanies.length;
+    const header = document.createElement('div');
+    header.className = 'filiere-section-header';
+    header.innerHTML = `
+      <div class="filiere-section-dot" style="background:${color}"></div>
+      <span class="filiere-section-name">${filiere}</span>
+      <span class="filiere-section-count">${count} entreprise${count > 1 ? 's' : ''}</span>
     `;
-    grid.appendChild(card);
+    section.appendChild(header);
+
+    groupCompanies.forEach(company => {
+      const cardColor = FILIERE_COLORS[company.filiere] || '#94a3b8';
+      const initials = getInitials(company.nomAffichage || company.nom);
+
+      const card = document.createElement('div');
+      card.className = 'company-card ent-select-card';
+      card.dataset.name = (company.nom + ' ' + (company.nomAffichage || '')).toLowerCase();
+      card.dataset.filiere = company.filiere;
+      card.style.setProperty('--card-color', cardColor);
+      card.onclick = () => openEntDashboard(company);
+
+      card.innerHTML = `
+        <div class="card-logo-area">
+          ${company.logoFile
+            ? `<img src="/images/logos/${company.logoFile}"
+                alt="${company.nomAffichage || company.nom}"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
+               <div class="card-logo-fallback-inner" style="display:none;background:${cardColor}">${initials}</div>`
+            : `<div class="card-logo-fallback-inner" style="background:${cardColor}">${initials}</div>`
+          }
+        </div>
+        <div class="card-info">
+          <div class="card-name">${company.nomAffichage || company.nom}</div>
+          ${company.secteur ? `<div class="card-tagline">${company.secteur}</div>` : ''}
+        </div>
+        <div class="card-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+      `;
+      section.appendChild(card);
+    });
+
+    grid.appendChild(section);
   });
 }
 
@@ -1754,6 +1878,11 @@ function filterEntSelection() {
   const search = document.getElementById('ent-search').value.toLowerCase().trim();
   document.querySelectorAll('#ent-companies-grid .company-card').forEach(card => {
     card.classList.toggle('hidden', !!search && !card.dataset.name.includes(search));
+  });
+  // Hide sections that have no visible cards
+  document.querySelectorAll('#ent-companies-grid .filiere-section').forEach(section => {
+    const hasVisible = Array.from(section.querySelectorAll('.company-card')).some(c => !c.classList.contains('hidden'));
+    section.style.display = hasVisible ? 'block' : 'none';
   });
 }
 
