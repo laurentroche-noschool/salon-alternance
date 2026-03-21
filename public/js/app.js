@@ -255,39 +255,67 @@ function srUpdateFilterCounts() {
 
 function srSearchCompanies() {
   const search = (document.getElementById('sr-search-input').value || '').toLowerCase().trim();
-  document.querySelectorAll('#sr-companies-grid .sr-company-card').forEach(card => {
+  document.querySelectorAll('#sr-companies-grid .company-card').forEach(card => {
     card.classList.toggle('hidden', !!(search && !card.dataset.name.includes(search)));
+  });
+  document.querySelectorAll('#sr-companies-grid .filiere-section').forEach(section => {
+    const hasVisible = Array.from(section.querySelectorAll('.company-card')).some(c => !c.classList.contains('hidden'));
+    section.style.display = hasVisible ? 'block' : 'none';
   });
 }
 
 function srRenderCompaniesGrid(list) {
   const grid = document.getElementById('sr-companies-grid');
   grid.innerHTML = '';
-  list.forEach(company => {
-    const color = FILIERE_COLORS[company.filiere] || '#94a3b8';
-    const initials = getInitials(company.nomAffichage || company.nom);
-    const standTxt = getStandText(company.stand);
+  const grouped = groupAndSort(list);
+  grouped.forEach(({ filiere, color, companies: groupCompanies }) => {
+    const section = document.createElement('div');
+    section.className = 'filiere-section';
+    section.dataset.filiere = filiere;
 
-    const card = document.createElement('div');
-    card.className = 'company-card sr-company-card';
-    card.dataset.filiere = company.filiere;
-    card.dataset.name = (company.nom + ' ' + (company.nomAffichage || '')).toLowerCase();
-    card.onclick = () => { openStudentModal(company); document.getElementById('modal-student').classList.add('sr-mode'); };
-
-    card.innerHTML = `
-      ${company.logoFile
-        ? `<div class="card-logo-wrap">
-            <img class="card-logo" src="/images/logos/${company.logoFile}" alt="${company.nomAffichage || company.nom}"
-              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
-            <div class="card-logo-fallback" style="display:none;background:${color};width:72px;height:72px;border-radius:12px;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;color:#fff">${initials}</div>
-           </div>`
-        : `<div class="card-logo-fallback" style="background:${color}">${initials}</div>`
-      }
-      <div class="card-name">${company.nomAffichage || company.nom}</div>
-      <div class="card-filiere-dot" style="background:${color}"></div>
-      ${standTxt ? `<div class="card-stand">📍 ${standTxt}</div>` : ''}
+    const count = groupCompanies.length;
+    const header = document.createElement('div');
+    header.className = 'filiere-section-header';
+    header.innerHTML = `
+      <div class="filiere-section-dot" style="background:${color}"></div>
+      <span class="filiere-section-name">${FILIERE_LABELS[filiere] || filiere}</span>
+      <span class="filiere-section-count">${count} entreprise${count > 1 ? 's' : ''}</span>
     `;
-    grid.appendChild(card);
+    section.appendChild(header);
+
+    const cardsWrap = document.createElement('div');
+    cardsWrap.className = 'cards-grid-wrap';
+
+    groupCompanies.forEach(company => {
+      const cardColor = FILIERE_COLORS[company.filiere] || '#94a3b8';
+      const initials = getInitials(company.nomAffichage || company.nom);
+
+      const card = document.createElement('div');
+      card.className = 'company-card sr-company-card';
+      card.dataset.filiere = company.filiere;
+      card.dataset.name = (company.nom + ' ' + (company.nomAffichage || '')).toLowerCase();
+      card.style.setProperty('--card-color', cardColor);
+      card.onclick = () => { openStudentModal(company); document.getElementById('modal-student').classList.add('sr-mode'); };
+
+      card.innerHTML = `
+        <div class="card-logo-area">
+          ${company.logoFile
+            ? `<img src="/images/logos/${company.logoFile}" alt="${company.nomAffichage || company.nom}"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
+               <div class="card-logo-fallback-inner" style="display:none;background:${cardColor}">${initials}</div>`
+            : `<div class="card-logo-fallback-inner" style="background:${cardColor}">${initials}</div>`
+          }
+        </div>
+        <div class="card-info">
+          <div class="card-name">${company.nomAffichage || company.nom}</div>
+          ${company.secteur ? `<div class="card-tagline">${company.secteur}</div>` : ''}
+        </div>
+      `;
+      cardsWrap.appendChild(card);
+    });
+
+    section.appendChild(cardsWrap);
+    grid.appendChild(section);
   });
 }
 
