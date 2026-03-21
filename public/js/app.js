@@ -20,7 +20,6 @@ let entRatings = {};
 let entPendingChanges = {};
 
 const FILIERE_COLORS = {
-  'COMMERCE':               '#3b82f6',
   'COMMERCE NS':            '#8b5cf6',
   'COMMERCE WILL':          '#ec4899',
   'IMMOBILIER':             '#10b981',
@@ -31,10 +30,19 @@ const FILIERE_COLORS = {
   'AUTRE':                  '#94a3b8'
 };
 
+const FILIERE_LABELS = {
+  'COMMERCE NS':            'Commerce Noschool',
+  'COMMERCE WILL':          'Commerce Will.school',
+  'IMMOBILIER':             'Immobilier',
+  'BANQUE / ASSURANCE':     'Banque / Assurance',
+  'MARKETING / COM / SOCIAL': 'Marketing / Com / Social',
+  'RH / TOURISME':          'RH / Tourisme',
+  'SOCIAL':                 'Social'
+};
+
 const FILIERE_ORDER = [
   'COMMERCE NS',
   'COMMERCE WILL',
-  'COMMERCE',
   'IMMOBILIER',
   'BANQUE / ASSURANCE',
   'MARKETING / COM / SOCIAL',
@@ -334,8 +342,7 @@ function closeSrDetail() {
 // ===== FILTER COUNTS =====
 function updateFilterCounts() {
   document.getElementById('count-all').textContent = companies.length;
-  document.getElementById('count-COMMERCE').textContent    = companies.filter(c => c.filiere === 'COMMERCE').length;
-  document.getElementById('count-COMMERCE-NS').textContent  = companies.filter(c => c.filiere === 'COMMERCE NS').length;
+  document.getElementById('count-COMMERCE-NS').textContent  = companies.filter(c => c.filiere === 'COMMERCE NS' || c.filiere === 'COMMERCE').length;
   document.getElementById('count-COMMERCE-WILL').textContent = companies.filter(c => c.filiere === 'COMMERCE WILL').length;
   document.getElementById('count-IMMOBILIER').textContent   = companies.filter(c => c.filiere === 'IMMOBILIER').length;
   document.getElementById('count-BANQUE').textContent       = companies.filter(c => c.filiere === 'BANQUE / ASSURANCE').length;
@@ -390,7 +397,7 @@ function renderCompaniesGrid(list) {
     header.className = 'filiere-section-header';
     header.innerHTML = `
       <div class="filiere-section-dot" style="background:${color}"></div>
-      <span class="filiere-section-name">${filiere}</span>
+      <span class="filiere-section-name">${FILIERE_LABELS[filiere] || filiere}</span>
       <span class="filiere-section-count">${count} entreprise${count > 1 ? 's' : ''}</span>
     `;
     section.appendChild(header);
@@ -972,7 +979,7 @@ function renderCREGrid(list) {
     header.className = 'filiere-section-header';
     header.innerHTML = `
       <div class="filiere-section-dot" style="background:${color}"></div>
-      <span class="filiere-section-name">${filiere}</span>
+      <span class="filiere-section-name">${FILIERE_LABELS[filiere] || filiere}</span>
       <span class="filiere-section-count">${count} entreprise${count > 1 ? 's' : ''}</span>
     `;
     section.appendChild(header);
@@ -1338,7 +1345,7 @@ function renderAdminStats(data) {
 
   // ── Filières
   const FILIERE_COLORS_ADMIN = {
-    'COMMERCE': '#3b82f6', 'COMMERCE NS': '#8b5cf6', 'COMMERCE WILL': '#ec4899',
+    'COMMERCE NS': '#8b5cf6', 'COMMERCE WILL': '#ec4899',
     'IMMOBILIER': '#10b981', 'BANQUE / ASSURANCE': '#f59e0b',
     'MARKETING / COM / SOCIAL': '#f97316', 'RH / TOURISME': '#06b6d4',
     'SOCIAL': '#84cc16', 'AUTRE': '#94a3b8'
@@ -1835,7 +1842,7 @@ function renderEntSelection(list) {
     header.className = 'filiere-section-header';
     header.innerHTML = `
       <div class="filiere-section-dot" style="background:${color}"></div>
-      <span class="filiere-section-name">${filiere}</span>
+      <span class="filiere-section-name">${FILIERE_LABELS[filiere] || filiere}</span>
       <span class="filiere-section-count">${count} entreprise${count > 1 ? 's' : ''}</span>
     `;
     section.appendChild(header);

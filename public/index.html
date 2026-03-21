@@ -120,11 +120,8 @@
         <button class="filter-btn active" data-filiere="all" onclick="filterFiliere('all', this)">
           Toutes <span class="filter-count" id="count-all"></span>
         </button>
-        <button class="filter-btn" data-filiere="COMMERCE" onclick="filterFiliere('COMMERCE', this)">
-          Commerce <span class="filter-count" id="count-COMMERCE"></span>
-        </button>
         <button class="filter-btn" data-filiere="COMMERCE NS" onclick="filterFiliere('COMMERCE NS', this)">
-          Commerce NS <span class="filter-count" id="count-COMMERCE-NS"></span>
+          Commerce Noschool <span class="filter-count" id="count-COMMERCE-NS"></span>
         </button>
         <button class="filter-btn" data-filiere="COMMERCE WILL" onclick="filterFiliere('COMMERCE WILL', this)">
           Commerce Will <span class="filter-count" id="count-COMMERCE-WILL"></span>
@@ -356,8 +353,7 @@
             <input type="text" id="admin-filter-search" class="admin-filter-input" placeholder="🔍 Rechercher une entreprise…" oninput="filterAdminTable()" />
             <select id="admin-filter-filiere" class="admin-filter-select" onchange="filterAdminTable()">
               <option value="all">Toutes les filières</option>
-              <option value="COMMERCE">Commerce</option>
-              <option value="COMMERCE NS">Commerce NS</option>
+              <option value="COMMERCE NS">Commerce Noschool</option>
               <option value="COMMERCE WILL">Commerce Will</option>
               <option value="IMMOBILIER">Immobilier</option>
               <option value="BANQUE">Banque</option>
@@ -437,8 +433,7 @@
             <input type="text" id="admin-student-search" class="admin-filter-input" placeholder="🔍 Rechercher un(e) candidat(e)…" oninput="filterAdminStudents()" />
             <select id="admin-student-filiere" class="admin-filter-select" onchange="filterAdminStudents()">
               <option value="all">Toutes les filières</option>
-              <option value="COMMERCE">Commerce</option>
-              <option value="COMMERCE NS">Commerce NS</option>
+              <option value="COMMERCE NS">Commerce Noschool</option>
               <option value="COMMERCE WILL">Commerce Will</option>
               <option value="IMMOBILIER">Immobilier</option>
               <option value="BANQUE">Banque</option>
@@ -492,7 +487,7 @@
     <div id="ent-selection" style="display:none">
       <div class="ent-selection-header">
         <h3>Sélectionnez votre entreprise</h3>
-        <p class="ent-selection-desc">Cliquez sur votre logo pour accéder à votre espace candidats</p>
+        <p class="ent-selection-desc">Cliquez sur le logo pour avoir toutes les informations sur l'entreprise et t'aider à décrocher ton alternance</p>
         <input type="text" id="ent-search" placeholder="🔍 Rechercher votre entreprise..." class="search-input ent-search-input" oninput="filterEntSelection()" />
       </div>
       <div id="ent-companies-grid" class="companies-grid"></div>
@@ -663,8 +658,7 @@
             <button class="btn-add-company" onclick="openAddCompanyModal()">➕ Ajouter une entreprise</button>
             <select id="cre-filiere-filter" class="filiere-select" onchange="filterCRECompanies()">
               <option value="all">Toutes les filières</option>
-              <option value="COMMERCE">Commerce</option>
-              <option value="COMMERCE NS">Commerce NS</option>
+              <option value="COMMERCE NS">Commerce Noschool</option>
               <option value="COMMERCE WILL">Commerce Will</option>
               <option value="IMMOBILIER">Immobilier</option>
               <option value="BANQUE / ASSURANCE">Banque / Assurance</option>
@@ -779,8 +773,7 @@
           <label>Filière *</label>
           <select id="add-company-filiere" class="filiere-select add-filiere-select">
             <option value="">-- Choisir une filière --</option>
-            <option value="COMMERCE">Commerce (NoSchool)</option>
-            <option value="COMMERCE NS">Commerce NS</option>
+            <option value="COMMERCE NS">Commerce Noschool</option>
             <option value="COMMERCE WILL">Commerce Will.school</option>
             <option value="IMMOBILIER">Immobilier</option>
             <option value="BANQUE / ASSURANCE">Banque / Assurance</option>
