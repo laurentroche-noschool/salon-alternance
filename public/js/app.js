@@ -2444,25 +2444,27 @@ function togglePresenceNoteRow(btn, companyId) {
   expandRow.className = 'note-expand-row';
   expandRow.dataset.coid = String(companyId);
   expandRow.innerHTML =
-    '<td colspan="' + cols + '" class="note-expand-cell">' +
+    '<td colspan="' + cols + '" class="td-note-expand">' +
       '<div class="note-expand-inner">' +
-        '<textarea class="note-textarea" placeholder="Note sur l\'entreprise..." id="pnote-ta-' + companyId + '">' +
+        '<div class="note-label">📝 Note CRE :</div>' +
+        '<textarea class="note-textarea" placeholder="Saisissez votre note ici (échanges, impression, suites à donner…)">' +
           currentNote.replace(/</g,'&lt;').replace(/>/g,'&gt;') +
         '</textarea>' +
-        '<div style="display:flex;flex-direction:column;gap:0.4rem">' +
-          '<button class="btn-sm btn-primary" onclick="savePresenceNote(' + companyId + ')">💾 Sauvegarder</button>' +
-          '<button class="btn-sm" onclick="this.closest(\'.note-expand-row\').remove()">✕ Fermer</button>' +
+        '<div class="note-expand-actions">' +
+          '<span class="note-hint">💾 Sauvegarde auto à la sortie du champ</span>' +
+          '<button class="btn-note-close" onclick="this.closest(\'.note-expand-row\').remove()">✕ Fermer</button>' +
         '</div>' +
       '</div>' +
     '</td>';
   tr.insertAdjacentElement('afterend', expandRow);
-  document.getElementById('pnote-ta-' + companyId).focus();
+  const ta = expandRow.querySelector('textarea');
+  ta.addEventListener('blur', function() { savePresenceNote(companyId, ta, btn); });
+  ta.focus();
+  ta.selectionStart = ta.selectionEnd = ta.value.length;
 }
 
-async function savePresenceNote(companyId) {
-  const ta = document.getElementById('pnote-ta-' + companyId);
-  if (!ta) return;
-  const note = ta.value.trim();
+async function savePresenceNote(companyId, textarea, noteBtn) {
+  const note = textarea.value.trim();
   try {
     await fetch('/api/cre/company-notes/' + companyId, {
       method: 'POST',
@@ -2470,19 +2472,11 @@ async function savePresenceNote(companyId) {
       body: JSON.stringify({ pin: crePin, note })
     });
     companyNotes[companyId] = note;
-    // Update button icon without full re-render
-    const row = document.getElementById('prow-' + companyId);
-    if (row) {
-      const btn = row.querySelector('.btn-note-cre');
-      if (btn) {
-        btn.textContent = note ? '📝' : '✏️';
-        btn.title = note ? note.substring(0,80) : 'Ajouter une note';
-        if (note) btn.classList.add('has-note'); else btn.classList.remove('has-note');
-      }
+    if (noteBtn) {
+      noteBtn.textContent = note ? '📝' : '✏️';
+      noteBtn.title = note ? note.substring(0,80) : 'Ajouter une note';
+      noteBtn.classList.toggle('has-note', !!note);
     }
-    const expandRow = document.querySelector('.note-expand-row[data-coid="' + companyId + '"]');
-    if (expandRow) expandRow.remove();
-    showToast('Note sauvegardée ✓', 'success');
   } catch(e) { showToast('Erreur sauvegarde note', 'error'); }
 }
 
