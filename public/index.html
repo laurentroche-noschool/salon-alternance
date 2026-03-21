@@ -145,7 +145,10 @@
     </div>
 
     <div class="search-bar-wrap">
-      <input type="text" id="search-input" placeholder="🔍 Rechercher une entreprise..." class="search-input" oninput="searchCompanies()" />
+      <div class="search-hint-row">
+        <input type="text" id="search-input" placeholder="🔍 Rechercher..." class="search-input search-input-compact" oninput="searchCompanies()" />
+        <p class="search-hint-text">👆 Clique sur une tuile pour découvrir l'entreprise et décrocher ton alternance</p>
+      </div>
     </div>
 
     <div id="companies-grid" class="companies-grid"></div>

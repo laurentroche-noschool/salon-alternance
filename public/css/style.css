@@ -299,7 +299,14 @@ body {
 .filter-btn:not(.active) .filter-count { background: var(--border); color: var(--text-muted); }
 
 /* ===== SEARCH ===== */
-.search-bar-wrap { padding: 0.75rem 1.25rem 0; }
+.search-bar-wrap { padding: 0.6rem 1rem 0; }
+
+.search-hint-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .search-input {
   width: 100%;
   padding: 0.65rem 1rem;
@@ -311,6 +318,22 @@ body {
   transition: border-color 0.15s;
   color: var(--text);
 }
+
+.search-input-compact {
+  width: auto;
+  flex: 0 0 180px;
+  font-size: 0.82rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.search-hint-text {
+  flex: 1;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin: 0;
+}
+
 .search-input:focus { outline: none; border-color: var(--primary); }
 
 /* ===== COMPANY LIST - Grouped by filière ===== */
