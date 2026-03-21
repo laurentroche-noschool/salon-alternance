@@ -889,6 +889,18 @@ app.get('/api/sheet-candidates/list', async function(req, res) {
     var pin = req.query.pin;
     if (pin !== CRE_PIN && pin !== ENTERPRISE_PIN) return res.status(401).json({ error: 'PIN incorrect' });
 
+    // Si le cache est vide, aller chercher le Google Sheet
+    if (!sheetCache.candidates || !sheetCache.candidates.length) {
+      try {
+        var csvText = await fetchURL(SHEET_CSV_URL);
+        var rows = parseSheetCSV(csvText);
+        var candidates = rows.map(mapSheetRow).filter(function(c) { return c.nom && c.prenom; });
+        sheetCache = { candidates: candidates, lastSync: new Date().toISOString() };
+      } catch (fetchErr) {
+        // Cache reste vide, on retourne ce qu'on a (self-regs uniquement)
+      }
+    }
+
     var list = (sheetCache.candidates || []).map(function(c) {
       return { nom: c.nom, prenom: c.prenom, email: c.email, tel: c.tel, diplome: c.diplome, domaines: c.domaines };
     });
