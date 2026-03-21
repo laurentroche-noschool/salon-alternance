@@ -2525,7 +2525,7 @@ function renderSheetCandidates() {
       '</td>' +
       '<td class="td-note">' +
         '<button class="btn-note-cre' + (c.notesCRE ? ' has-note' : '') + '" ' +
-        'onclick="toggleNoteRow(this,\'' + keySafe + '\',\'' + (c.notesCRE||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n') + '\')" ' +
+        'onclick="toggleNoteRow(this,\'' + keySafe + '\')" ' +
         'title="' + (c.notesCRE ? c.notesCRE.substring(0,80) : 'Ajouter une note') + '">' +
         (c.notesCRE ? '📝' : '✏️') +
         '</button>' +
@@ -2589,18 +2589,23 @@ async function saveFormationCiblee(key, value) {
   } catch(e) {}
 }
 
-function toggleNoteRow(btn, key, currentNote) {
+function toggleNoteRow(btn, key) {
   // Ferme une note déjà ouverte
   const existing = document.querySelector('.note-expand-row');
   if (existing) {
     if (existing.dataset.key === key) { existing.remove(); return; }
     existing.remove();
   }
+  // Lire la note COURANTE depuis sheetCandidates (pas depuis le HTML figé)
+  const candidate = sheetCandidates.find(function(x) {
+    const k = (x.email && x.email.indexOf('@') !== -1) ? x.email : (x.nom + '__' + (x.prenom||'').toLowerCase());
+    return k === key;
+  });
+  const decoded = candidate ? (candidate.notesCRE || '') : '';
   const tr = btn.closest('tr');
   const expandRow = document.createElement('tr');
   expandRow.className = 'note-expand-row';
   expandRow.dataset.key = key;
-  const decoded = currentNote.replace(/\\n/g, '\n').replace(/\\'/g, "'");
   expandRow.innerHTML =
     '<td colspan="8" class="td-note-expand">' +
       '<div class="note-expand-inner">' +
