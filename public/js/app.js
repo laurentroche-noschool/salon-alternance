@@ -1025,6 +1025,25 @@ async function addStudent() {
   const cre = document.getElementById('student-cre').value.trim();
   const errEl = document.getElementById('add-student-error');
 
+  // Auto-save stand silently before positioning student
+  const salle = document.getElementById('cre-stand-salle').value.trim();
+  const etage = document.getElementById('cre-stand-etage').value;
+  if (salle || etage) {
+    try {
+      const standRes = await fetch(`/api/companies/${currentCRECompany.id}/stand`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: crePin, salle, etage })
+      });
+      if (standRes.ok) {
+        const updated = await standRes.json();
+        const idx = companies.findIndex(c => c.id === currentCRECompany.id);
+        if (idx !== -1) companies[idx].stand = updated.stand;
+        currentCRECompany.stand = updated.stand;
+      }
+    } catch (e) { /* silent fail */ }
+  }
+
   if (!nom || !prenom || !formation) {
     errEl.textContent = 'Veuillez remplir Nom, Prénom et Formation.';
     errEl.style.display = 'block';
