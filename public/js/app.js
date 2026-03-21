@@ -2523,13 +2523,20 @@ function renderSheetCandidates() {
           ? '<button class="btn-companies-count" onclick="openCandidateCompanies(this,' + idx + ')">' + c.nbCompanies + ' 🏢</button>'
           : '<span class="no-company">—</span>') +
       '</td>' +
+      '<td class="td-note">' +
+        '<button class="btn-note-cre' + (c.notesCRE ? ' has-note' : '') + '" ' +
+        'onclick="toggleNoteRow(this,\'' + keySafe + '\',\'' + (c.notesCRE||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n') + '\')" ' +
+        'title="' + (c.notesCRE ? c.notesCRE.substring(0,80) : 'Ajouter une note') + '">' +
+        (c.notesCRE ? '📝' : '✏️') +
+        '</button>' +
+      '</td>' +
     '</tr>';
   });
 
   container.innerHTML = '<table class="sheet-table">' +
     '<thead><tr>' +
       '<th>Présence</th><th>Nom / Prénom</th><th>Contact</th><th>Formation / Domaines</th>' +
-      '<th>Situation</th><th>Formation ciblée</th><th>Entreprises</th>' +
+      '<th>Situation</th><th>Formation ciblée</th><th>Entreprises</th><th class="th-note">Note CRE</th>' +
     '</tr></thead>' +
     '<tbody>' + rows.join('') + '</tbody>' +
   '</table>';
@@ -2580,6 +2587,61 @@ async function saveFormationCiblee(key, value) {
     if (c) c.formationCiblee = value;
     if (value) showToast('✓ Formation ciblée enregistrée', 'success');
   } catch(e) {}
+}
+
+function toggleNoteRow(btn, key, currentNote) {
+  // Ferme une note déjà ouverte
+  const existing = document.querySelector('.note-expand-row');
+  if (existing) {
+    if (existing.dataset.key === key) { existing.remove(); return; }
+    existing.remove();
+  }
+  const tr = btn.closest('tr');
+  const expandRow = document.createElement('tr');
+  expandRow.className = 'note-expand-row';
+  expandRow.dataset.key = key;
+  const decoded = currentNote.replace(/\\n/g, '\n').replace(/\\'/g, "'");
+  expandRow.innerHTML =
+    '<td colspan="8" class="td-note-expand">' +
+      '<div class="note-expand-inner">' +
+        '<div class="note-label">📝 Note CRE :</div>' +
+        '<textarea class="note-textarea" placeholder="Saisissez votre note ici (échanges, impression, suites à donner…)">' + decoded.replace(/</g,'&lt;') + '</textarea>' +
+        '<div class="note-expand-actions">' +
+          '<span class="note-hint">💾 Sauvegarde auto à la sortie du champ</span>' +
+          '<button class="btn-note-close" onclick="this.closest(\'.note-expand-row\').remove()">✕ Fermer</button>' +
+        '</div>' +
+      '</div>' +
+    '</td>';
+  tr.insertAdjacentElement('afterend', expandRow);
+  const ta = expandRow.querySelector('textarea');
+  ta.addEventListener('blur', function() { saveNotesCRE(key, ta, btn); });
+  ta.focus();
+  // Place le curseur à la fin
+  ta.selectionStart = ta.selectionEnd = ta.value.length;
+}
+
+async function saveNotesCRE(key, textarea, noteBtn) {
+  const value = textarea.value.trim();
+  try {
+    await fetch('/api/sheet-candidates/update', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ pin: crePin, key: key, notesCRE: value })
+    });
+    // Met à jour le cache local
+    const c = sheetCandidates.find(function(x) {
+      const k = (x.email && x.email.indexOf('@') !== -1) ? x.email : (x.nom + '__' + (x.prenom||'').toLowerCase());
+      return k === key;
+    });
+    if (c) c.notesCRE = value;
+    // Met à jour le bouton de la ligne
+    if (noteBtn) {
+      noteBtn.classList.toggle('has-note', !!value);
+      noteBtn.textContent = value ? '📝' : '✏️';
+      noteBtn.title = value ? value.substring(0,80) : 'Ajouter une note';
+    }
+    if (value) showToast('✓ Note CRE enregistrée', 'success');
+  } catch(e) { showToast('❌ Erreur sauvegarde', 'error'); }
 }
 
 function openCandidateCompanies(btn, idx) {

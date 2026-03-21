@@ -1867,6 +1867,58 @@ body {
 .formation-ciblee-input:focus { border-color:#6366f1; box-shadow:0 0 0 2px rgba(99,102,241,0.15); }
 .btn-companies-count { background:#ede9fe; color:#5b21b6; border:none; border-radius:8px; padding:0.2rem 0.55rem; font-size:0.8rem; font-weight:700; cursor:pointer; white-space:nowrap; }
 .btn-companies-count:hover { background:#ddd6fe; }
+
+/* ── Note CRE inline ── */
+.th-note { width: 60px; text-align: center; }
+.td-note { width: 60px; text-align: center; padding: 0.2rem; }
+.btn-note-cre { background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 4px 6px; border-radius: 6px; transition: background 0.15s; line-height: 1; }
+.btn-note-cre:hover { background: #f1f5f9; }
+.btn-note-cre.has-note { filter: none; }
+.btn-note-cre:not(.has-note) { opacity: 0.45; }
+.btn-note-cre:not(.has-note):hover { opacity: 1; }
+
+.note-expand-row > td { padding: 0; }
+.note-expand-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.6rem 1.2rem;
+  background: #fffbeb;
+  border-top: 2px solid #fed7aa;
+  border-bottom: 1px solid #fde68a;
+}
+.note-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #92400e;
+  white-space: nowrap;
+  padding-top: 0.4rem;
+}
+.note-textarea {
+  flex: 1;
+  min-height: 72px;
+  max-height: 160px;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #fed7aa;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  resize: vertical;
+  background: #fff;
+  color: var(--text);
+  line-height: 1.45;
+}
+.note-textarea:focus { outline: none; border-color: #f97316; box-shadow: 0 0 0 2px rgba(249,115,22,0.15); }
+.note-expand-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+.note-hint { font-size: 0.64rem; color: #9ca3af; white-space: nowrap; }
+.btn-note-close { font-size: 0.72rem; padding: 4px 10px; border: 1px solid #e2e8f0; background: white; border-radius: 5px; cursor: pointer; color: var(--text-muted); white-space: nowrap; }
+.btn-note-close:hover { background: #f8fafc; border-color: #cbd5e1; }
 .no-company { color:#cbd5e1; font-size:0.78rem; }
 .companies-list-mini { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.4rem; max-height:300px; overflow-y:auto; }
 .company-item-mini { padding:0.45rem 0.7rem; background:#f8fafc; border-radius:7px; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; }
