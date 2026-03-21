@@ -322,14 +322,14 @@ body {
 }
 
 .filiere-section {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.2rem;
 }
 
 .filiere-section-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1.25rem 0.4rem;
+  padding: 0.5rem 1rem 0.4rem;
   position: sticky;
   top: 0;
   background: var(--bg);
@@ -358,35 +358,43 @@ body {
   font-weight: 500;
 }
 
+/* Grid wrapper inside each filiere section */
+.cards-grid-wrap {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.55rem;
+  padding: 0.25rem 1rem 0.5rem;
+}
+
+/* Compact tile card */
 .company-card {
   background: var(--white);
   cursor: pointer;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid var(--border);
-  transition: background 0.15s;
+  gap: 0.45rem;
+  padding: 0.85rem 0.5rem 0.7rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--card-color, #e2e8f0);
+  transition: box-shadow 0.15s, transform 0.12s;
   position: relative;
-  border-left: 3px solid transparent;
-}
-
-.company-card:first-of-type {
-  border-top: 1px solid var(--border);
+  text-align: center;
+  min-width: 0;
 }
 
 .company-card:hover {
-  background: #f8fafc;
-  border-left-color: var(--card-color, #e2e8f0);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.09);
+  transform: translateY(-2px);
 }
 
 .company-card.hidden { display: none !important; }
 
-/* Logo area - square 48px */
+/* Logo area */
 .card-logo-area {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
+  width: 54px;
+  height: 54px;
   border-radius: 10px;
   overflow: hidden;
   background: #f1f5f9;
@@ -394,6 +402,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .card-logo-area img {
@@ -416,21 +425,23 @@ body {
 
 /* Card info */
 .card-info {
-  flex: 1;
+  width: 100%;
   min-width: 0;
 }
 
 .card-name {
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
   color: var(--text);
-  white-space: nowrap;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .card-tagline {
-  font-size: 0.73rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
   margin-top: 2px;
   white-space: nowrap;
@@ -438,22 +449,19 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Right side elements */
-.card-arrow {
-  color: #cbd5e1;
-  font-size: 0.8rem;
-  flex-shrink: 0;
-}
+/* Arrow: hidden in tile mode */
+.card-arrow { display: none; }
 
+/* Student pill: compact badge below name */
 .card-student-pill {
-  font-size: 0.7rem;
+  font-size: 0.62rem;
   font-weight: 600;
-  padding: 3px 10px;
+  padding: 2px 8px;
   border-radius: 20px;
   background: #e2e8f0;
   color: var(--text-muted);
-  flex-shrink: 0;
   white-space: nowrap;
+  margin-top: 2px;
 }
 
 .card-student-pill.has-students {
@@ -2048,9 +2056,11 @@ body {
   .btn-home-label { font-size: 0.95rem; }
   .btn-home-sub   { font-size: 0.7rem; }
 
-  /* Grille entreprises — now a flex column list, no grid overrides */
-  .company-card { padding: 0.65rem 1rem; gap: 0.7rem; }
-  .card-logo-area { width: 42px; height: 42px; }
+  /* Grille entreprises — tuiles compactes */
+  .cards-grid-wrap { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.45rem; padding: 0.2rem 0.7rem 0.4rem; }
+  .company-card { padding: 0.7rem 0.4rem 0.6rem; }
+  .card-logo-area { width: 48px; height: 48px; }
+  .card-name { font-size: 0.72rem; }
 
   /* Filtres */
   .filter-bar { padding: 0.4rem 0.6rem; }
@@ -2125,7 +2135,8 @@ body {
   .btn-sr-icon { font-size: 1.5rem; }
   .btn-sr-label { font-size: 0.95rem; }
   .btn-sr-sub { font-size: 0.68rem; }
-  /* .companies-grid is now a flex column list — no grid overrides needed */
+  .cards-grid-wrap { grid-template-columns: repeat(2, 1fr); gap: 0.4rem; padding: 0.2rem 0.6rem 0.4rem; }
+  .card-name { font-size: 0.7rem; }
 }
 
 

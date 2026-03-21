@@ -402,6 +402,9 @@ function renderCompaniesGrid(list) {
     `;
     section.appendChild(header);
 
+    const cardsWrap = document.createElement('div');
+    cardsWrap.className = 'cards-grid-wrap';
+
     groupCompanies.forEach(company => {
       const cardColor = FILIERE_COLORS[company.filiere] || '#94a3b8';
       const initials = getInitials(company.nomAffichage || company.nom);
@@ -429,11 +432,11 @@ function renderCompaniesGrid(list) {
           <div class="card-name">${company.nomAffichage || company.nom}</div>
           ${tagline ? `<div class="card-tagline">${tagline}</div>` : ''}
         </div>
-        <div class="card-arrow"><i class="fa-solid fa-chevron-right"></i></div>
       `;
-      section.appendChild(card);
+      cardsWrap.appendChild(card);
     });
 
+    section.appendChild(cardsWrap);
     grid.appendChild(section);
   });
 }
@@ -984,6 +987,9 @@ function renderCREGrid(list) {
     `;
     section.appendChild(header);
 
+    const cardsWrap = document.createElement('div');
+    cardsWrap.className = 'cards-grid-wrap';
+
     groupCompanies.forEach(company => {
       const cardColor = FILIERE_COLORS[company.filiere] || '#94a3b8';
       const initials = getInitials(company.nomAffichage || company.nom);
@@ -1009,15 +1015,15 @@ function renderCREGrid(list) {
         </div>
         <div class="card-info">
           <div class="card-name">${company.nomAffichage || company.nom}</div>
-          ${company.cre ? `<div class="card-tagline">CRE: ${company.cre}</div>` : ''}
         </div>
         <div class="card-student-pill ${studentCount > 0 ? 'has-students' : ''}">
-          ${studentCount > 0 ? studentCount + ' positionné' + (studentCount > 1 ? 's' : '') : 'Aucun positionné'}
+          ${studentCount > 0 ? studentCount + ' ✓' : '0'}
         </div>
       `;
-      section.appendChild(card);
+      cardsWrap.appendChild(card);
     });
 
+    section.appendChild(cardsWrap);
     grid.appendChild(section);
   });
 }
@@ -1205,9 +1211,7 @@ function refreshCRECardCount(companyId) {
         (currentCRECompany && card.dataset.name.includes((currentCRECompany.nomAffichage || currentCRECompany.nom).toLowerCase()))) {
       const pill = card.querySelector('.card-student-pill');
       if (pill) {
-        pill.textContent = count > 0
-          ? `${count} positionné${count > 1 ? 's' : ''}`
-          : 'Aucun positionné';
+        pill.textContent = count > 0 ? `${count} ✓` : '0';
         pill.classList.toggle('has-students', count > 0);
       }
     }
@@ -1847,6 +1851,9 @@ function renderEntSelection(list) {
     `;
     section.appendChild(header);
 
+    const cardsWrap = document.createElement('div');
+    cardsWrap.className = 'cards-grid-wrap';
+
     groupCompanies.forEach(company => {
       const cardColor = FILIERE_COLORS[company.filiere] || '#94a3b8';
       const initials = getInitials(company.nomAffichage || company.nom);
@@ -1872,11 +1879,11 @@ function renderEntSelection(list) {
           <div class="card-name">${company.nomAffichage || company.nom}</div>
           ${company.secteur ? `<div class="card-tagline">${company.secteur}</div>` : ''}
         </div>
-        <div class="card-arrow"><i class="fa-solid fa-chevron-right"></i></div>
       `;
-      section.appendChild(card);
+      cardsWrap.appendChild(card);
     });
 
+    section.appendChild(cardsWrap);
     grid.appendChild(section);
   });
 }
