@@ -1155,6 +1155,16 @@ body {
 .cre-view-tab.active { background: var(--primary); color: #fff; }
 
 /* ===== PRÉSENCE TABLE ===== */
+
+/* Zone collante : titre + stats + filtres */
+.presence-sticky-zone {
+  position: sticky;
+  top: 107px; /* 56px app-header + ~51px cre-view-tabs */
+  z-index: 78;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
 .presence-header {
   padding: 1rem 1rem 0.5rem;
   display: flex; flex-direction: column; gap: 0.5rem;
@@ -1174,11 +1184,22 @@ body {
   border-bottom: 1px solid var(--border);
 }
 .pstat-taux { font-weight: 700; }
-.presence-table-wrap { padding: 0.5rem 1rem 2rem; overflow-x: auto; }
+
+/* Table scrollable verticalement → thead peut être sticky à top:0 dans ce conteneur */
+.presence-table-wrap {
+  padding: 0 1rem 2rem;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 255px);
+}
 .presence-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .presence-table th {
   background: var(--primary); color: #fff;
   padding: 0.6rem 0.8rem; text-align: left; font-weight: 600; font-size: 0.8rem;
+  /* Thead collant dans le conteneur scrollable */
+  position: sticky;
+  top: 0;
+  z-index: 4;
 }
 .presence-table td { padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
 .presence-table tr:hover td { background: #f0f4f8; }
@@ -2354,6 +2375,8 @@ body {
   .admin-table td:nth-child(5) { display: none; }
 
   /* Présence entreprises */
+  .presence-sticky-zone { top: 95px; }
+  .presence-table-wrap { max-height: calc(100vh - 220px); }
   .presence-table { font-size: 0.75rem; }
   .presence-filters { flex-direction: column; gap: 0.4rem; }
 

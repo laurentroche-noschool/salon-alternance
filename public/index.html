@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Salon Alternance — Will.School & NoSchool Bordeaux</title>
-  <link rel="stylesheet" href="/css/style.css?v=20260322i" />
+  <link rel="stylesheet" href="/css/style.css?v=20260322j" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -588,30 +588,33 @@
 
       <!-- Vue présence -->
       <div id="cre-presence-view" style="display:none">
-        <div class="presence-header">
-          <div class="presence-title-row">
-            <h3>✅ Présence des entreprises sur l'événement</h3>
-            <button class="btn-export-csv" onclick="exportPresence()">📥 Exporter Excel</button>
+        <!-- Zone sticky : titre + stats + filtres -->
+        <div class="presence-sticky-zone">
+          <div class="presence-header">
+            <div class="presence-title-row">
+              <h3>✅ Présence des entreprises sur l'événement</h3>
+              <button class="btn-export-csv" onclick="exportPresence()">📥 Exporter Excel</button>
+            </div>
+            <div class="presence-stats" id="presence-stats"></div>
           </div>
-          <div class="presence-stats" id="presence-stats"></div>
-        </div>
-        <!-- Filtres présence -->
-        <div class="presence-filters">
-          <input type="text" id="presence-search" class="admin-filter-input" placeholder="🔍 Rechercher une entreprise…" oninput="renderPresenceTab()" />
-          <select id="presence-filiere" class="admin-filter-select" onchange="renderPresenceTab()">
-            <option value="all">Toutes les filières</option>
-            <option value="COMMERCE">Commerce</option>
-            <option value="COMMERCE NS">Commerce NS</option>
-            <option value="COMMERCE WILL">Commerce Will</option>
-            <option value="IMMOBILIER">Immobilier</option>
-            <option value="BANQUE">Banque</option>
-            <option value="MARKETING">Marketing / Digital &amp; Social</option>
-            <option value="RH">RH</option>
-          </select>
-          <div class="admin-filter-btns">
-            <button class="admin-filter-btn active" id="pf-all"     onclick="setPresenceFilter('all',this)">Toutes</button>
-            <button class="admin-filter-btn"         id="pf-present" onclick="setPresenceFilter('present',this)">✅ Présentes</button>
-            <button class="admin-filter-btn"         id="pf-absent"  onclick="setPresenceFilter('absent',this)">❌ Absentes</button>
+          <!-- Filtres présence -->
+          <div class="presence-filters">
+            <input type="text" id="presence-search" class="admin-filter-input" placeholder="🔍 Rechercher une entreprise…" oninput="renderPresenceTab()" />
+            <select id="presence-filiere" class="admin-filter-select" onchange="renderPresenceTab()">
+              <option value="all">Toutes les filières</option>
+              <option value="COMMERCE">Commerce</option>
+              <option value="COMMERCE NS">Commerce NS</option>
+              <option value="COMMERCE WILL">Commerce Will</option>
+              <option value="IMMOBILIER">Immobilier</option>
+              <option value="BANQUE">Banque</option>
+              <option value="MARKETING">Marketing / Digital &amp; Social</option>
+              <option value="RH">RH</option>
+            </select>
+            <div class="admin-filter-btns">
+              <button class="admin-filter-btn active" id="pf-all"     onclick="setPresenceFilter('all',this)">Toutes</button>
+              <button class="admin-filter-btn"         id="pf-present" onclick="setPresenceFilter('present',this)">✅ Présentes</button>
+              <button class="admin-filter-btn"         id="pf-absent"  onclick="setPresenceFilter('absent',this)">❌ Absentes</button>
+            </div>
           </div>
         </div>
         <div id="presence-table-wrap" class="presence-table-wrap"></div>
@@ -957,6 +960,6 @@
   <!-- Toast notification -->
   <div id="toast" class="toast"></div>
 
-  <script src="/js/app.js?v=20260322i"></script>
+  <script src="/js/app.js?v=20260322j"></script>
 </body>
 </html>
