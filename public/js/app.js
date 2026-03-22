@@ -18,6 +18,7 @@ let currentEntCompany = null;
 let entStudents = [];
 let entRatings = {};
 let entPendingChanges = {};
+let entCREStudentNotes = {}; // notes CRE par étudiant (lecture seule côté entreprise)
 
 const FILIERE_COLORS = {
   'COMMERCE NS':              '#8b5cf6',
@@ -1114,7 +1115,6 @@ function renderCREGrid(list) {
       card.style.setProperty('--card-color', cardColor);
       card.onclick = () => openCREModal(company);
 
-      const hasNote = !!(companyNotes[company.id]);
       card.innerHTML = `
         <div class="card-logo-area">
           ${company.logoFile
@@ -1130,9 +1130,6 @@ function renderCREGrid(list) {
         </div>
         <div class="card-student-pill ${studentCount > 0 ? 'has-students' : ''}">
           ${studentCount > 0 ? studentCount + ' ✓' : '0'}
-        </div>
-        <div class="card-note-area">
-          <button class="btn-card-note ${hasNote ? 'has-note' : ''}" onclick="event.stopPropagation(); toggleCRECompanyNote(event, this, ${company.id})" title="${hasNote ? (companyNotes[company.id] || '').substring(0,80) : 'Ajouter une note CRE'}">${hasNote ? '📝' : '✏️'}</button>
         </div>
       `;
       cardsWrap.appendChild(card);
@@ -1166,54 +1163,7 @@ function updateCREStats() {
     `${totalStudents} étudiant${totalStudents > 1 ? 's' : ''} positionnés sur ${companiesWithStudents} entreprise${companiesWithStudents > 1 ? 's' : ''}`;
 }
 
-function toggleCRECompanyNote(event, btn, companyId) {
-  // Close any existing note modal
-  const existing = document.getElementById('cre-company-note-modal');
-  if (existing) {
-    if (existing.dataset.coid === String(companyId)) { existing.remove(); return; }
-    existing.remove();
-  }
-  const currentNote = companyNotes[companyId] || '';
-  const modal = document.createElement('div');
-  modal.id = 'cre-company-note-modal';
-  modal.className = 'cre-company-note-modal';
-  modal.dataset.coid = String(companyId);
-  modal.innerHTML =
-    '<div class="note-expand-inner">' +
-      '<div class="note-label">📝 Note CRE :</div>' +
-      '<textarea class="note-textarea" placeholder="Ajouter une note...">' + currentNote.replace(/</g, '&lt;') + '</textarea>' +
-      '<div class="note-expand-actions">' +
-        '<span class="note-hint">💾 Sauvegarde auto à la sortie du champ</span>' +
-        '<button class="btn-note-close" onclick="document.getElementById(\'cre-company-note-modal\').remove()">✕ Fermer</button>' +
-      '</div>' +
-    '</div>';
-  document.body.appendChild(modal);
-  // Position floating panel near button
-  const btnRect = btn.getBoundingClientRect();
-  const modalW = 340;
-  let left = btnRect.left;
-  if (left + modalW > window.innerWidth - 12) left = window.innerWidth - modalW - 12;
-  if (left < 8) left = 8;
-  modal.style.left = left + 'px';
-  const topBelow = btnRect.bottom + 8;
-  const topAbove = btnRect.top - 8 - 180; // approx height
-  modal.style.top = (topBelow + 180 > window.innerHeight ? topAbove : topBelow) + 'px';
-  const ta = modal.querySelector('textarea');
-  ta.addEventListener('blur', function() { savePresenceNote(companyId, ta, btn); });
-  // Close on outside click
-  setTimeout(function() {
-    document.addEventListener('click', function _outsideNote(e) {
-      const m = document.getElementById('cre-company-note-modal');
-      if (!m) { document.removeEventListener('click', _outsideNote); return; }
-      if (!m.contains(e.target) && !btn.contains(e.target)) {
-        m.remove();
-        document.removeEventListener('click', _outsideNote);
-      }
-    });
-  }, 0);
-  ta.focus();
-  ta.selectionStart = ta.selectionEnd = ta.value.length;
-}
+// (toggleCRECompanyNote supprimé — note déplacée dans la fiche étudiant du modal CRE)
 
 function exportCREPositionnements() {
   const a = document.createElement('a');
@@ -1268,8 +1218,14 @@ async function openCREModal(company) {
 
 async function refreshStudentsList(companyId) {
   try {
-    const res = await fetch(`/api/companies/${companyId}/students`);
-    const students = await res.json();
+    const [sRes, nRes] = await Promise.all([
+      fetch(`/api/companies/${companyId}/students`),
+      fetch(`/api/cre/student-notes?pin=${encodeURIComponent(crePin)}&companyId=${companyId}`)
+    ]);
+    const students = await sRes.json();
+    const notes = nRes.ok ? await nRes.json() : {};
+    // Merge notes into global state
+    Object.assign(creStudentNotes, notes);
     registrations[companyId] = students;
     renderStudentsList(students);
     document.getElementById('student-count-badge').textContent = students.length;
@@ -1286,16 +1242,40 @@ function renderStudentsList(students) {
     listEl.innerHTML = '<p class="no-students">Aucun étudiant positionné pour l\'instant</p>';
     return;
   }
-  listEl.innerHTML = students.map((s, i) => `
+  listEl.innerHTML = students.map((s, i) => {
+    const note = (creStudentNotes[s.id] || '').replace(/</g, '&lt;');
+    return `
     <div class="student-item">
-      <div class="student-num">${i + 1}</div>
-      <div class="student-info">
-        <div class="student-name">${s.prenom} ${s.nom}</div>
-        <div class="student-details">${s.formation}${s.cre ? ' · CRE: ' + s.cre : ''}</div>
+      <div class="student-item-header">
+        <div class="student-num">${i + 1}</div>
+        <div class="student-info">
+          <div class="student-name">${s.prenom} ${s.nom}</div>
+          <div class="student-details">${s.formation}${s.cre ? ' · CRE: ' + s.cre : ''}</div>
+        </div>
+        <button class="btn-delete-student" onclick="deleteStudent('${currentCRECompany.id}', '${s.id}')" title="Retirer">🗑</button>
       </div>
-      <button class="btn-delete-student" onclick="deleteStudent('${currentCRECompany.id}', '${s.id}')" title="Retirer">🗑</button>
-    </div>
-  `).join('');
+      <div class="student-cre-note-area">
+        <div class="student-cre-note-label">📋 Commentaire CRE (briefing post-RDV)</div>
+        <textarea id="cre-snote-${s.id}" class="student-cre-note"
+                  placeholder="Notez le briefing post-entretien, infos importantes à retenir..."
+                  onblur="saveCREStudentNote('${s.id}')">${note}</textarea>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function saveCREStudentNote(studentId) {
+  const ta = document.getElementById('cre-snote-' + studentId);
+  if (!ta) return;
+  const note = ta.value;
+  try {
+    await fetch('/api/cre/student-notes/' + studentId, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: crePin, note })
+    });
+    creStudentNotes[studentId] = note;
+  } catch(e) { /* silent */ }
 }
 
 async function addStudent() {
@@ -2137,12 +2117,14 @@ function entBackToSelection() {
 // ===== ENTREPRISE : CHARGEMENT CANDIDATS =====
 async function loadEntStudents(companyId) {
   try {
-    const [sRes, rRes] = await Promise.all([
+    const [sRes, rRes, nRes] = await Promise.all([
       fetch(`/api/companies/${companyId}/students`),
-      fetch(`/api/companies/${companyId}/ratings?pin=${encodeURIComponent(entPin)}`)
+      fetch(`/api/companies/${companyId}/ratings?pin=${encodeURIComponent(entPin)}`),
+      fetch(`/api/companies/${companyId}/cre-student-notes`)
     ]);
     entStudents = await sRes.json();
     entRatings  = await rRes.json();
+    entCREStudentNotes = nRes.ok ? await nRes.json() : {};
     entPendingChanges = {};
     renderEntStudents();
   } catch(e) { console.error('Erreur chargement candidats entreprise:', e); }
@@ -2228,7 +2210,7 @@ function renderEntStudents() {
           </div>
         </div>
 
-        <!-- Commentaire -->
+        <!-- Commentaire entreprise -->
         <div class="ent-panel-section">
           <div class="ent-section-label">📝 Notes & impressions</div>
           <textarea id="ent-comment-${s.id}" class="ent-comment"
@@ -2238,6 +2220,13 @@ function renderEntStudents() {
         <div class="ent-panel-actions">
           <button class="btn-save-rating" onclick="saveRating('${s.id}')">💾 Enregistrer</button>
         </div>
+
+        <!-- Note CRE (lecture seule pour l'entreprise) -->
+        ${(entCREStudentNotes[s.id] || '').trim() ? `
+        <div class="ent-panel-section ent-cre-note-section">
+          <div class="ent-section-label">🔖 Commentaire CRE</div>
+          <div class="ent-cre-note-readonly">${(entCREStudentNotes[s.id] || '').replace(/\n/g, '<br>')}</div>
+        </div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -2443,6 +2432,7 @@ function exportCRECandidates() {
 // ===== CRE : ONGLET PRÉSENCE =====
 let presenceData = {};
 let companyNotes = {};
+let creStudentNotes = {}; // briefings CRE par étudiant, clé = studentId
 let currentCREView = 'positionnements';
 
 let _sheetAutoRefreshTimer = null;
