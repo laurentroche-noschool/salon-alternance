@@ -35,7 +35,7 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip; /* clip ne crée pas de scroll context → position:sticky fonctionne */
 }
 
 /* ===== SCREENS ===== */

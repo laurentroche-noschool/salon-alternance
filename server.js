@@ -31,9 +31,14 @@ function sbCheck(result, label) {
 }
 
 // ─── Companies ────────────────────────────────────────────────────────────────
+const FILIERE_ALIASES = {
+  'SOCIAL': 'MARKETING / COM / SOCIAL',
+  'SOLUTION DIGITALE': 'MARKETING / COM / SOCIAL',
+};
 async function getCompanies() {
   const result = await supabase.from('companies').select('*').order('id');
-  return sbCheck(result, 'getCompanies');
+  const rows = sbCheck(result, 'getCompanies');
+  return rows.map(c => ({ ...c, filiere: FILIERE_ALIASES[c.filiere] || c.filiere }));
 }
 
 // ─── Students ─────────────────────────────────────────────────────────────────

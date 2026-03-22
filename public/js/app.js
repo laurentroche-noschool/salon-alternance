@@ -47,6 +47,12 @@ const FILIERE_ORDER = [
   'RH / TOURISME'
 ];
 
+// Normalize old/alias filière values
+const FILIERE_NORMALIZE = {
+  'SOCIAL':            'MARKETING / COM / SOCIAL',
+  'SOLUTION DIGITALE': 'MARKETING / COM / SOCIAL',
+};
+
 function groupAndSort(list) {
   // Sort alphabetically by display name
   const sorted = [...list].sort((a, b) => {
@@ -55,10 +61,11 @@ function groupAndSort(list) {
     return nameA.localeCompare(nameB, 'fr');
   });
 
-  // Group by filière following FILIERE_ORDER
+  // Group by filière following FILIERE_ORDER (normalize aliases)
   const groups = {};
   sorted.forEach(company => {
-    const f = company.filiere || 'AUTRE';
+    const raw = company.filiere || 'AUTRE';
+    const f = FILIERE_NORMALIZE[raw] || raw;
     if (!groups[f]) groups[f] = [];
     groups[f].push(company);
   });
@@ -109,6 +116,7 @@ async function restoreSession() {
       enterCREMode();
       document.getElementById('cre-login').style.display = 'none';
       document.getElementById('cre-dashboard').style.display = 'block';
+      requestAnimationFrame(updateCRETabsTop);
       await loadRegistrations();
       renderCREGrid(companies);
       updateCREStats();
@@ -232,7 +240,18 @@ function enterEntrepriseMode() {
 function enterCREMode() {
   currentMode = 'cre';
   showScreen('screen-cre');
+  // Adjust sticky tabs to actual header height after rendering
+  requestAnimationFrame(updateCRETabsTop);
 }
+
+function updateCRETabsTop() {
+  const header = document.querySelector('#screen-cre .app-header');
+  const tabs   = document.querySelector('.cre-view-tabs');
+  if (header && tabs) {
+    tabs.style.top = header.getBoundingClientRect().height + 'px';
+  }
+}
+window.addEventListener('resize', updateCRETabsTop);
 
 // ===== MODE JE M'INSCRIS =====
 let srCurrentFiliere = 'all';
@@ -973,6 +992,7 @@ async function verifyCRE() {
     sessionStorage.setItem('ss_crePin', pin);
     document.getElementById('cre-login').style.display = 'none';
     document.getElementById('cre-dashboard').style.display = 'block';
+    requestAnimationFrame(updateCRETabsTop);
     await loadRegistrations();
     renderCREGrid(companies);
     updateCREStats();
