@@ -32,8 +32,13 @@ function sbCheck(result, label) {
 
 // ─── Companies ────────────────────────────────────────────────────────────────
 const FILIERE_ALIASES = {
-  'SOCIAL': 'MARKETING / COM / SOCIAL',
-  'SOLUTION DIGITALE': 'MARKETING / COM / SOCIAL',
+  'SOCIAL':                    'MARKETING / COM / SOCIAL',
+  'SOLUTION DIGITALE':         'MARKETING / COM / SOCIAL',
+  'Solution numérique':        'MARKETING / COM / SOCIAL',
+  'Solution digitale':         'MARKETING / COM / SOCIAL',
+  'SOLUTION NUMÉRIQUE':        'MARKETING / COM / SOCIAL',
+  'MARKETING / COMMUNICATION': 'MARKETING / COM / SOCIAL',
+  'LE COMMERCE SERA':          'COMMERCE WILL',
 };
 async function getCompanies() {
   const result = await supabase.from('companies').select('*').order('id');

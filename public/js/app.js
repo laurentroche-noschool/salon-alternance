@@ -49,8 +49,13 @@ const FILIERE_ORDER = [
 
 // Normalize old/alias filière values
 const FILIERE_NORMALIZE = {
-  'SOCIAL':            'MARKETING / COM / SOCIAL',
-  'SOLUTION DIGITALE': 'MARKETING / COM / SOCIAL',
+  'SOCIAL':                    'MARKETING / COM / SOCIAL',
+  'SOLUTION DIGITALE':         'MARKETING / COM / SOCIAL',
+  'Solution numérique':        'MARKETING / COM / SOCIAL',
+  'Solution digitale':         'MARKETING / COM / SOCIAL',
+  'SOLUTION NUMÉRIQUE':        'MARKETING / COM / SOCIAL',
+  'MARKETING / COMMUNICATION': 'MARKETING / COM / SOCIAL',
+  'LE COMMERCE SERA':          'COMMERCE WILL',
 };
 
 function groupAndSort(list) {
