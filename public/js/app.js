@@ -2225,19 +2225,22 @@ function renderEntStudents() {
         <div class="ent-panel-section">
           <div class="ent-section-label">📝 Notes & impressions</div>
           <textarea id="ent-comment-${s.id}" class="ent-comment"
-                    placeholder="Vos impressions, points forts, points à retravailler...">${r.comment || ''}</textarea>
+                    placeholder="Vos impressions, points forts, points à retravailler..."
+                    onblur="autoSaveRating('${s.id}')">${r.comment || ''}</textarea>
         </div>
 
         <div class="ent-panel-actions">
           <button class="btn-save-rating" onclick="saveRating('${s.id}')">💾 Enregistrer</button>
         </div>
 
-        <!-- Note CRE (lecture seule pour l'entreprise) -->
-        ${(entCREStudentNotes[s.id] || '').trim() ? `
+        <!-- Débriefe CRE (lecture seule pour l'entreprise, toujours visible) -->
         <div class="ent-panel-section ent-cre-note-section">
-          <div class="ent-section-label">🔖 Commentaire CRE</div>
-          <div class="ent-cre-note-readonly">${(entCREStudentNotes[s.id] || '').replace(/\n/g, '<br>')}</div>
-        </div>` : ''}
+          <div class="ent-section-label">🔖 Débriefe entretien (CRE X Entreprise)</div>
+          ${(entCREStudentNotes[s.id] || '').trim()
+            ? `<div class="ent-cre-note-readonly">${(entCREStudentNotes[s.id] || '').replace(/\n/g, '<br>')}</div>`
+            : `<div class="ent-cre-note-empty">Aucun débriefe CRE pour le moment.</div>`
+          }
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -2306,6 +2309,30 @@ async function saveRating(studentId) {
     showToast('Enregistré ✓', 'success');
   } catch(e) {
     showToast('Erreur lors de la sauvegarde', 'error');
+  }
+}
+
+async function autoSaveRating(studentId) {
+  const pending = { ...(entRatings[studentId] || {}), ...(entPendingChanges[studentId] || {}) };
+  const comment = (document.getElementById(`ent-comment-${studentId}`) || {}).value || '';
+  try {
+    const res = await fetch(`/api/companies/${currentEntCompany.id}/ratings/${studentId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: entPin, met: pending.met || false, rating: pending.rating || null, comment })
+    });
+    const saved = await res.json();
+    entRatings[studentId] = saved;
+    delete entPendingChanges[studentId];
+    updateStudentSummary(studentId, saved);
+    // Feedback visuel discret (pas de toast intrusif)
+    const ta = document.getElementById(`ent-comment-${studentId}`);
+    if (ta) {
+      ta.style.borderColor = '#4caf50';
+      setTimeout(() => { ta.style.borderColor = ''; }, 1200);
+    }
+  } catch(e) {
+    // Silencieux en cas d'erreur auto-save
   }
 }
 
