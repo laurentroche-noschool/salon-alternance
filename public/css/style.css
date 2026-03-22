@@ -1099,6 +1099,7 @@ body {
   border: none;
   cursor: pointer;
   color: #dc2626;
+  margin-left: auto;
   font-size: 1rem;
   padding: 0.2rem;
   border-radius: 4px;
