@@ -2259,7 +2259,7 @@ body {
 /* ═══════════════════════════════════════════════════════════
    JE M'INSCRIS — Screen
    ═══════════════════════════════════════════════════════════ */
-.sr-header { background: linear-gradient(135deg, #15803d, #166534) !important; }
+.sr-header { background: linear-gradient(135deg, #1C1C1E, #2d2d30) !important; }
 
 .sr-intro-banner {
   display: flex;
@@ -2280,8 +2280,8 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-  border: 2px solid #86efac;
+  background: linear-gradient(135deg, #1C1C1E, #2d2d30);
+  border: 2px solid #F5D033;
   border-radius: var(--radius);
   padding: 1rem 1.2rem;
   margin: 1rem 1rem 0;
@@ -2289,12 +2289,12 @@ body {
 }
 .sr-cta-left { display: flex; align-items: flex-start; gap: 0.8rem; flex: 1; min-width: 200px; }
 .sr-cta-icon { font-size: 2rem; flex-shrink: 0; }
-.sr-cta-text { font-size: 0.9rem; color: #166534; line-height: 1.4; }
-.sr-cta-text strong { display: block; font-size: 0.98rem; margin-bottom: 0.2rem; }
+.sr-cta-text { font-size: 0.9rem; color: #F5D033; line-height: 1.4; }
+.sr-cta-text strong { display: block; font-size: 0.98rem; margin-bottom: 0.2rem; color: #fff; }
 .btn-sr-cta {
   padding: 0.75rem 1.5rem;
-  background: #16a34a;
-  color: #fff;
+  background: #F5D033;
+  color: #1C1C1E;
   border: none;
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
@@ -2304,7 +2304,7 @@ body {
   transition: background 0.18s, transform 0.15s;
   flex-shrink: 0;
 }
-.btn-sr-cta:hover { background: #15803d; transform: translateY(-1px); }
+.btn-sr-cta:hover { background: #e8c000; transform: translateY(-1px); }
 
 /* ── En-tête liste consultative ── */
 .sr-directory-header {
