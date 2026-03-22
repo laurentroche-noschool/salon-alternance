@@ -1877,6 +1877,43 @@ body {
 .btn-note-cre:not(.has-note) { opacity: 0.45; }
 .btn-note-cre:not(.has-note):hover { opacity: 1; }
 
+/* ── Badge doublon ── */
+.btn-dup-alert {
+  background: none; border: none; cursor: pointer;
+  font-size: 1rem; padding: 2px 4px; border-radius: 5px;
+  transition: background 0.15s; line-height: 1;
+  animation: dup-pulse 2s ease-in-out infinite;
+}
+.btn-dup-alert:hover { background: #fef3c7; }
+@keyframes dup-pulse { 0%,100% { opacity:1; } 50% { opacity:0.55; } }
+.row-has-dup { background: #fffbeb !important; }
+.row-has-dup:hover { background: #fef3c7 !important; }
+
+/* ── Ligne expansion doublon ── */
+.dup-expand-row > td { padding: 0; }
+.td-dup-expand { padding: 0 !important; }
+.dup-expand-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.65rem 1.2rem;
+  background: #fff7ed;
+  border-top: 2px solid #f97316;
+  border-bottom: 1px solid #fed7aa;
+}
+.dup-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+.dup-info { flex: 1; font-size: 0.82rem; color: #92400e; line-height: 1.5; }
+.dup-info strong { color: #c2410c; }
+.dup-detail { color: #78350f; font-size: 0.78rem; }
+.dup-actions { display: flex; flex-direction: column; gap: 0.4rem; flex-shrink: 0; }
+.btn-dup-delete {
+  font-size: 0.75rem; padding: 5px 10px;
+  background: #dc2626; color: #fff; border: none;
+  border-radius: 6px; cursor: pointer; white-space: nowrap;
+  transition: background 0.15s;
+}
+.btn-dup-delete:hover { background: #b91c1c; }
+
 .note-expand-row > td { padding: 0; }
 .note-expand-inner {
   display: flex;

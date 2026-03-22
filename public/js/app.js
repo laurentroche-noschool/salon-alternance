@@ -2562,8 +2562,9 @@ function renderSheetCandidates() {
     return;
   }
 
-  // Stockage global des listes d'entreprises par index (évite les problèmes de JSON dans onclick)
+  // Stockage global des listes d'entreprises et doublons par index
   window._sheetCompaniesStore = [];
+  window._sheetDuplicatesStore = [];
 
   const rows = list.map(function(c, idx) {
     const key = (c.email && c.email.indexOf('@') !== -1) ? c.email : (c.nom + '__' + (c.prenom||'').toLowerCase());
@@ -2579,10 +2580,11 @@ function renderSheetCandidates() {
                      (c.situation||'').indexOf('Reconver') !== -1 ? '🔄 Reconversion' : (c.situation||'—');
     const srId = c.selfRegisteredId || '';
 
-    // Stocke les entreprises dans le tableau global, accessible par index
+    // Stocke les entreprises et doublons dans les tableaux globaux, accessibles par index
     window._sheetCompaniesStore[idx] = c.companies || [];
+    window._sheetDuplicatesStore[idx] = c.duplicateSR || null;
 
-    return '<tr class="sheet-row' + (c.checkedIn ? ' checked-in' : '') + (isSR ? ' row-sr' : '') + '">' +
+    return '<tr class="sheet-row' + (c.checkedIn ? ' checked-in' : '') + (isSR ? ' row-sr' : '') + (c.hasDuplicate ? ' row-has-dup' : '') + '">' +
       '<td class="td-checkin">' +
         '<button class="btn-checkin' + (c.checkedIn ? ' is-in' : '') + '" onclick="toggleCheckin(\'' + keySafe + '\',' + c.checkedIn + ')" title="' + (c.checkedIn ? 'Présent(e)' : 'Marquer présent(e)') + '">' +
           (c.checkedIn ? '✅' : '⬜') + '</button>' +
@@ -2590,6 +2592,7 @@ function renderSheetCandidates() {
       '</td>' +
       '<td class="td-name"><strong>' + c.nom + ' ' + (c.prenom||'') + '</strong>' +
         (c.notesCandidat ? ' <span class="candidate-note" title="' + (c.notesCandidat||'').replace(/"/g,'&quot;') + '">💬</span>' : '') +
+        (c.hasDuplicate ? ' <button class="btn-dup-alert" onclick="toggleDuplicateRow(this,' + idx + ')" title="Doublon potentiel — cliquer pour détails">⚠️</button>' : '') +
       '</td>' +
       '<td class="td-contact">' +
         (c.tel ? '<div>📱 ' + c.tel + '</div>' : '') +
@@ -2675,6 +2678,63 @@ async function saveFormationCiblee(key, value) {
     if (c) c.formationCiblee = value;
     if (value) showToast('✓ Formation ciblée enregistrée', 'success');
   } catch(e) {}
+}
+
+function toggleDuplicateRow(btn, idx) {
+  const existing = document.querySelector('.dup-expand-row');
+  if (existing) {
+    if (existing.dataset.idx === String(idx)) { existing.remove(); return; }
+    existing.remove();
+  }
+  const sr = window._sheetDuplicatesStore[idx];
+  if (!sr) return;
+  const tr = btn.closest('tr');
+  const cols = tr.querySelectorAll('td').length;
+  const expandRow = document.createElement('tr');
+  expandRow.className = 'dup-expand-row';
+  expandRow.dataset.idx = String(idx);
+  const dateStr = sr.createdAt ? new Date(sr.createdAt).toLocaleString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+  expandRow.innerHTML =
+    '<td colspan="' + cols + '" class="td-dup-expand">' +
+      '<div class="dup-expand-inner">' +
+        '<span class="dup-icon">⚠️</span>' +
+        '<div class="dup-info">' +
+          '<strong>Doublon potentiel</strong> — Cette personne s\'est également inscrite sur place le ' + dateStr + '<br>' +
+          '<span class="dup-detail">👤 ' + sr.nom + ' ' + sr.prenom +
+          (sr.email ? ' &nbsp;·&nbsp; ✉️ ' + sr.email : '') +
+          (sr.tel   ? ' &nbsp;·&nbsp; 📱 ' + sr.tel   : '') + '</span>' +
+        '</div>' +
+        '<div class="dup-actions">' +
+          '<button class="btn-dup-delete" onclick="deleteDuplicateSR(\'' + sr.id + '\',' + idx + ')">🗑️ Supprimer l\'inscription</button>' +
+          '<button class="btn-note-close" onclick="this.closest(\'.dup-expand-row\').remove()">✕ Fermer</button>' +
+        '</div>' +
+      '</div>' +
+    '</td>';
+  tr.insertAdjacentElement('afterend', expandRow);
+}
+
+async function deleteDuplicateSR(srId, idx) {
+  if (!confirm('Supprimer cette inscription sur place ? Cette action est irréversible.')) return;
+  try {
+    const res = await fetch('/api/cre/selfreg/' + srId + '/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: crePin })
+    });
+    const data = await res.json();
+    if (data.error) { showToast('❌ ' + data.error, 'error'); return; }
+    // Retire le marqueur doublon du candidat
+    const c = sheetCandidates.find(function(x, i) { return window._sheetDuplicatesStore[i] && window._sheetDuplicatesStore[i].id === srId; });
+    if (c) { c.hasDuplicate = false; c.duplicateSR = null; }
+    window._sheetDuplicatesStore[idx] = null;
+    // Ferme la ligne d'alerte et retire le badge
+    const dupRow = document.querySelector('.dup-expand-row');
+    if (dupRow) dupRow.remove();
+    const btn = document.querySelectorAll('.btn-dup-alert')[idx];
+    if (btn) { btn.closest('tr').classList.remove('row-has-dup'); btn.remove(); }
+    showToast('✅ Inscription sur place supprimée', 'success');
+    loadSheetCandidates(true);
+  } catch(e) { showToast('❌ Erreur: ' + e.message, 'error'); }
 }
 
 function toggleNoteRow(btn, key) {

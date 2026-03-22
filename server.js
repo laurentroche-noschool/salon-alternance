@@ -892,15 +892,50 @@ app.get('/api/sheet-candidates', async function(req, res) {
     async function respond(candidates, offline) {
       const selfRegs = await getSelfRegistrations();
       var validatedSR = selfRegs.filter(function(r) { return r.status === 'validated'; });
-      var emailSet = {};
-      candidates.forEach(function(x) { if (x.email) emailSet[x.email] = true; });
-      var extra = validatedSR.filter(function(r) { return !r.email || !emailSet[r.email]; }).map(function(r) {
+
+      // Index candidats par email et par nom+prénom pour détection doublon
+      var emailSet = {}, nameSet = {};
+      candidates.forEach(function(x) {
+        if (x.email) emailSet[(x.email||'').toLowerCase()] = true;
+        var nk = (x.nom||'').toLowerCase().trim() + '__' + (x.prenom||'').toLowerCase().trim();
+        nameSet[nk] = true;
+      });
+
+      // SRs dédupliquées par email → doublons potentiels
+      var dedupByEmail = {};
+      validatedSR.filter(function(r) { return r.email && emailSet[(r.email||'').toLowerCase()]; })
+        .forEach(function(r) { dedupByEmail[(r.email||'').toLowerCase()] = r; });
+
+      var extra = validatedSR.filter(function(r) { return !r.email || !emailSet[(r.email||'').toLowerCase()]; }).map(function(r) {
         return { nom: r.nom, prenom: r.prenom, email: r.email, tel: r.telephone,
           diplome: r.diplome, domaines: r.domainesInteret,
           situation: 'Inscription sur place', notesCandidat: '', inscritAt: r.created_at,
           selfRegistered: true, selfRegisteredId: r.id };
       });
+
+      // Parmi les extra (pas dédupliqués par email), chercher doublons par nom+prénom
+      var dedupByName = {};
+      extra.filter(function(r) {
+        var nk = (r.nom||'').toLowerCase().trim() + '__' + (r.prenom||'').toLowerCase().trim();
+        return nameSet[nk];
+      }).forEach(function(r) {
+        var nk = (r.nom||'').toLowerCase().trim() + '__' + (r.prenom||'').toLowerCase().trim();
+        dedupByName[nk] = r;
+      });
+
       var merged = await mergeCandidatesWithLocal(candidates.concat(extra));
+
+      // Marquer les candidats qui ont un doublon SR
+      merged.forEach(function(c) {
+        var eKey = (c.email||'').toLowerCase();
+        var nKey = (c.nom||'').toLowerCase().trim() + '__' + (c.prenom||'').toLowerCase().trim();
+        var sr = (eKey && dedupByEmail[eKey]) || dedupByName[nKey];
+        if (sr) {
+          c.hasDuplicate = true;
+          c.duplicateSR = { id: sr.id, nom: sr.nom, prenom: sr.prenom, email: sr.email||'', tel: sr.telephone||'', createdAt: sr.created_at };
+        }
+      });
+
       res.json({ candidates: merged, lastSync: sheetCache.lastSync, total: merged.length, offline: !!offline });
     }
 
@@ -1139,6 +1174,19 @@ app.post('/api/self-register/:id/reject', async function(req, res) {
       .update({ status: 'rejected', rejected_at: now })
       .eq('id', req.params.id);
     sbCheck(upd, 'reject self-registration');
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/cre/selfreg/:id/delete  (CRE — suppression doublon)
+app.post('/api/cre/selfreg/:id/delete', async function(req, res) {
+  try {
+    var pin = req.body.pin;
+    if (pin !== CRE_PIN) return res.status(401).json({ error: 'PIN incorrect' });
+    const del = await supabase.from('self_registrations').delete().eq('id', req.params.id);
+    sbCheck(del, 'delete self-registration doublon');
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
