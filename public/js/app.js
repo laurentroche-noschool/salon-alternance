@@ -1,3 +1,14 @@
+// ===== UTILITAIRE : AFFICHER/MASQUER PIN =====
+function togglePinVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁';
+  btn.classList.toggle('active', show);
+  input.focus();
+}
+
 // ===== STATE =====
 let companies = [];
 let currentMode = null;

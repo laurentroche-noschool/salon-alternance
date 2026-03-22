@@ -870,6 +870,31 @@ body {
 .cre-login-box h3 { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
 .cre-login-box p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; }
 
+.pin-input-wrap {
+  position: relative;
+  width: 100%;
+}
+.pin-input-wrap .pin-input {
+  padding-right: 2.8rem;
+}
+.btn-pin-eye {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.2rem 0.3rem;
+  opacity: 0.45;
+  transition: opacity 0.15s;
+  user-select: none;
+}
+.btn-pin-eye:hover { opacity: 1; }
+.btn-pin-eye.active { opacity: 1; }
+
 .pin-input {
   width: 100%;
   padding: 0.8rem 1rem;

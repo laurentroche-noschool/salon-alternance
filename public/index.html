@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Salon Alternance — Will.School & NoSchool Bordeaux</title>
-  <link rel="stylesheet" href="/css/style.css?v=20260322f" />
+  <link rel="stylesheet" href="/css/style.css?v=20260322g" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -283,8 +283,11 @@
         <div class="admin-login-icon">⚙️</div>
         <h3>Accès Administrateur</h3>
         <p>Synthèse complète du Salon Alternance</p>
-        <input type="password" id="admin-pin-input" placeholder="Code administrateur" class="pin-input"
-               onkeydown="if(event.key==='Enter') verifyAdmin()" />
+        <div class="pin-input-wrap">
+          <input type="password" id="admin-pin-input" placeholder="Code administrateur" class="pin-input"
+                 onkeydown="if(event.key==='Enter') verifyAdmin()" />
+          <button class="btn-pin-eye" type="button" onclick="togglePinVisibility('admin-pin-input', this)" title="Afficher / masquer">👁</button>
+        </div>
         <button class="btn-primary btn-admin-connect" onclick="verifyAdmin()">Connexion</button>
         <p id="admin-login-error" class="error-msg" style="display:none">Code incorrect.</p>
       </div>
@@ -474,8 +477,11 @@
         <div class="ent-login-icon">🏢</div>
         <h3>Accès Entreprise</h3>
         <p>Saisissez votre code d'accès pour consulter et évaluer vos candidats</p>
-        <input type="password" id="ent-pin-input" placeholder="Code d'accès" class="pin-input"
-               onkeydown="if(event.key==='Enter') verifyEntreprise()" />
+        <div class="pin-input-wrap">
+          <input type="password" id="ent-pin-input" placeholder="Code d'accès" class="pin-input"
+                 onkeydown="if(event.key==='Enter') verifyEntreprise()" />
+          <button class="btn-pin-eye" type="button" onclick="togglePinVisibility('ent-pin-input', this)" title="Afficher / masquer">👁</button>
+        </div>
         <button class="btn-primary btn-ent-connect" onclick="verifyEntreprise()">Connexion</button>
         <p id="ent-login-error" class="error-msg" style="display:none">Code incorrect. Réessayez.</p>
       </div>
@@ -562,7 +568,10 @@
         <div class="cre-login-icon">🔐</div>
         <h3>Accès CRE</h3>
         <p>Saisissez votre PIN pour accéder à la gestion des positionnements</p>
-        <input type="password" id="cre-pin-input" placeholder="PIN CRE" class="pin-input" onkeydown="if(event.key==='Enter') verifyCRE()" />
+        <div class="pin-input-wrap">
+          <input type="password" id="cre-pin-input" placeholder="PIN CRE" class="pin-input" onkeydown="if(event.key==='Enter') verifyCRE()" />
+          <button class="btn-pin-eye" type="button" onclick="togglePinVisibility('cre-pin-input', this)" title="Afficher / masquer">👁</button>
+        </div>
         <button class="btn-primary" onclick="verifyCRE()">Connexion</button>
         <p id="cre-login-error" class="error-msg" style="display:none">PIN incorrect. Réessayez.</p>
       </div>
@@ -745,8 +754,11 @@
       <div class="student-pin-icon">🎓</div>
       <h3>Espace Candidat(e)</h3>
       <p>Saisissez le code d'accès pour découvrir les entreprises</p>
-      <input type="password" id="student-pin-input" class="pin-input" placeholder="Code d'accès"
-             onkeydown="if(event.key==='Enter') verifyStudentPin()" />
+      <div class="pin-input-wrap">
+        <input type="password" id="student-pin-input" class="pin-input" placeholder="Code d'accès"
+               onkeydown="if(event.key==='Enter') verifyStudentPin()" />
+        <button class="btn-pin-eye" type="button" onclick="togglePinVisibility('student-pin-input', this)" title="Afficher / masquer">👁</button>
+      </div>
       <button class="btn-primary btn-student-connect" onclick="verifyStudentPin()">Accéder</button>
       <p id="student-pin-error" class="error-msg" style="display:none">Code incorrect. Réessayez.</p>
     </div>
@@ -945,6 +957,6 @@
   <!-- Toast notification -->
   <div id="toast" class="toast"></div>
 
-  <script src="/js/app.js?v=20260322f"></script>
+  <script src="/js/app.js?v=20260322g"></script>
 </body>
 </html>
