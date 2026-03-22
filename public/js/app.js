@@ -2312,16 +2312,18 @@ async function autoSaveCRENote(studentId) {
   if (!ta) return;
   const note = ta.value;
   try {
-    await fetch(`/api/companies/${currentEntCompany.id}/cre-student-notes/${studentId}`, {
+    const res = await fetch(`/api/companies/${currentEntCompany.id}/cre-student-notes/${studentId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pin: entPin, note })
     });
+    if (!res.ok) throw new Error('Erreur serveur ' + res.status);
     entCREStudentNotes[studentId] = note;
     ta.style.borderColor = '#4caf50';
     setTimeout(() => { ta.style.borderColor = ''; }, 1200);
   } catch(e) {
-    // Silencieux
+    ta.style.borderColor = '#ef4444';
+    setTimeout(() => { ta.style.borderColor = ''; }, 2000);
   }
 }
 

@@ -787,18 +787,17 @@ app.get('/api/cre/student-notes', async (req, res) => {
     const local = await getSheetLocal();
     const notes = {};
     if (companyId) {
-      // Return notes only for students of this company
       const result = await supabase.from('students').select('id').eq('company_id', parseInt(companyId));
       const students = sbCheck(result, 'getStudents');
       students.forEach(s => {
         const key = 'cre_briefe_' + s.id;
-        if (local[key]) notes[s.id] = local[key].note || '';
+        notes[s.id] = (local[key] && local[key].notesCRE) ? local[key].notesCRE : '';
       });
     } else {
       Object.keys(local).forEach(k => {
         if (k.startsWith('cre_briefe_')) {
           const sid = k.replace('cre_briefe_', '');
-          notes[sid] = (local[k] && local[k].note) || '';
+          notes[sid] = (local[k] && local[k].notesCRE) || '';
         }
       });
     }
@@ -811,12 +810,12 @@ app.post('/api/cre/student-notes/:studentId', async (req, res) => {
   try {
     const { pin, note } = req.body;
     if (pin !== CRE_PIN) return res.status(401).json({ error: 'Non autorisé' });
-    await setSheetLocalKey('cre_briefe_' + req.params.studentId, { note: (note || '').trim() });
+    await setSheetLocalKey('cre_briefe_' + req.params.studentId, { notesCRE: (note || '').trim() });
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// GET CRE student notes for a company (lecture seule, pas de PIN — pour vue entreprise)
+// GET CRE student notes for a company (pour vue entreprise)
 app.get('/api/companies/:id/cre-student-notes', async (req, res) => {
   try {
     const companyId = parseInt(req.params.id);
@@ -826,7 +825,7 @@ app.get('/api/companies/:id/cre-student-notes', async (req, res) => {
     const notes = {};
     students.forEach(s => {
       const key = 'cre_briefe_' + s.id;
-      notes[s.id] = (local[key] && local[key].note) ? local[key].note : '';
+      notes[s.id] = (local[key] && local[key].notesCRE) ? local[key].notesCRE : '';
     });
     res.json(notes);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -837,7 +836,7 @@ app.post('/api/companies/:id/cre-student-notes/:studentId', async (req, res) => 
   try {
     const { pin, note } = req.body;
     if (pin !== ENTERPRISE_PIN) return res.status(401).json({ error: 'Non autorisé' });
-    await setSheetLocalKey('cre_briefe_' + req.params.studentId, { note: (note || '').trim() });
+    await setSheetLocalKey('cre_briefe_' + req.params.studentId, { notesCRE: (note || '').trim() });
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
