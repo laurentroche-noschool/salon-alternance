@@ -800,6 +800,43 @@ app.get('/api/cre/presence/export', async (req, res) => {
   }
 });
 
+// GET export positionnements (CRE) — liste entreprises + nb positionnés + note CRE
+app.get('/api/cre/positionnements/export', async (req, res) => {
+  try {
+    const { pin } = req.query;
+    if (pin !== CRE_PIN) return res.status(401).json({ error: 'Non autorisé' });
+    const [companies, localMap, studentsRows] = await Promise.all([
+      getCompanies(),
+      getSheetLocal(),
+      supabase.from('students').select('company_id').then(r => r.data || [])
+    ]);
+    // Count students per company
+    const countByCompany = {};
+    for (const s of studentsRows) {
+      if (s.company_id) countByCompany[s.company_id] = (countByCompany[s.company_id] || 0) + 1;
+    }
+    const rows = [['Entreprise', 'Filière', 'Nb étudiants positionnés', 'Note CRE']];
+    [...companies]
+      .sort((a, b) => (a.nomAffichage || a.nom).localeCompare(b.nomAffichage || b.nom))
+      .forEach(c => {
+        const noteKey = 'co_note_' + c.id;
+        const note = (localMap[noteKey] && localMap[noteKey].notesCRE) || '';
+        rows.push([
+          c.nomAffichage || c.nom,
+          c.filiere || '',
+          countByCompany[c.id] || 0,
+          note
+        ]);
+      });
+    const date = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="positionnements_${date}.csv"`);
+    res.send(toCSV(rows));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Export candidates routes ─────────────────────────────────────────────────
 
 // GET export candidates — Entreprise

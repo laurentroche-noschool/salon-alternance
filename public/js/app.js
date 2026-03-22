@@ -1028,6 +1028,7 @@ function renderCREGrid(list) {
       card.style.setProperty('--card-color', cardColor);
       card.onclick = () => openCREModal(company);
 
+      const hasNote = !!(companyNotes[company.id]);
       card.innerHTML = `
         <div class="card-logo-area">
           ${company.logoFile
@@ -1043,6 +1044,9 @@ function renderCREGrid(list) {
         </div>
         <div class="card-student-pill ${studentCount > 0 ? 'has-students' : ''}">
           ${studentCount > 0 ? studentCount + ' ✓' : '0'}
+        </div>
+        <div class="card-note-area">
+          <button class="btn-card-note ${hasNote ? 'has-note' : ''}" onclick="event.stopPropagation(); toggleCRECompanyNote(event, this, ${company.id})" title="${hasNote ? (companyNotes[company.id] || '').substring(0,80) : 'Ajouter une note CRE'}">${hasNote ? '📝' : '✏️'}</button>
         </div>
       `;
       cardsWrap.appendChild(card);
@@ -1074,6 +1078,61 @@ function updateCREStats() {
   const companiesWithStudents = Object.values(registrations).filter(v => v.length > 0).length;
   document.getElementById('cre-stats-bar').textContent =
     `${totalStudents} étudiant${totalStudents > 1 ? 's' : ''} positionnés sur ${companiesWithStudents} entreprise${companiesWithStudents > 1 ? 's' : ''}`;
+}
+
+function toggleCRECompanyNote(event, btn, companyId) {
+  // Close any existing note modal
+  const existing = document.getElementById('cre-company-note-modal');
+  if (existing) {
+    if (existing.dataset.coid === String(companyId)) { existing.remove(); return; }
+    existing.remove();
+  }
+  const currentNote = companyNotes[companyId] || '';
+  const modal = document.createElement('div');
+  modal.id = 'cre-company-note-modal';
+  modal.className = 'cre-company-note-modal';
+  modal.dataset.coid = String(companyId);
+  modal.innerHTML =
+    '<div class="note-expand-inner">' +
+      '<div class="note-label">📝 Note CRE :</div>' +
+      '<textarea class="note-textarea" placeholder="Ajouter une note...">' + currentNote.replace(/</g, '&lt;') + '</textarea>' +
+      '<div class="note-expand-actions">' +
+        '<span class="note-hint">💾 Sauvegarde auto à la sortie du champ</span>' +
+        '<button class="btn-note-close" onclick="document.getElementById(\'cre-company-note-modal\').remove()">✕ Fermer</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  // Position floating panel near button
+  const btnRect = btn.getBoundingClientRect();
+  const modalW = 340;
+  let left = btnRect.left;
+  if (left + modalW > window.innerWidth - 12) left = window.innerWidth - modalW - 12;
+  if (left < 8) left = 8;
+  modal.style.left = left + 'px';
+  const topBelow = btnRect.bottom + 8;
+  const topAbove = btnRect.top - 8 - 180; // approx height
+  modal.style.top = (topBelow + 180 > window.innerHeight ? topAbove : topBelow) + 'px';
+  const ta = modal.querySelector('textarea');
+  ta.addEventListener('blur', function() { savePresenceNote(companyId, ta, btn); });
+  // Close on outside click
+  setTimeout(function() {
+    document.addEventListener('click', function _outsideNote(e) {
+      const m = document.getElementById('cre-company-note-modal');
+      if (!m) { document.removeEventListener('click', _outsideNote); return; }
+      if (!m.contains(e.target) && !btn.contains(e.target)) {
+        m.remove();
+        document.removeEventListener('click', _outsideNote);
+      }
+    });
+  }, 0);
+  ta.focus();
+  ta.selectionStart = ta.selectionEnd = ta.value.length;
+}
+
+function exportCREPositionnements() {
+  const a = document.createElement('a');
+  a.href = `/api/cre/positionnements/export?pin=${encodeURIComponent(crePin)}`;
+  a.click();
 }
 
 // ===== CRE MODAL =====
@@ -2520,11 +2579,13 @@ function updateSheetStats() {
   if (!statsEl) return;
   const present = sheetCandidates.filter(function(c) { return c.checkedIn; }).length;
   const positioned = sheetCandidates.filter(function(c) { return c.nbCompanies > 0; }).length;
+  const dupCount = sheetCandidates.filter(function(c) { return c.hasDuplicate; }).length;
   statsEl.innerHTML =
     '<span class="sheet-stat">✅ <strong>' + present + '</strong> présent(s)</span>' +
     '<span class="sheet-stat">⏳ <strong>' + (sheetCandidates.length - present) + '</strong> attendu(s)</span>' +
     '<span class="sheet-stat">🏢 <strong>' + positioned + '</strong> positionné(s)</span>' +
-    '<span class="sheet-stat">📋 <strong>' + sheetCandidates.length + '</strong> inscrits total</span>';
+    '<span class="sheet-stat">📋 <strong>' + sheetCandidates.length + '</strong> inscrits total</span>' +
+    (dupCount > 0 ? '<span class="sheet-stat sheet-stat-dup">⚠️ <strong>' + dupCount + '</strong> doublon(s) à vérifier</span>' : '');
 }
 
 function renderSheetCandidates() {
