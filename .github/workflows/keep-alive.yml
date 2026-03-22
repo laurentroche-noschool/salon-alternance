@@ -1,0 +1,21 @@
+name: Keep Alive – Ping Render
+
+on:
+  schedule:
+    # Toutes les 10 minutes, 24h/24, 7j/7
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # possibilité de lancer manuellement
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping salon-alternance
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 https://salon-alternance.onrender.com/health)
+          echo "Statut HTTP : $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "Avertissement : le serveur a répondu $STATUS"
+          else
+            echo "Serveur actif ✓"
+          fi

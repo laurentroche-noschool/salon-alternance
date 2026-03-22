@@ -21,6 +21,9 @@ const supabase = createClient(
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// ─── Health check (keep-alive ping) ───────────────────────────────────────────
+app.get('/health', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
+
 // ─── Helper: throw on Supabase error ──────────────────────────────────────────
 function sbCheck(result, label) {
   if (result.error) throw new Error((label ? label + ': ' : '') + result.error.message);
