@@ -251,7 +251,45 @@ function updateCRETabsTop() {
     tabs.style.top = header.getBoundingClientRect().height + 'px';
   }
 }
-window.addEventListener('resize', updateCRETabsTop);
+window.addEventListener('resize', function() {
+  updateCRETabsTop();
+  fixCandidatsSticky();
+});
+
+// Fige le bandeau de l'onglet Candidats : candidats-header, filters et thead restent visibles
+function fixCandidatsSticky() {
+  if (currentCREView !== 'candidats') return;
+  const appHeader   = document.querySelector('#screen-cre .app-header');
+  const creTabs     = document.querySelector('.cre-view-tabs');
+  const candHeader  = document.querySelector('.candidats-header');
+  const candFilters = document.querySelector('.candidats-filters');
+  const srSection   = document.getElementById('sr-pending-section');
+  const tableWrap   = document.getElementById('sheet-candidates-table');
+  if (!appHeader || !creTabs || !candHeader || !candFilters || !tableWrap) return;
+
+  function elH(el) {
+    return (el && el.offsetParent !== null) ? el.getBoundingClientRect().height : 0;
+  }
+
+  const appH    = elH(appHeader);
+  const tabsH   = elH(creTabs);
+  const headTop = appH + tabsH;
+
+  // .candidats-header sticky just below CRE tabs
+  candHeader.style.top = headTop + 'px';
+
+  // .candidats-filters sticky below candidats-header
+  const candHeaderH = elH(candHeader);
+  candFilters.style.top = (headTop + candHeaderH) + 'px';
+
+  // Table container fills the remaining viewport (scroll inside the container)
+  const filtersH = elH(candFilters);
+  const srH      = elH(srSection);
+  const tableTop = headTop + candHeaderH + filtersH + srH;
+  const remaining = window.innerHeight - tableTop;
+  tableWrap.style.height    = Math.max(200, remaining) + 'px';
+  tableWrap.style.overflowY = 'auto';
+}
 
 // ===== MODE JE M'INSCRIS =====
 let srCurrentFiliere = 'all';
@@ -2393,6 +2431,7 @@ function switchCREView(view) {
   if (view === 'candidats') {
     if (!sheetCandidates.length) loadSheetCandidates();
     loadPendingSelfRegs(); // charge les inscriptions sur place en attente
+    requestAnimationFrame(fixCandidatsSticky);
     // Auto-refresh toutes les 5 minutes quand l'onglet est actif
     if (!_sheetAutoRefreshTimer) {
       _sheetAutoRefreshTimer = setInterval(function() {
@@ -2709,6 +2748,8 @@ function renderSheetCandidates() {
     '</tr></thead>' +
     '<tbody>' + rows.join('') + '</tbody>' +
   '</table>';
+  // Figer la tête de tableau après rendu
+  requestAnimationFrame(fixCandidatsSticky);
 }
 
 function setCheckinFilter(f, btn) {
