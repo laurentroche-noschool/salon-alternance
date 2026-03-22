@@ -558,6 +558,26 @@ body {
   font-style: italic;
   padding: 0.4rem 0.1rem;
 }
+.ent-cre-note-edit {
+  width: 100%;
+  min-height: 72px;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.83rem;
+  font-family: inherit;
+  color: #334155;
+  background: #f8faff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  resize: vertical;
+  line-height: 1.5;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+.ent-cre-note-edit:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
 
 /* Legacy — keep for backwards compat in case referenced elsewhere */
 .card-logo-wrap { display: none; }

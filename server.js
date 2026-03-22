@@ -826,9 +826,19 @@ app.get('/api/companies/:id/cre-student-notes', async (req, res) => {
     const notes = {};
     students.forEach(s => {
       const key = 'cre_briefe_' + s.id;
-      if (local[key] && local[key].note) notes[s.id] = local[key].note;
+      notes[s.id] = (local[key] && local[key].note) ? local[key].note : '';
     });
     res.json(notes);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST save CRE debriefe note from enterprise view (Enterprise PIN)
+app.post('/api/companies/:id/cre-student-notes/:studentId', async (req, res) => {
+  try {
+    const { pin, note } = req.body;
+    if (pin !== ENTERPRISE_PIN) return res.status(401).json({ error: 'Non autorisé' });
+    await setSheetLocalKey('cre_briefe_' + req.params.studentId, { note: (note || '').trim() });
+    res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

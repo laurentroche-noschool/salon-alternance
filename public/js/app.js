@@ -2229,17 +2229,12 @@ function renderEntStudents() {
                     onblur="autoSaveRating('${s.id}')">${r.comment || ''}</textarea>
         </div>
 
-        <div class="ent-panel-actions">
-          <button class="btn-save-rating" onclick="saveRating('${s.id}')">💾 Enregistrer</button>
-        </div>
-
-        <!-- Débriefe CRE (lecture seule pour l'entreprise, toujours visible) -->
+        <!-- Débriefe CRE (éditable, auto-save) -->
         <div class="ent-panel-section ent-cre-note-section">
           <div class="ent-section-label">🔖 Débriefe entretien (CRE X Entreprise)</div>
-          ${(entCREStudentNotes[s.id] || '').trim()
-            ? `<div class="ent-cre-note-readonly">${(entCREStudentNotes[s.id] || '').replace(/\n/g, '<br>')}</div>`
-            : `<div class="ent-cre-note-empty">Aucun débriefe CRE pour le moment.</div>`
-          }
+          <textarea id="ent-cre-note-${s.id}" class="ent-cre-note-edit"
+                    placeholder="Notes de débriefe post-entretien CRE..."
+                    onblur="autoSaveCRENote('${s.id}')">${entCREStudentNotes[s.id] || ''}</textarea>
         </div>
       </div>
     </div>`;
@@ -2309,6 +2304,24 @@ async function saveRating(studentId) {
     showToast('Enregistré ✓', 'success');
   } catch(e) {
     showToast('Erreur lors de la sauvegarde', 'error');
+  }
+}
+
+async function autoSaveCRENote(studentId) {
+  const ta = document.getElementById(`ent-cre-note-${studentId}`);
+  if (!ta) return;
+  const note = ta.value;
+  try {
+    await fetch(`/api/companies/${currentEntCompany.id}/cre-student-notes/${studentId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: entPin, note })
+    });
+    entCREStudentNotes[studentId] = note;
+    ta.style.borderColor = '#4caf50';
+    setTimeout(() => { ta.style.borderColor = ''; }, 1200);
+  } catch(e) {
+    // Silencieux
   }
 }
 
