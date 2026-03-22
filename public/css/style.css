@@ -2380,8 +2380,11 @@ body {
   border: 2px solid #F5D033;
   border-radius: var(--radius);
   padding: 1rem 1.2rem;
-  margin: 1rem 1rem 0;
+  margin: 0 1rem;           /* suppression margin-top → géré par sticky */
   flex-wrap: wrap;
+  position: sticky;
+  z-index: 80;
+  /* top mis dynamiquement par updateSRStickyTop() */
 }
 .sr-cta-left { display: flex; align-items: flex-start; gap: 0.8rem; flex: 1; min-width: 200px; }
 .sr-cta-icon { font-size: 2rem; flex-shrink: 0; }
@@ -2407,8 +2410,12 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.9rem 1rem 0.5rem;
+  padding: 0.75rem 1rem 0.5rem;
   flex-wrap: wrap;
+  background: var(--bg);
+  position: sticky;
+  z-index: 79;
+  /* top mis dynamiquement par updateSRStickyTop() */
 }
 .sr-directory-title { font-size: 1rem; font-weight: 700; color: var(--text); margin: 0; }
 .sr-search { flex: 1; min-width: 180px; max-width: 300px; padding: 0.45rem 0.8rem; font-size: 0.88rem; }

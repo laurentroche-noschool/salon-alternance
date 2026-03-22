@@ -91,7 +91,12 @@ function groupAndSort(list) {
 async function init() {
   try {
     const res = await fetch('/api/companies');
-    companies = await res.json();
+    const raw = await res.json();
+    // Normaliser les filières dès le chargement (défense côté client)
+    companies = raw.map(c => ({
+      ...c,
+      filiere: FILIERE_NORMALIZE[c.filiere] || c.filiere
+    }));
     updateFilterCounts();
     await restoreSession();
   } catch (e) {
@@ -254,7 +259,24 @@ function updateCRETabsTop() {
 window.addEventListener('resize', function() {
   updateCRETabsTop();
   fixCandidatsSticky();
+  updateSRStickyTop();
 });
+
+// Fige le bandeau CTA + en-tête liste dans l'écran "Je m'inscris"
+function updateSRStickyTop() {
+  const header   = document.querySelector('#screen-selfregister .app-header');
+  const ctaBar   = document.querySelector('.sr-cta-bar');
+  const dirHeader = document.querySelector('.sr-directory-header');
+  if (!header) return;
+  const headerH = header.getBoundingClientRect().height;
+  if (ctaBar) {
+    ctaBar.style.top = headerH + 'px';
+    const ctaH = ctaBar.getBoundingClientRect().height;
+    if (dirHeader) dirHeader.style.top = (headerH + ctaH) + 'px';
+  } else if (dirHeader) {
+    dirHeader.style.top = headerH + 'px';
+  }
+}
 
 // Fige le bandeau de l'onglet Candidats : candidats-header, filters et thead restent visibles
 function fixCandidatsSticky() {
@@ -300,6 +322,7 @@ function enterSelfRegisterMode() {
   showScreen('screen-selfregister');
   srRenderCompaniesGrid(companies);
   srUpdateFilterCounts();
+  requestAnimationFrame(updateSRStickyTop);
 }
 
 function srUpdateFilterCounts() {
