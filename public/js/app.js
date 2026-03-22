@@ -1255,14 +1255,12 @@ function renderStudentsList(students) {
   }
   listEl.innerHTML = students.map((s, i) => `
     <div class="student-item">
-      <div class="student-item-header">
-        <div class="student-num">${i + 1}</div>
-        <div class="student-info">
-          <div class="student-name">${s.prenom} ${s.nom}</div>
-          <div class="student-details">${s.formation}${s.cre ? ' · CRE: ' + s.cre : ''}</div>
-        </div>
-        <button class="btn-delete-student" onclick="deleteStudent('${currentCRECompany.id}', '${s.id}')" title="Retirer">🗑</button>
+      <div class="student-num">${i + 1}</div>
+      <div class="student-info">
+        <div class="student-name">${s.prenom} ${s.nom}</div>
+        <div class="student-details">${s.formation}${s.cre ? ' · CRE: ' + s.cre : ''}</div>
       </div>
+      <button class="btn-delete-student" onclick="deleteStudent('${currentCRECompany.id}', '${s.id}')" title="Retirer">🗑</button>
     </div>`).join('');
 }
 
