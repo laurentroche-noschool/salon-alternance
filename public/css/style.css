@@ -328,10 +328,14 @@ body {
 
 .search-hint-text {
   flex: 1;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  line-height: 1.35;
+  font-size: 0.95rem;
+  color: #1a1a1a;
+  line-height: 1.45;
   margin: 0;
+}
+.search-hint-text strong {
+  color: #e91e8c;
+  font-weight: 700;
 }
 
 .search-input:focus { outline: none; border-color: var(--primary); }
