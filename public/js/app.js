@@ -20,24 +20,22 @@ let entRatings = {};
 let entPendingChanges = {};
 
 const FILIERE_COLORS = {
-  'COMMERCE NS':            '#8b5cf6',
-  'COMMERCE WILL':          '#ec4899',
-  'IMMOBILIER':             '#10b981',
-  'BANQUE / ASSURANCE':     '#f59e0b',
+  'COMMERCE NS':              '#8b5cf6',
+  'COMMERCE WILL':            '#ec4899',
+  'IMMOBILIER':               '#10b981',
+  'BANQUE / ASSURANCE':       '#f59e0b',
   'MARKETING / COM / SOCIAL': '#f97316',
-  'RH / TOURISME':          '#06b6d4',
-  'SOCIAL':                 '#84cc16',
-  'AUTRE':                  '#94a3b8'
+  'RH / TOURISME':            '#06b6d4',
+  'AUTRE':                    '#94a3b8'
 };
 
 const FILIERE_LABELS = {
-  'COMMERCE NS':            'Commerce Noschool',
-  'COMMERCE WILL':          'Commerce Will.school',
-  'IMMOBILIER':             'Immobilier',
-  'BANQUE / ASSURANCE':     'Banque / Assurance',
-  'MARKETING / COM / SOCIAL': 'Marketing / Com / Social',
-  'RH / TOURISME':          'RH / Tourisme',
-  'SOCIAL':                 'Social'
+  'COMMERCE NS':              'Commerce Noschool',
+  'COMMERCE WILL':            'Commerce Will.school',
+  'IMMOBILIER':               'Immobilier',
+  'BANQUE / ASSURANCE':       'Banque / Assurance',
+  'MARKETING / COM / SOCIAL': 'Marketing / Com / Digital et Social',
+  'RH / TOURISME':            'RH / Tourisme'
 };
 
 const FILIERE_ORDER = [
@@ -46,8 +44,7 @@ const FILIERE_ORDER = [
   'IMMOBILIER',
   'BANQUE / ASSURANCE',
   'MARKETING / COM / SOCIAL',
-  'RH / TOURISME',
-  'SOCIAL'
+  'RH / TOURISME'
 ];
 
 function groupAndSort(list) {
