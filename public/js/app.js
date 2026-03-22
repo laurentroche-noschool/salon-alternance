@@ -1253,9 +1253,7 @@ function renderStudentsList(students) {
     listEl.innerHTML = '<p class="no-students">Aucun étudiant positionné pour l\'instant</p>';
     return;
   }
-  listEl.innerHTML = students.map((s, i) => {
-    const note = (creStudentNotes[s.id] || '').replace(/</g, '&lt;');
-    return `
+  listEl.innerHTML = students.map((s, i) => `
     <div class="student-item">
       <div class="student-item-header">
         <div class="student-num">${i + 1}</div>
@@ -1265,28 +1263,7 @@ function renderStudentsList(students) {
         </div>
         <button class="btn-delete-student" onclick="deleteStudent('${currentCRECompany.id}', '${s.id}')" title="Retirer">🗑</button>
       </div>
-      <div class="student-cre-note-area">
-        <div class="student-cre-note-label">📋 Commentaire CRE (briefing post-RDV)</div>
-        <textarea id="cre-snote-${s.id}" class="student-cre-note"
-                  placeholder="Notez le briefing post-entretien, infos importantes à retenir..."
-                  onblur="saveCREStudentNote('${s.id}')">${note}</textarea>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function saveCREStudentNote(studentId) {
-  const ta = document.getElementById('cre-snote-' + studentId);
-  if (!ta) return;
-  const note = ta.value;
-  try {
-    await fetch('/api/cre/student-notes/' + studentId, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin: crePin, note })
-    });
-    creStudentNotes[studentId] = note;
-  } catch(e) { /* silent */ }
+    </div>`).join('');
 }
 
 async function addStudent() {
