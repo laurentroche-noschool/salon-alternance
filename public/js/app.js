@@ -552,7 +552,6 @@ function renderCompaniesGrid(list) {
         </div>
         <div class="card-info">
           <div class="card-name">${company.nomAffichage || company.nom}</div>
-          ${tagline ? `<div class="card-tagline">${tagline}</div>` : ''}
         </div>
       `;
       cardsWrap.appendChild(card);
