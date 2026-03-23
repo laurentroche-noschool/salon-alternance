@@ -567,6 +567,20 @@ app.patch('/api/companies/:id/stand', async (req, res) => {
   }
 });
 
+// PATCH update company logo/website (Admin PIN)
+app.patch('/api/companies/:id/meta', async (req, res) => {
+  try {
+    const { pin, logoFile, website } = req.body;
+    if (pin !== ADMIN_PIN) return res.status(401).json({ error: 'PIN incorrect' });
+    const updates = {};
+    if (logoFile !== undefined) updates.logoFile = logoFile;
+    if (website !== undefined) updates.website = website;
+    const result = await supabase.from('companies').update(updates).eq('id', parseInt(req.params.id));
+    sbCheck(result, 'update company meta');
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // DELETE a company (special PIN)
 app.delete('/api/companies/:id', async (req, res) => {
   try {
