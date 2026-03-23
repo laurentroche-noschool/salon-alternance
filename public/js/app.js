@@ -715,10 +715,10 @@ const SOFT_SKILLS_DB = {
   ],
   'COMMERCE NS': [
     { emoji: '🤝', skill: 'Sens du client',
-      desc: 'NoSchool forme des profils orientés commerce de terrain, avec un fort sens de la relation. Montre que tu comprends le besoin AVANT de vendre — pose des questions, écoute, reformule. Le recruteur veut voir une posture conseil, pas une posture vendeur.',
+      desc: 'Noschool forme des profils orientés commerce de terrain, avec un fort sens de la relation. Montre que tu comprends le besoin AVANT de vendre — pose des questions, écoute, reformule. Le recruteur veut voir une posture conseil, pas une posture vendeur.',
       conseil: '💬 À dire : "Je ne propose jamais un produit sans avoir compris le projet réel du client — parfois ce qu\'il demande n\'est pas ce dont il a besoin."' },
     { emoji: '🎯', skill: 'Orientation résultats',
-      desc: 'Les enseignes NoSchool attendent des alternants qui suivent leurs indicateurs et ne se contentent pas du minimum. Connaître son taux de transformation, son panier moyen, ses horaires chargés — c\'est la marque d\'un vrai professionnel.',
+      desc: 'Les enseignes Noschool attendent des alternants qui suivent leurs indicateurs et ne se contentent pas du minimum. Connaître son taux de transformation, son panier moyen, ses horaires chargés — c\'est la marque d\'un vrai professionnel.',
       conseil: '💬 À dire : "Je notais chaque semaine mes ventes, mon panier moyen et le nombre de clients — ça m\'a permis d\'identifier mes meilleurs créneaux et d\'améliorer ma méthode."' },
     { emoji: '💬', skill: 'Aisance relationnelle',
       desc: 'Dans un environnement retail, tu interagis avec des dizaines de profils en une seule journée. Montre que tu sais passer d\'un client difficile à un sourire sincère pour le suivant — sans porter les émotions d\'une interaction à l\'autre.',
@@ -730,7 +730,7 @@ const SOFT_SKILLS_DB = {
       desc: 'L\'énergie que tu transmets influence directement l\'expérience client et la dynamique de l\'équipe. Le recruteur veut quelqu\'un qui "tire vers le haut" — pas un profil qui arrive en retrait. Sois présent physiquement et vocalement dès le premier instant.',
       conseil: '💬 À montrer : Initie le contact, sois le premier à tendre la main, pose des questions sur l\'entreprise — l\'enthousiasme se prouve par l\'initiative.' },
     { emoji: '🤜', skill: 'Esprit d\'équipe',
-      desc: 'Un bon alternant NoSchool sait s\'intégrer dans une équipe déjà en place, souvent plus senior. Montre que tu es prêt à apprendre, à rendre service et à ne pas attendre que les tâches te soient distribuées.',
+      desc: 'Un bon alternant Noschool sait s\'intégrer dans une équipe déjà en place, souvent plus senior. Montre que tu es prêt à apprendre, à rendre service et à ne pas attendre que les tâches te soient distribuées.',
       conseil: '💬 À dire : "J\'arrive toujours en avance pour préparer avec l\'équipe — et quand c\'est calme, je cherche ce que je peux améliorer ou ranger sans qu\'on me le demande."' },
     { emoji: '💪', skill: 'Résilience',
       desc: 'Le commerce en alternance peut être physiquement et mentalement exigeant. Montre que tu tiens dans la durée, que tu ne te plains pas et que tu cherches des solutions plutôt que des excuses.',
@@ -2737,7 +2737,7 @@ function renderSheetCandidates() {
                      (c.situation||'').indexOf('NOSCHOOL') !== -1 ? 'sit-ns' :
                      (c.situation||'').indexOf('autre') !== -1 ? 'sit-ext' : 'sit-reco';
     const sitLabel = isSR ? '✍️ Inscription sur place' :
-                     (c.situation||'').indexOf('NOSCHOOL') !== -1 ? '🎓 NoSchool' :
+                     (c.situation||'').indexOf('NOSCHOOL') !== -1 ? '🎓 Noschool' :
                      (c.situation||'').indexOf('autre') !== -1 ? '🏫 Autre école' :
                      (c.situation||'').indexOf('Reconver') !== -1 ? '🔄 Reconversion' : (c.situation||'—');
     const srId = c.selfRegisteredId || '';
