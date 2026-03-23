@@ -567,15 +567,16 @@ app.patch('/api/companies/:id/stand', async (req, res) => {
   }
 });
 
-// PATCH update company logo/website/filiere (Admin PIN)
+// PATCH update company fields (Admin PIN)
 app.patch('/api/companies/:id/meta', async (req, res) => {
   try {
-    const { pin, logoFile, website, filiere } = req.body;
+    const { pin, ...fields } = req.body;
     if (pin !== ADMIN_PIN) return res.status(401).json({ error: 'PIN incorrect' });
+    const allowed = ['logoFile','website','filiere','nomAffichage','secteur','tagline','description','histoire',
+                     'valeurs','missions','concurrents','chiffres_cles','recrutement','questions_rh','questions_op',
+                     'contact','cre','salle','etage'];
     const updates = {};
-    if (logoFile !== undefined) updates.logoFile = logoFile;
-    if (website !== undefined) updates.website = website;
-    if (filiere !== undefined) updates.filiere = filiere;
+    allowed.forEach(k => { if (fields[k] !== undefined) updates[k] = fields[k]; });
     const result = await supabase.from('companies').update(updates).eq('id', parseInt(req.params.id));
     sbCheck(result, 'update company meta');
     res.json({ success: true });
