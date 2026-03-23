@@ -1254,13 +1254,37 @@ function renderStudentsList(students) {
   }
   listEl.innerHTML = students.map((s, i) => `
     <div class="student-item">
-      <div class="student-num">${i + 1}</div>
-      <div class="student-info">
-        <div class="student-name">${s.prenom} ${s.nom}</div>
-        <div class="student-details">${s.formation}${s.cre ? ' · CRE: ' + s.cre : ''}</div>
+      <div class="student-item-top">
+        <div class="student-num">${i + 1}</div>
+        <div class="student-info">
+          <div class="student-name">${s.prenom} ${s.nom}</div>
+          <div class="student-details">${s.formation}${s.cre ? ' · CRE: ' + s.cre : ''}</div>
+        </div>
+        <button class="btn-delete-student" onclick="deleteStudent('${currentCRECompany.id}', '${s.id}')" title="Retirer">🗑</button>
       </div>
-      <button class="btn-delete-student" onclick="deleteStudent('${currentCRECompany.id}', '${s.id}')" title="Retirer">🗑</button>
+      <textarea id="cre-debrief-${s.id}" class="cre-debrief-area"
+                placeholder="🔖 Débriefe entretien CRE (confidentiel)..."
+                onblur="saveCREDebrief('${s.id}')">${creStudentNotes[s.id] || ''}</textarea>
     </div>`).join('');
+}
+
+async function saveCREDebrief(studentId) {
+  const ta = document.getElementById(`cre-debrief-${studentId}`);
+  if (!ta) return;
+  try {
+    const res = await fetch(`/api/cre/student-notes/${studentId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: crePin, note: ta.value })
+    });
+    if (!res.ok) throw new Error('Erreur ' + res.status);
+    creStudentNotes[studentId] = ta.value;
+    ta.style.borderColor = '#4caf50';
+    setTimeout(() => { ta.style.borderColor = ''; }, 1200);
+  } catch(e) {
+    ta.style.borderColor = '#ef4444';
+    setTimeout(() => { ta.style.borderColor = ''; }, 2000);
+  }
 }
 
 async function addStudent() {
@@ -2203,13 +2227,6 @@ function renderEntStudents() {
                     onblur="autoSaveRating('${s.id}')">${r.comment || ''}</textarea>
         </div>
 
-        <!-- Débriefe CRE (éditable, auto-save) -->
-        <div class="ent-panel-section ent-cre-note-section">
-          <div class="ent-section-label">🔖 Débriefe entretien (CRE X Entreprise)</div>
-          <textarea id="ent-cre-note-${s.id}" class="ent-cre-note-edit"
-                    placeholder="Notes de débriefe post-entretien CRE..."
-                    onblur="autoSaveCRENote('${s.id}')">${entCREStudentNotes[s.id] || ''}</textarea>
-        </div>
       </div>
     </div>`;
   }).join('');

@@ -1072,13 +1072,35 @@ body {
 .students-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 280px; overflow-y: auto; }
 .student-item {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.5rem;
   padding: 0.65rem 0.8rem;
   background: #f8fafc;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 }
+.student-item-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+.cre-debrief-area {
+  width: 100%;
+  min-height: 56px;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  color: var(--text);
+  background: #fff;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.cre-debrief-area:focus { outline: none; border-color: var(--primary); }
+.cre-debrief-area::placeholder { color: var(--text-muted); }
 .student-num {
   width: 24px;
   height: 24px;
