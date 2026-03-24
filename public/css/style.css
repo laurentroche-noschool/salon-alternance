@@ -2227,6 +2227,26 @@ body {
   flex-shrink: 0;
 }
 .cpop-name { font-weight: 500; }
+.cpop-loc { font-size: 0.74rem; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
+.cpop-item { flex-wrap: nowrap; gap: 0.4rem; }
+.cpop-mail-row {
+  padding: 0.55rem 0.75rem 0.45rem;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 0.15rem;
+}
+.cpop-mail-btn {
+  width: 100%;
+  background: #f0f7ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 7px;
+  color: #1d4ed8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cpop-mail-btn:hover { background: #dbeafe; }
 
 /* ===== BOUTON PLAN SALON ===== */
 .btn-plan-salon {

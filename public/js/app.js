@@ -2741,9 +2741,10 @@ function renderSheetCandidates() {
     return;
   }
 
-  // Stockage global des listes d'entreprises et doublons par index
+  // Stockage global des listes d'entreprises, doublons et infos candidat par index
   window._sheetCompaniesStore = [];
   window._sheetDuplicatesStore = [];
+  window._sheetCandidateInfoStore = [];
 
   const rows = list.map(function(c, idx) {
     const key = (c.email && c.email.indexOf('@') !== -1) ? c.email : (c.nom + '__' + (c.prenom||'').toLowerCase());
@@ -2759,9 +2760,10 @@ function renderSheetCandidates() {
                      (c.situation||'').indexOf('Reconver') !== -1 ? '🔄 Reconversion' : (c.situation||'—');
     const srId = c.selfRegisteredId || '';
 
-    // Stocke les entreprises et doublons dans les tableaux globaux, accessibles par index
+    // Stocke les entreprises, doublons et infos candidat dans les tableaux globaux, accessibles par index
     window._sheetCompaniesStore[idx] = c.companies || [];
     window._sheetDuplicatesStore[idx] = c.duplicateSR || null;
+    window._sheetCandidateInfoStore[idx] = { email: c.email||'', prenom: c.prenom||'', nom: c.nom||'' };
 
     return '<tr class="sheet-row' + (c.checkedIn ? ' checked-in' : '') + (isSR ? ' row-sr' : '') + (c.hasDuplicate ? ' row-has-dup' : '') + '">' +
       '<td class="td-checkin">' +
@@ -2983,31 +2985,72 @@ function openCandidateCompanies(btn, idx) {
   document.querySelectorAll('.companies-popover').forEach(function(p) { p.remove(); });
 
   var companies = (window._sheetCompaniesStore && window._sheetCompaniesStore[idx]) || [];
+  var candidat  = (window._sheetCandidateInfoStore && window._sheetCandidateInfoStore[idx]) || {};
 
   var popover = document.createElement('div');
   popover.className = 'companies-popover';
-  popover.innerHTML = companies.map(function(c) {
+
+  var listHtml = companies.map(function(c) {
+    var loc = '';
+    if (c.salle) loc += ' <span class="cpop-loc">📍 ' + c.salle + (c.etage ? ' · ' + c.etage : '') + '</span>';
     return '<div class="cpop-item"><span class="cpop-dot" style="background:' + (FILIERE_COLORS[c.filiere]||'#94a3b8') + '"></span>' +
-           '<span class="cpop-name">' + c.nom + '</span></div>';
+           '<span class="cpop-name">' + c.nom + '</span>' + loc + '</div>';
   }).join('');
+
+  var mailBtn = '';
+  if (candidat.email) {
+    mailBtn = '<div class="cpop-mail-row"><button class="cpop-mail-btn" onclick="sendCandidateReminderMail(' + idx + ')">📧 Envoyer un rappel</button></div>';
+  }
+
+  popover.innerHTML = listHtml + mailBtn;
 
   document.body.appendChild(popover);
 
   // Positionnement sous le bouton
   var rect = btn.getBoundingClientRect();
-  var popW = 220;
+  var popW = 240;
   var left = rect.left + window.scrollX;
   // Éviter de déborder à droite
   if (left + popW > window.innerWidth - 8) left = window.innerWidth - popW - 8;
   popover.style.left = left + 'px';
   popover.style.top  = (rect.bottom + window.scrollY + 6) + 'px';
 
-  // Fermeture au clic extérieur
+  // Fermeture au clic extérieur (sauf sur le bouton mail)
   setTimeout(function() {
     document.addEventListener('click', function close(e) {
       if (!popover.contains(e.target)) { popover.remove(); document.removeEventListener('click', close); }
     });
   }, 0);
+}
+
+function sendCandidateReminderMail(idx) {
+  var companies = (window._sheetCompaniesStore && window._sheetCompaniesStore[idx]) || [];
+  var candidat  = (window._sheetCandidateInfoStore && window._sheetCandidateInfoStore[idx]) || {};
+  if (!candidat.email) return;
+
+  var prenom = candidat.prenom || 'Bonjour';
+  var compList = companies.map(function(c, i) {
+    var line = (i + 1) + '. ' + c.nom;
+    if (c.filiere) line += ' (' + (FILIERE_LABELS[c.filiere] || c.filiere) + ')';
+    if (c.salle)   line += ' — ' + c.salle + (c.etage ? ', ' + c.etage : '');
+    return line;
+  }).join('\n');
+
+  var subject = 'Tes entreprises à rencontrer — Jobs Alternance';
+  var body =
+    'Bonjour ' + prenom + ',\n\n' +
+    'Voici la liste des entreprises sur lesquelles tu as été positionné(e) lors du Jobs Alternance :\n\n' +
+    compList + '\n\n' +
+    'N\'hésite pas à te présenter à chacun de leurs stands !\n\n' +
+    'À très bientôt,\nL\'équipe CRE';
+
+  var mailto = 'mailto:' + encodeURIComponent(candidat.email) +
+    '?subject=' + encodeURIComponent(subject) +
+    '&body=' + encodeURIComponent(body);
+
+  // Ferme le popover
+  document.querySelectorAll('.companies-popover').forEach(function(p) { p.remove(); });
+  window.location.href = mailto;
 }
 
 function exportSheetCandidates() {

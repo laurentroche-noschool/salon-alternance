@@ -473,7 +473,7 @@ app.get('/api/admin/students', async (req, res) => {
       if (!studentsMap[key]) studentsMap[key] = { nom: s.nom||'', prenom: s.prenom||'', formation: s.formation||'', email: s.email||'', companies: [] };
       if ((s.formation||'').length > (studentsMap[key].formation||'').length) studentsMap[key].formation = s.formation;
       const r = compRatings[s.id] || {};
-      studentsMap[key].companies.push({ id: s.company_id, nom: comp.nomAffichage||comp.nom, filiere: comp.filiere||'', spontaneous: !!s.spontaneous, met: r.met===true, rating: r.rating||null, comment: r.comment||'' });
+      studentsMap[key].companies.push({ id: s.company_id, nom: comp.nomAffichage||comp.nom, filiere: comp.filiere||'', salle: comp.salle||'', etage: comp.etage||'', cre: comp.cre||'', spontaneous: !!s.spontaneous, met: r.met===true, rating: r.rating||null, comment: r.comment||'' });
     }
 
     const result = Object.values(studentsMap).sort((a,b) => (a.nom||'').localeCompare(b.nom||''));
