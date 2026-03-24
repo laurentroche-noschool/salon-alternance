@@ -975,23 +975,26 @@ app.get('/api/cre/companies/:id/export-candidates', async (req, res) => {
     if (compResult.error || !compResult.data) return res.status(404).json({ error: 'Non trouvé' });
     const company = compResult.data;
 
-    const [students, ratingRows] = await Promise.all([
+    const [students, ratingRows, localMap] = await Promise.all([
       getStudentsForCompany(parseInt(req.params.id)),
-      getRatingsForCompany(parseInt(req.params.id))
+      getRatingsForCompany(parseInt(req.params.id)),
+      getSheetLocal()
     ]);
 
     const ratingsById = {};
     for (const r of ratingRows) ratingsById[r.student_id] = r;
 
-    const rows = [['Entreprise', 'Filière', 'Nom', 'Prénom', 'Formation', 'Type', 'CRE', 'Rencontré(e)', 'Décision entreprise', 'Commentaire', 'Date']];
+    const rows = [['Entreprise', 'Filière', 'Nom', 'Prénom', 'Formation', 'Type', 'CRE', 'Rencontré(e)', 'Décision entreprise', 'Commentaire entreprise', 'Débriefe CRE', 'Date']];
     students.forEach(s => {
       const r = ratingsById[s.id] || {};
+      const creNote = (localMap['cre_briefe_' + s.id] && localMap['cre_briefe_' + s.id].notesCRE) || '';
       rows.push([company.nomAffichage || company.nom, company.filiere || '',
         s.nom, s.prenom, s.formation,
         s.spontaneous ? 'Spontanée' : 'CRE', s.cre || '',
         r.met === true ? 'Oui' : r.met === false ? 'Non' : '',
         r.rating ? RATING_LABELS_CSV[r.rating] : '',
         r.comment || '',
+        creNote,
         new Date(s.created_at).toLocaleDateString('fr-FR')]);
     });
     const slug = (company.nomAffichage || company.nom).replace(/[^a-zA-Z0-9]/g, '_');
