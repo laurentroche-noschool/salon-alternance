@@ -573,7 +573,7 @@ app.patch('/api/companies/:id/meta', async (req, res) => {
   try {
     const { pin, ...fields } = req.body;
     if (pin !== ADMIN_PIN) return res.status(401).json({ error: 'PIN incorrect' });
-    const allowed = ['logoFile','website','filiere','nomAffichage','secteur','tagline','description','histoire',
+    const allowed = ['nom','logoFile','website','filiere','nomAffichage','secteur','tagline','description','histoire',
                      'valeurs','missions','concurrents','chiffres_cles','recrutement','questions_rh','questions_op',
                      'contact','cre','salle','etage'];
     const updates = {};

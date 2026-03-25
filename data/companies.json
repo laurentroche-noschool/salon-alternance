@@ -324,54 +324,56 @@
   },
   {
     "id": 7,
-    "nom": "DB2K",
-    "nomAffichage": "DB2K",
+    "nom": "Columbus Café & Co",
+    "nomAffichage": "Columbus Café & Co",
     "filiere": "COMMERCE NS",
     "cre": "Alexandra Sarikakis",
     "contact": "GUYAU AURELIE",
-    "website": "https://www.db2k.fr",
+    "website": "https://www.columbuscafe.com/",
     "domain": null,
-    "secteur": "Commerce et distribution spécialisée",
-    "tagline": "L'excellence au service de vos projets",
+    "secteur": "Restauration / Cafés & snacking",
+    "tagline": "Le café qui vous ressemble",
     "stand": {
       "salle": "",
       "etage": ""
     },
-    "description": "DB2K est une entreprise spécialisée dans le commerce et la distribution, implantée dans la région bordelaise. Elle offre à ses alternants un environnement professionnel stimulant où les compétences commerciales et relationnelles sont au coeur de chaque mission. L'entreprise valorise l'esprit d'initiative et l'autonomie de ses collaborateurs.",
-    "histoire": "DB2K a été créée avec la volonté de proposer des solutions commerciales adaptées aux besoins des entreprises et des particuliers de la région. Depuis sa fondation, la structure a su se développer en s'appuyant sur une équipe soudée et des partenariats solides. L'entreprise continue de se renforcer en accueillant des alternants qu'elle considère comme de véritables acteurs de son développement.",
+    "description": "Columbus Café & Co est une chaîne française de cafés spécialisée dans les boissons chaudes et le snacking de qualité. Avec plus de 250 points de vente en France, l'enseigne propose une expérience de restauration rapide centrée sur la convivialité et l'authenticité. Les alternants y développent des compétences solides en relation client, gestion de point de vente et commerce.",
+    "histoire": "Fondée en 1994, Columbus Café & Co s'est imposée comme une référence dans le secteur des coffee shops à la française. L'enseigne se distingue par son ancrage local et son modèle de franchise qui valorise l'entrepreneuriat. Avec son ours emblématique, Columbus Café incarne une approche chaleureuse et accessible de la restauration.",
     "valeurs": [
-      "Performance",
-      "Engagement",
+      "Convivialité",
+      "Qualité",
       "Esprit d'équipe",
-      "Intégrité",
-      "Innovation"
+      "Authenticité",
+      "Engagement"
     ],
     "missions": [
-      "Développer et fidéliser un portefeuille clients",
-      "Prospecter de nouveaux marchés et partenaires",
-      "Assurer le suivi des commandes et la satisfaction client",
-      "Contribuer aux actions commerciales et marketing de l'entreprise"
+      "Accueillir et conseiller les clients sur les produits",
+      "Préparer et servir boissons et snacking dans le respect des standards",
+      "Assurer la tenue et la propreté du point de vente",
+      "Contribuer au développement du chiffre d'affaires"
     ],
     "concurrents": [
-      "Entreprises locales du secteur commerce",
-      "Distributeurs régionaux",
-      "Acteurs e-commerce"
+      "Starbucks",
+      "Paul",
+      "Prêt à Manger",
+      "Café de Flore"
     ],
-    "chiffres_cles": "Équipe à taille humaine, forte croissance régionale, portefeuille clients diversifié",
-    "recrutement": "DB2K recherche des alternants en BTS NDRC ou MCO. Profils proactifs, autonomes, avec un goût prononcé pour le commerce et la relation client.",
+    "chiffres_cles": "Plus de 250 points de vente en France, réseau en franchise, présent depuis 1994",
+    "recrutement": "Columbus Café & Co recherche des alternants en BTS MCO ou MUM. Profils dynamiques, orientés service client, avec un goût pour la restauration et le contact humain.",
     "questions_rh": [
-      "Qu'est-ce qui vous a motivé à choisir une entreprise à taille humaine pour votre alternance ?",
-      "Comment vous organisez-vous pour atteindre vos objectifs commerciaux sur le long terme ?",
-      "Parlez-moi d'une fois où vous avez dû faire preuve d'initiative dans une situation difficile.",
-      "Comment gérez-vous le refus d'un prospect lors d'une démarche commerciale ?",
-      "Quelle est votre méthode pour établir une relation de confiance durable avec un client ?"
+      "Qu'est-ce qui vous attire dans l'univers de la restauration rapide et des cafés ?",
+      "Comment gérez-vous une situation stressante en période de forte affluence ?",
+      "Parlez-moi d'une expérience où vous avez contribué à satisfaire un client difficile.",
+      "Pourquoi choisir Columbus Café & Co plutôt qu'un autre réseau de restauration ?",
+      "Comment travaillez-vous en équipe pour atteindre des objectifs collectifs ?"
     ],
     "questions_op": [
-      "Quelles sont les étapes d'un cycle de vente complet, de la prospection à la fidélisation ?",
-      "Comment utiliseriez-vous un CRM pour optimiser le suivi de votre portefeuille clients ?",
-      "Quels arguments développeriez-vous pour convaincre un prospect réticent ?",
-      "Comment analysez-vous les résultats d'une action commerciale pour l'améliorer ?"
-    ]
+      "Quelles sont les règles d'hygiène et de sécurité alimentaire à respecter en restauration ?",
+      "Comment gérez-vous la rotation des stocks et la gestion des invendus ?",
+      "Quelles techniques utilisez-vous pour augmenter le ticket moyen d'un client ?",
+      "Comment assurez-vous la qualité constante des produits servis tout au long de la journée ?"
+    ],
+    "logoFile": "7_columbus.png"
   },
   {
     "id": 8,
