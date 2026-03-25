@@ -4,6 +4,7 @@ const path = require('path');
 const https = require('https');
 const http  = require('http');
 const { createClient } = require('@supabase/supabase-js');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -1364,6 +1365,67 @@ app.get('/api/self-register/export', async function(req, res) {
     res.setHeader('Content-Disposition', 'attachment; filename="inscriptions_sur_place_' + date + '.csv"');
     res.send(toCSV(rows));
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Envoi email candidat (CRE) ───────────────────────────────────────────────
+app.post('/api/cre/send-candidate-email', async (req, res) => {
+  try {
+    const { pin, to, prenom, companies } = req.body;
+    if (pin !== CRE_PIN) return res.status(401).json({ error: 'Non autorisé' });
+    if (!to || !to.includes('@')) return res.status(400).json({ error: 'Email invalide' });
+
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    if (!smtpUser || !smtpPass) return res.status(503).json({ error: 'Email non configuré sur le serveur (SMTP_USER / SMTP_PASS manquants)' });
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: false,
+      auth: { user: smtpUser, pass: smtpPass }
+    });
+
+    const compList = (companies || []).map((c, i) => {
+      let line = `${i + 1}. ${c.nom}`;
+      if (c.filiere) line += ` (${c.filiere})`;
+      if (c.salle)   line += ` — ${c.salle}${c.etage ? ', ' + c.etage : ''}`;
+      return line;
+    }).join('\n');
+
+    const htmlList = (companies || []).map((c, i) => {
+      let detail = '';
+      if (c.salle) detail += ` <span style="color:#64748b;font-size:13px">📍 ${c.salle}${c.etage ? ', ' + c.etage : ''}</span>`;
+      return `<li style="padding:6px 0;border-bottom:1px solid #f1f5f9">${c.nom}${detail}</li>`;
+    }).join('');
+
+    const fromName = process.env.SMTP_FROM_NAME || 'Jobs Alternance – CRE';
+    const mailOptions = {
+      from: `"${fromName}" <${smtpUser}>`,
+      to,
+      subject: 'Tes entreprises à rencontrer – Jobs Alternance',
+      text: `Bonjour ${prenom},\n\nVoici la liste des entreprises sur lesquelles tu as été positionné(e) lors du Jobs Alternance :\n\n${compList}\n\nN'hésite pas à te présenter à chacun de leurs stands !\n\nÀ très bientôt,\nL'équipe CRE`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#1e293b">
+          <div style="background:#6366f1;padding:24px 28px;border-radius:10px 10px 0 0">
+            <h2 style="color:#fff;margin:0;font-size:20px">Jobs Alternance</h2>
+            <p style="color:rgba(255,255,255,0.85);margin:4px 0 0;font-size:14px">Tes entreprises à rencontrer</p>
+          </div>
+          <div style="background:#fff;padding:28px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 10px 10px">
+            <p style="margin:0 0 16px">Bonjour <strong>${prenom}</strong>,</p>
+            <p style="margin:0 0 16px">Voici la liste des entreprises sur lesquelles tu as été positionné(e) :</p>
+            <ul style="list-style:none;padding:0;margin:0 0 20px">${htmlList}</ul>
+            <p style="margin:0 0 8px">N'hésite pas à te présenter à chacun de leurs stands !</p>
+            <p style="margin:0;color:#64748b;font-size:13px">À très bientôt — L'équipe CRE</p>
+          </div>
+        </div>`
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.json({ success: true, to });
+  } catch (err) {
+    console.error('Email error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

@@ -3023,34 +3023,48 @@ function openCandidateCompanies(btn, idx) {
   }, 0);
 }
 
-function sendCandidateReminderMail(idx) {
+async function sendCandidateReminderMail(idx) {
   var companies = (window._sheetCompaniesStore && window._sheetCompaniesStore[idx]) || [];
   var candidat  = (window._sheetCandidateInfoStore && window._sheetCandidateInfoStore[idx]) || {};
   if (!candidat.email) return;
 
-  var prenom = candidat.prenom || 'Bonjour';
-  var compList = companies.map(function(c, i) {
-    var line = (i + 1) + '. ' + c.nom;
-    if (c.filiere) line += ' (' + (FILIERE_LABELS[c.filiere] || c.filiere) + ')';
-    if (c.salle)   line += ' — ' + c.salle + (c.etage ? ', ' + c.etage : '');
-    return line;
-  }).join('\n');
-
-  var subject = 'Tes entreprises à rencontrer — Jobs Alternance';
-  var body =
-    'Bonjour ' + prenom + ',\n\n' +
-    'Voici la liste des entreprises sur lesquelles tu as été positionné(e) lors du Jobs Alternance :\n\n' +
-    compList + '\n\n' +
-    'N\'hésite pas à te présenter à chacun de leurs stands !\n\n' +
-    'À très bientôt,\nL\'équipe CRE';
-
-  var mailto = 'mailto:' + encodeURIComponent(candidat.email) +
-    '?subject=' + encodeURIComponent(subject) +
-    '&body=' + encodeURIComponent(body);
-
   // Ferme le popover
   document.querySelectorAll('.companies-popover').forEach(function(p) { p.remove(); });
-  window.location.href = mailto;
+
+  var btn = document.querySelector('.cpop-mail-btn');
+  var originalText = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = '⏳ Envoi…'; btn.disabled = true; }
+
+  try {
+    var res = await fetch('/api/cre/send-candidate-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pin: crePin,
+        to: candidat.email,
+        prenom: candidat.prenom || '',
+        companies: companies
+      })
+    });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+    showToast('✅ Email envoyé à ' + candidat.email, 'success');
+  } catch(e) {
+    // Fallback mailto: si le serveur n'est pas configuré
+    showToast('⚠️ ' + e.message + ' — ouverture de votre messagerie…', 'error');
+    var prenom = candidat.prenom || '';
+    var compList = companies.map(function(c, i) {
+      var line = (i + 1) + '. ' + c.nom;
+      if (c.filiere) line += ' (' + (FILIERE_LABELS[c.filiere] || c.filiere) + ')';
+      if (c.salle)   line += ' — ' + c.salle + (c.etage ? ', ' + c.etage : '');
+      return line;
+    }).join('\n');
+    var subject = 'Tes entreprises à rencontrer – Jobs Alternance';
+    var body = 'Bonjour ' + prenom + ',\n\nVoici la liste des entreprises sur lesquelles tu as été positionné(e) lors du Jobs Alternance :\n\n' + compList + '\n\nN\'hésite pas à te présenter à chacun de leurs stands !\n\nÀ très bientôt,\nL\'équipe CRE';
+    setTimeout(function() {
+      window.location.href = 'mailto:' + encodeURIComponent(candidat.email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    }, 1500);
+  }
 }
 
 function exportSheetCandidates() {
