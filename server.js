@@ -1400,6 +1400,31 @@ app.get('/api/offres-alternance-public', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET entretiens publics (sans PIN — pour les candidats)
+app.get('/api/entretiens-public', async (req, res) => {
+  try {
+    const [companies, students, allRatings] = await Promise.all([
+      getCompanies(),
+      getAllStudents(),
+      getAllRatings()
+    ]);
+    const compMap = {};
+    companies.forEach(c => { compMap[c.id] = c; });
+    const ratingsMap = buildRatingsMap(allRatings);
+    const studentsMap = {};
+    for (const s of students) {
+      const comp = compMap[s.company_id]; if (!comp) continue;
+      const compRatings = ratingsMap[String(s.company_id)] || {};
+      const key = `${(s.nom||'').toUpperCase()}__${(s.prenom||'').toLowerCase()}`;
+      if (!studentsMap[key]) studentsMap[key] = { nom: s.nom||'', prenom: s.prenom||'', companies: [] };
+      const r = compRatings[s.id] || {};
+      studentsMap[key].companies.push({ id: s.company_id, nom: comp.nomAffichage||comp.nom, filiere: comp.filiere||'' });
+    }
+    const result = Object.values(studentsMap).sort((a,b) => (a.nom||'').localeCompare(b.nom||''));
+    res.json(result);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // POST sauvegarder les postes d'une entreprise (CRE PIN)
 app.post('/api/offres-alternance/:id', async (req, res) => {
   try {

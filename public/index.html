@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Jobs Alternance — Will.School & Noschool Bordeaux</title>
-  <link rel="stylesheet" href="/css/style.css?v=20260325e" />
+  <link rel="stylesheet" href="/css/style.css?v=20260325f" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -117,6 +117,7 @@
     <div class="student-view-tabs">
       <button class="student-view-tab active" id="stab-entreprises" onclick="switchStudentView('entreprises')">🏢 Entreprises</button>
       <button class="student-view-tab" id="stab-offres" onclick="switchStudentView('offres')">💼 Offres Alternance</button>
+      <button class="student-view-tab" id="stab-entretiens" onclick="switchStudentView('entretiens')">🤝 Mes entretiens</button>
     </div>
 
     <!-- Vue Entreprises -->
@@ -155,6 +156,19 @@
       </div>
 
       <div id="companies-grid" class="companies-grid"></div>
+    </div>
+
+    <!-- Vue Mes entretiens (lecture seule) -->
+    <div id="student-entretiens-view" style="display:none">
+      <div class="offres-header">
+        <div class="offres-title-row">
+          <h3 class="offres-title">🤝 Candidats &amp; Entreprises</h3>
+          <input type="text" id="student-entretiens-search" class="offres-search" placeholder="🔍 Rechercher un candidat ou une entreprise…" oninput="filterStudentEntretiens(this.value)" />
+        </div>
+      </div>
+      <div id="student-entretiens-container" class="entretiens-table-wrap">
+        <div class="empty-state" style="padding:2rem;text-align:center">Chargement…</div>
+      </div>
     </div>
 
     <!-- Vue Offres Alternance (lecture seule) -->
@@ -980,6 +994,6 @@
   <!-- Toast notification -->
   <div id="toast" class="toast"></div>
 
-  <script src="/js/app.js?v=20260325e"></script>
+  <script src="/js/app.js?v=20260325f"></script>
 </body>
 </html>

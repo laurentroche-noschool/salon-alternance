@@ -3191,13 +3191,19 @@ async function savePosteAlternance(companyId) {
 
 // ===== OFFRES ALTERNANCE — VUE CANDIDAT (lecture seule) =====
 var _studentOffresData = [];
+var _studentEntretiensData = [];
 
 function switchStudentView(view) {
   document.getElementById('stab-entreprises').classList.toggle('active', view === 'entreprises');
   document.getElementById('stab-offres').classList.toggle('active', view === 'offres');
+  var stabEnt = document.getElementById('stab-entretiens');
+  if (stabEnt) stabEnt.classList.toggle('active', view === 'entretiens');
   document.getElementById('student-companies-view').style.display = view === 'entreprises' ? '' : 'none';
   document.getElementById('student-offres-view').style.display = view === 'offres' ? 'block' : 'none';
+  var entView = document.getElementById('student-entretiens-view');
+  if (entView) entView.style.display = view === 'entretiens' ? 'block' : 'none';
   if (view === 'offres') loadStudentOffres();
+  if (view === 'entretiens') loadStudentEntretiens();
 }
 
 async function loadStudentOffres() {
@@ -3266,6 +3272,83 @@ function filterStudentOffres(query) {
   document.querySelectorAll('#student-offres-container .offres-filiere-block').forEach(function(block) {
     var visible = Array.from(block.querySelectorAll('.offres-card')).some(function(c) { return c.style.display !== 'none'; });
     block.style.display = visible ? '' : 'none';
+  });
+}
+
+// ── Mes entretiens (vue candidat) ────────────────────────────────────────────
+
+async function loadStudentEntretiens() {
+  var container = document.getElementById('student-entretiens-container');
+  if (container) container.innerHTML = '<div class="empty-state" style="padding:2rem;text-align:center">⏳ Chargement…</div>';
+  try {
+    var res = await fetch('/api/entretiens-public');
+    _studentEntretiensData = await res.json();
+    renderStudentEntretiens(_studentEntretiensData);
+  } catch(e) {
+    if (container) container.innerHTML = '<div class="empty-state" style="padding:2rem;text-align:center;color:#ef4444">Erreur de chargement</div>';
+  }
+}
+
+function renderStudentEntretiens(data) {
+  var container = document.getElementById('student-entretiens-container');
+  if (!container) return;
+  if (!data || !data.length) {
+    container.innerHTML = '<div class="empty-state" style="padding:2rem;text-align:center;color:#64748b">Aucun candidat inscrit pour l\'instant.</div>';
+    return;
+  }
+  var rows = data.map(function(s) {
+    var nb = s.companies ? s.companies.length : 0;
+    var did = 'ent_' + (s.nom + '_' + s.prenom).replace(/[^a-z0-9]/gi, '_');
+    var compRows = (s.companies || []).map(function(c) {
+      return '<tr class="stu-comp-row">' +
+        '<td>' + (c.nom||'—') + '</td>' +
+        '<td><span class="filiere-tag" style="background:' + (FILIERE_COLORS[c.filiere]||'#94a3b8') + ';color:#fff;font-size:0.68rem;padding:1px 6px;border-radius:4px">' + (c.filiere||'') + '</span></td>' +
+        '</tr>';
+    }).join('');
+    return '<tr class="stu-main-row entretien-row" data-candidat="' + ((s.prenom||'') + ' ' + (s.nom||'')).toLowerCase() + '" data-companies="' + (s.companies||[]).map(function(c){return (c.nom||'').toLowerCase();}).join(' ') + '" onclick="toggleStudentEntretienDetail(\'' + did + '\')">' +
+      '<td class="td-company"><span class="stu-arrow" id="arr_' + did + '">▸</span> <strong>' + (s.prenom||'') + ' ' + (s.nom||'') + '</strong></td>' +
+      '<td class="td-num">' +
+        (nb ? '<span class="entretien-nb-badge" onclick="event.stopPropagation();toggleStudentEntretienDetail(\'' + did + '\')">' + nb + ' 🏢</span>' : '—') +
+      '</td>' +
+      '</tr>' +
+      '<tr id="' + did + '" style="display:none" class="entretien-detail-row">' +
+        '<td colspan="2" style="padding:0;background:#f8fafc">' +
+          '<table class="stu-inner-table"><thead><tr><th>Entreprise</th><th>Filière</th></tr></thead>' +
+          '<tbody>' + compRows + '</tbody></table>' +
+        '</td>' +
+      '</tr>';
+  }).join('');
+
+  container.innerHTML =
+    '<table class="admin-table entretiens-table"><thead><tr>' +
+    '<th>Candidat(e)</th>' +
+    '<th class="th-num">Entreprises</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function toggleStudentEntretienDetail(id) {
+  var row = document.getElementById(id); if (!row) return;
+  var open = row.style.display !== 'none';
+  row.style.display = open ? 'none' : 'table-row';
+  var arrow = document.getElementById('arr_' + id);
+  if (arrow) arrow.textContent = open ? '▸' : '▾';
+}
+
+function filterStudentEntretiens(query) {
+  var q = (query || '').toLowerCase().trim();
+  var rows = document.querySelectorAll('#student-entretiens-container .entretien-row');
+  rows.forEach(function(row) {
+    if (!q) { row.style.display = ''; return; }
+    var cand = row.dataset.candidat || '';
+    var comps = row.dataset.companies || '';
+    var match = cand.includes(q) || comps.includes(q);
+    row.style.display = match ? '' : 'none';
+    // hide detail row if parent hidden
+    var did = row.querySelector('.stu-arrow') ? row.querySelector('.stu-arrow').id.replace('arr_','') : null;
+    if (did) {
+      var detail = document.getElementById(did);
+      if (detail && !match) detail.style.display = 'none';
+    }
   });
 }
 
