@@ -594,7 +594,7 @@ function openStudentModal(company) {
     logoFallback.textContent = initials;
   }
 
-  document.getElementById('modal-company-name').textContent = company.nom;
+  document.getElementById('modal-company-name').textContent = company.nomAffichage || company.nom;
 
   const badge = document.getElementById('modal-filiere-badge');
   badge.textContent = company.filiere;
@@ -1203,7 +1203,7 @@ async function openCREModal(company) {
     logoFallback.textContent = initials;
   }
 
-  document.getElementById('cre-modal-company-name').textContent = company.nom;
+  document.getElementById('cre-modal-company-name').textContent = company.nomAffichage || company.nom;
   const badge = document.getElementById('cre-modal-filiere-badge');
   badge.textContent = company.filiere;
   badge.style.background = color;
