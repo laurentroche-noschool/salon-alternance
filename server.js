@@ -109,13 +109,20 @@ async function getSheetLocal() {
   const rows = sbCheck(result, 'getSheetLocal');
   const map = {};
   for (const r of rows) {
-    map[r.key] = {
-      checkedIn:       r.checked_in,
-      checkinAt:       r.checkin_at,
-      formationCiblee: r.formation_ciblee,
-      notesCRE:        r.notes_cre,
-      selfRegistered:  r.self_registered
-    };
+    // Pour les clés postes_company_*, notes_cre contient le JSON des postes
+    if (r.key && r.key.startsWith('postes_company_')) {
+      let postes = [];
+      try { postes = r.notes_cre ? JSON.parse(r.notes_cre) : []; } catch(e) { postes = []; }
+      map[r.key] = { postes };
+    } else {
+      map[r.key] = {
+        checkedIn:       r.checked_in,
+        checkinAt:       r.checkin_at,
+        formationCiblee: r.formation_ciblee,
+        notesCRE:        r.notes_cre,
+        selfRegistered:  r.self_registered
+      };
+    }
   }
   return map;
 }
@@ -128,6 +135,8 @@ async function setSheetLocalKey(key, fields) {
   if (fields.formationCiblee !== undefined) row.formation_ciblee = fields.formationCiblee;
   if (fields.notesCRE   !== undefined) row.notes_cre       = fields.notesCRE;
   if (fields.selfRegistered !== undefined) row.self_registered = fields.selfRegistered;
+  // Pour les postes : sérialiser en JSON dans notes_cre
+  if (fields.postes !== undefined) row.notes_cre = JSON.stringify(fields.postes);
   const result = await supabase.from('sheet_local').upsert(row, { onConflict: 'key' });
   sbCheck(result, 'setSheetLocalKey');
 }
