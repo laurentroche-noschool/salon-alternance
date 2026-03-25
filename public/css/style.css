@@ -2409,14 +2409,34 @@ body {
 }
 .plan-salon-content {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   border-radius: 10px;
   background: #f8fafc;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 300px;
+  flex-direction: column;
+  min-height: 400px;
 }
+.plan-salon-iframe {
+  flex: 1;
+  width: 100%;
+  min-height: 420px;
+  border: none;
+  border-radius: 10px 10px 0 0;
+}
+.plan-salon-dl {
+  padding: 0.6rem 1rem;
+  background: #f1f5f9;
+  border-radius: 0 0 10px 10px;
+  text-align: center;
+}
+.btn-plan-dl {
+  display: inline-block;
+  padding: 0.4rem 1.2rem;
+  background: var(--primary); color: #fff;
+  border-radius: 8px; text-decoration: none;
+  font-size: 0.85rem; font-weight: 600;
+}
+.btn-plan-dl:hover { opacity: 0.85; }
 /* Quand le plan est une image */
 .plan-salon-content img {
   max-width: 100%;
