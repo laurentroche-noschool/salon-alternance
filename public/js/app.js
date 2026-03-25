@@ -112,7 +112,8 @@ async function init() {
     // Normaliser les filières dès le chargement (défense côté client)
     companies = raw.map(c => ({
       ...c,
-      filiere: FILIERE_NORMALIZE[c.filiere] || c.filiere
+      filiere: FILIERE_NORMALIZE[c.filiere] || c.filiere,
+      stand: { salle: c.salle || '', etage: c.etage || '' }
     }));
     updateFilterCounts();
     await restoreSession();
@@ -1306,9 +1307,10 @@ async function addStudent() {
       });
       if (standRes.ok) {
         const updated = await standRes.json();
+        const newStand = { salle: updated.salle || '', etage: updated.etage || '' };
         const idx = companies.findIndex(c => c.id === currentCRECompany.id);
-        if (idx !== -1) companies[idx].stand = updated.stand;
-        currentCRECompany.stand = updated.stand;
+        if (idx !== -1) companies[idx].stand = newStand;
+        currentCRECompany.stand = newStand;
       }
     } catch (e) { /* silent fail */ }
   }
@@ -1389,10 +1391,11 @@ async function saveStand() {
       body: JSON.stringify({ pin: crePin, salle, etage })
     });
     const updated = await res.json();
+    const newStand = { salle: updated.salle || '', etage: updated.etage || '' };
     // Update local companies array
     const idx = companies.findIndex(c => c.id === currentCRECompany.id);
-    if (idx !== -1) companies[idx].stand = updated.stand;
-    currentCRECompany.stand = updated.stand;
+    if (idx !== -1) companies[idx].stand = newStand;
+    currentCRECompany.stand = newStand;
 
     const msg = document.getElementById('stand-save-msg');
     msg.style.display = 'block';
