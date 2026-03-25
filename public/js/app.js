@@ -2486,12 +2486,9 @@ function switchCREView(view) {
   document.getElementById('tab-positionnements').classList.toggle('active', view === 'positionnements');
   document.getElementById('tab-presence').classList.toggle('active', view === 'presence');
   document.getElementById('tab-candidats').classList.toggle('active', view === 'candidats');
-  document.getElementById('tab-offres').classList.toggle('active', view === 'offres');
   document.getElementById('cre-positionnements-view').style.display = view === 'positionnements' ? 'block' : 'none';
   document.getElementById('cre-presence-view').style.display = view === 'presence' ? 'block' : 'none';
   document.getElementById('cre-candidats-view').style.display = view === 'candidats' ? 'block' : 'none';
-  document.getElementById('cre-offres-view').style.display = view === 'offres' ? 'block' : 'none';
-  if (view === 'offres') loadOffresAlternance();
   if (view === 'presence') loadPresenceTab();
   if (view === 'candidats') {
     if (!sheetCandidates.length) loadSheetCandidates();
@@ -3190,6 +3187,86 @@ async function savePosteAlternance(companyId) {
   } catch(e) {
     showToast('❌ Erreur : ' + e.message, 'error');
   }
+}
+
+// ===== OFFRES ALTERNANCE — VUE CANDIDAT (lecture seule) =====
+var _studentOffresData = [];
+
+function switchStudentView(view) {
+  document.getElementById('stab-entreprises').classList.toggle('active', view === 'entreprises');
+  document.getElementById('stab-offres').classList.toggle('active', view === 'offres');
+  document.getElementById('student-companies-view').style.display = view === 'entreprises' ? '' : 'none';
+  document.getElementById('student-offres-view').style.display = view === 'offres' ? 'block' : 'none';
+  if (view === 'offres') loadStudentOffres();
+}
+
+async function loadStudentOffres() {
+  var container = document.getElementById('student-offres-container');
+  if (container) container.innerHTML = '<div class="empty-state" style="padding:2rem;text-align:center">⏳ Chargement…</div>';
+  try {
+    var res = await fetch('/api/offres-alternance-public');
+    _studentOffresData = await res.json();
+    renderStudentOffres(_studentOffresData);
+  } catch(e) {
+    if (container) container.innerHTML = '<div class="empty-state" style="padding:2rem;text-align:center;color:#ef4444">Erreur de chargement</div>';
+  }
+}
+
+function renderStudentOffres(data) {
+  var container = document.getElementById('student-offres-container');
+  if (!container) return;
+  if (!data || !data.length) {
+    container.innerHTML = '<div class="empty-state" style="padding:2rem;text-align:center">Aucune offre disponible pour le moment</div>';
+    return;
+  }
+  var groups = {};
+  data.forEach(function(c) {
+    if (!c.postes || !c.postes.length) return; // N'affiche que les entreprises avec des postes
+    var f = c.filiere || 'AUTRE';
+    if (!groups[f]) groups[f] = [];
+    groups[f].push(c);
+  });
+  if (!Object.keys(groups).length) {
+    container.innerHTML = '<div class="empty-state" style="padding:2rem;text-align:center">Aucune offre renseignée pour le moment</div>';
+    return;
+  }
+  var html = '';
+  Object.keys(groups).sort().forEach(function(filiere) {
+    var color = FILIERE_COLORS[filiere] || '#94a3b8';
+    var label = FILIERE_LABELS[filiere] || filiere;
+    html += '<div class="offres-filiere-block">';
+    html += '<div class="offres-filiere-header" style="border-left:4px solid ' + color + '">' + label + '</div>';
+    html += '<div class="offres-cards">';
+    groups[filiere].forEach(function(c) {
+      var logoHtml = c.logoFile
+        ? '<img src="/images/logos/' + c.logoFile + '" class="offres-logo" onerror="this.style.display=\'none\'">'
+        : '<div class="offres-logo-fallback" style="background:' + color + '">' + (c.nomAffichage||c.nom||'').substring(0,2).toUpperCase() + '</div>';
+      var nom = c.nomAffichage || c.nom || '';
+      var postes = c.postes || [];
+      var postesHtml = postes.map(function(p) { return '<span class="offres-poste-tag">' + p + '</span>'; }).join('');
+      html += '<div class="offres-card" data-nom="' + nom.toLowerCase() + '" data-postes="' + postes.join(' ').toLowerCase() + '">';
+      html += '<div class="offres-card-head">' + logoHtml + '<span class="offres-card-nom">' + nom + '</span></div>';
+      html += '<div class="offres-postes">' + postesHtml + '</div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+function filterStudentOffres(query) {
+  var q = (query || '').toLowerCase().trim();
+  var cards = document.querySelectorAll('#student-offres-container .offres-card');
+  cards.forEach(function(card) {
+    if (!q) { card.style.display = ''; return; }
+    var nom = card.dataset.nom || '';
+    var postes = card.dataset.postes || '';
+    card.style.display = (nom.includes(q) || postes.includes(q)) ? '' : 'none';
+  });
+  document.querySelectorAll('#student-offres-container .offres-filiere-block').forEach(function(block) {
+    var visible = Array.from(block.querySelectorAll('.offres-card')).some(function(c) { return c.style.display !== 'none'; });
+    block.style.display = visible ? '' : 'none';
+  });
 }
 
 function exportSheetCandidates() {

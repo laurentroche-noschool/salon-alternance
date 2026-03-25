@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Jobs Alternance — Will.School & Noschool Bordeaux</title>
-  <link rel="stylesheet" href="/css/style.css?v=20260325b" />
+  <link rel="stylesheet" href="/css/style.css?v=20260325c" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -115,40 +115,62 @@
       </div>
     </div>
 
-    <div class="filter-bar">
-      <div class="filter-scroll">
-        <button class="filter-btn active" data-filiere="all" onclick="filterFiliere('all', this)">
-          Toutes <span class="filter-count" id="count-all"></span>
-        </button>
-        <button class="filter-btn" data-filiere="COMMERCE NS" onclick="filterFiliere('COMMERCE NS', this)">
-          Commerce Noschool <span class="filter-count" id="count-COMMERCE-NS"></span>
-        </button>
-        <button class="filter-btn" data-filiere="COMMERCE WILL" onclick="filterFiliere('COMMERCE WILL', this)">
-          Commerce Will <span class="filter-count" id="count-COMMERCE-WILL"></span>
-        </button>
-        <button class="filter-btn" data-filiere="IMMOBILIER" onclick="filterFiliere('IMMOBILIER', this)">
-          Immobilier <span class="filter-count" id="count-IMMOBILIER"></span>
-        </button>
-        <button class="filter-btn" data-filiere="BANQUE / ASSURANCE" onclick="filterFiliere('BANQUE / ASSURANCE', this)">
-          Banque / Assurance <span class="filter-count" id="count-BANQUE"></span>
-        </button>
-        <button class="filter-btn" data-filiere="MARKETING / COM / SOCIAL" onclick="filterFiliere('MARKETING / COM / SOCIAL', this)">
-          Marketing / Digital &amp; Social <span class="filter-count" id="count-MARKETING"></span>
-        </button>
-        <button class="filter-btn" data-filiere="RH / TOURISME" onclick="filterFiliere('RH / TOURISME', this)">
-          RH / Tourisme <span class="filter-count" id="count-RH"></span>
-        </button>
-      </div>
+    <!-- Onglets Candidat -->
+    <div class="student-view-tabs">
+      <button class="student-view-tab active" id="stab-entreprises" onclick="switchStudentView('entreprises')">🏢 Entreprises</button>
+      <button class="student-view-tab" id="stab-offres" onclick="switchStudentView('offres')">💼 Offres Alternance</button>
     </div>
 
-    <div class="search-bar-wrap">
-      <div class="search-hint-row">
-        <input type="text" id="search-input" placeholder="🔍 Rechercher..." class="search-input search-input-compact" oninput="searchCompanies()" />
-        <p class="search-hint-text">🚀 <strong>Clique sur chaque entreprise qui t'intéresse — découvre leurs postes, leurs tips d'entretien et mets toutes les chances de ton côté pour décrocher ton alternance !</strong></p>
+    <!-- Vue Entreprises -->
+    <div id="student-companies-view">
+      <div class="filter-bar">
+        <div class="filter-scroll">
+          <button class="filter-btn active" data-filiere="all" onclick="filterFiliere('all', this)">
+            Toutes <span class="filter-count" id="count-all"></span>
+          </button>
+          <button class="filter-btn" data-filiere="COMMERCE NS" onclick="filterFiliere('COMMERCE NS', this)">
+            Commerce Noschool <span class="filter-count" id="count-COMMERCE-NS"></span>
+          </button>
+          <button class="filter-btn" data-filiere="COMMERCE WILL" onclick="filterFiliere('COMMERCE WILL', this)">
+            Commerce Will <span class="filter-count" id="count-COMMERCE-WILL"></span>
+          </button>
+          <button class="filter-btn" data-filiere="IMMOBILIER" onclick="filterFiliere('IMMOBILIER', this)">
+            Immobilier <span class="filter-count" id="count-IMMOBILIER"></span>
+          </button>
+          <button class="filter-btn" data-filiere="BANQUE / ASSURANCE" onclick="filterFiliere('BANQUE / ASSURANCE', this)">
+            Banque / Assurance <span class="filter-count" id="count-BANQUE"></span>
+          </button>
+          <button class="filter-btn" data-filiere="MARKETING / COM / SOCIAL" onclick="filterFiliere('MARKETING / COM / SOCIAL', this)">
+            Marketing / Digital &amp; Social <span class="filter-count" id="count-MARKETING"></span>
+          </button>
+          <button class="filter-btn" data-filiere="RH / TOURISME" onclick="filterFiliere('RH / TOURISME', this)">
+            RH / Tourisme <span class="filter-count" id="count-RH"></span>
+          </button>
+        </div>
       </div>
+
+      <div class="search-bar-wrap">
+        <div class="search-hint-row">
+          <input type="text" id="search-input" placeholder="🔍 Rechercher..." class="search-input search-input-compact" oninput="searchCompanies()" />
+          <p class="search-hint-text">🚀 <strong>Clique sur chaque entreprise qui t'intéresse — découvre leurs postes, leurs tips d'entretien et mets toutes les chances de ton côté pour décrocher ton alternance !</strong></p>
+        </div>
+      </div>
+
+      <div id="companies-grid" class="companies-grid"></div>
     </div>
 
-    <div id="companies-grid" class="companies-grid"></div>
+    <!-- Vue Offres Alternance (lecture seule) -->
+    <div id="student-offres-view" style="display:none">
+      <div class="offres-header">
+        <div class="offres-title-row">
+          <h3 class="offres-title">💼 Offres Alternance par entreprise</h3>
+          <input type="text" id="student-offres-search" class="offres-search" placeholder="🔍 Rechercher poste ou entreprise…" oninput="filterStudentOffres(this.value)" />
+        </div>
+      </div>
+      <div id="student-offres-container" class="offres-container">
+        <div class="empty-state" style="padding:2rem;text-align:center">Chargement…</div>
+      </div>
+    </div>
   </div>
 
   <!-- ===== MODAL DÉTAIL ENTREPRISE (Étudiant) ===== -->
@@ -584,20 +606,6 @@
         <button class="cre-view-tab active" id="tab-positionnements" onclick="switchCREView('positionnements')">📋 Positionnements</button>
         <button class="cre-view-tab" id="tab-presence" onclick="switchCREView('presence')">✅ Présence entreprises</button>
         <button class="cre-view-tab" id="tab-candidats" onclick="switchCREView('candidats')">👥 Candidats</button>
-        <button class="cre-view-tab" id="tab-offres" onclick="switchCREView('offres')">💼 Offres Alternance</button>
-      </div>
-
-      <!-- Vue Offres Alternance -->
-      <div id="cre-offres-view" style="display:none">
-        <div class="offres-header">
-          <div class="offres-title-row">
-            <h3 class="offres-title">💼 Offres Alternance par entreprise</h3>
-            <input type="text" id="offres-search" class="offres-search" placeholder="🔍 Rechercher poste ou entreprise…" oninput="filterOffres(this.value)" />
-          </div>
-        </div>
-        <div id="offres-container" class="offres-container">
-          <div class="empty-state" style="padding:2rem;text-align:center">Chargement…</div>
-        </div>
       </div>
 
       <!-- Vue présence -->
@@ -974,6 +982,6 @@
   <!-- Toast notification -->
   <div id="toast" class="toast"></div>
 
-  <script src="/js/app.js?v=20260325b"></script>
+  <script src="/js/app.js?v=20260325c"></script>
 </body>
 </html>
