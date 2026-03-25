@@ -2486,9 +2486,12 @@ function switchCREView(view) {
   document.getElementById('tab-positionnements').classList.toggle('active', view === 'positionnements');
   document.getElementById('tab-presence').classList.toggle('active', view === 'presence');
   document.getElementById('tab-candidats').classList.toggle('active', view === 'candidats');
+  document.getElementById('tab-offres').classList.toggle('active', view === 'offres');
   document.getElementById('cre-positionnements-view').style.display = view === 'positionnements' ? 'block' : 'none';
   document.getElementById('cre-presence-view').style.display = view === 'presence' ? 'block' : 'none';
   document.getElementById('cre-candidats-view').style.display = view === 'candidats' ? 'block' : 'none';
+  document.getElementById('cre-offres-view').style.display = view === 'offres' ? 'block' : 'none';
+  if (view === 'offres') loadOffresAlternance();
   if (view === 'presence') loadPresenceTab();
   if (view === 'candidats') {
     if (!sheetCandidates.length) loadSheetCandidates();
@@ -3064,6 +3067,128 @@ async function sendCandidateReminderMail(idx) {
     setTimeout(function() {
       window.location.href = 'mailto:' + encodeURIComponent(candidat.email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
     }, 1500);
+  }
+}
+
+// ===== OFFRES ALTERNANCE =====
+var _offresData = [];
+
+async function loadOffresAlternance() {
+  var container = document.getElementById('offres-container');
+  if (container) container.innerHTML = '<div class="empty-state" style="padding:2rem;text-align:center">⏳ Chargement…</div>';
+  try {
+    var res = await fetch('/api/offres-alternance?pin=' + encodeURIComponent(crePin));
+    _offresData = await res.json();
+    renderOffresAlternance(_offresData);
+  } catch(e) {
+    if (container) container.innerHTML = '<div class="empty-state" style="padding:2rem;text-align:center;color:#ef4444">Erreur de chargement</div>';
+  }
+}
+
+function renderOffresAlternance(data) {
+  var container = document.getElementById('offres-container');
+  if (!container) return;
+
+  if (!data || !data.length) {
+    container.innerHTML = '<div class="empty-state" style="padding:2rem;text-align:center">Aucune entreprise trouvée</div>';
+    return;
+  }
+
+  // Grouper par filière
+  var groups = {};
+  data.forEach(function(c) {
+    var f = c.filiere || 'AUTRE';
+    if (!groups[f]) groups[f] = [];
+    groups[f].push(c);
+  });
+
+  var html = '';
+  Object.keys(groups).sort().forEach(function(filiere) {
+    var color = FILIERE_COLORS[filiere] || '#94a3b8';
+    var label = FILIERE_LABELS[filiere] || filiere;
+    html += '<div class="offres-filiere-block">';
+    html += '<div class="offres-filiere-header" style="border-left:4px solid ' + color + '">' + label + '</div>';
+    html += '<div class="offres-cards">';
+    groups[filiere].forEach(function(c) {
+      var logoHtml = c.logoFile
+        ? '<img src="/images/logos/' + c.logoFile + '" class="offres-logo" onerror="this.style.display=\'none\'">'
+        : '<div class="offres-logo-fallback" style="background:' + color + '">' + (c.nomAffichage||c.nom||'').substring(0,2).toUpperCase() + '</div>';
+      var nom = c.nomAffichage || c.nom || '';
+      var postes = c.postes || [];
+      var postesHtml = postes.length
+        ? postes.map(function(p) { return '<span class="offres-poste-tag">' + p + '</span>'; }).join('')
+        : '<span class="offres-no-poste">Aucun poste renseigné</span>';
+
+      html += '<div class="offres-card" data-company-id="' + c.id + '" data-nom="' + nom.toLowerCase() + '" data-postes="' + postes.join(' ').toLowerCase() + '">';
+      html += '<div class="offres-card-head">' + logoHtml + '<span class="offres-card-nom">' + nom + '</span>';
+      html += '<button class="offres-edit-btn" onclick="toggleOffresEdit(' + c.id + ')" title="Modifier les postes">✏️</button>';
+      html += '</div>';
+      html += '<div class="offres-postes" id="offres-postes-' + c.id + '">' + postesHtml + '</div>';
+      html += '<div class="offres-edit-zone" id="offres-edit-' + c.id + '" style="display:none">';
+      html += '<textarea class="offres-textarea" id="offres-ta-' + c.id + '" placeholder="Saisir les postes (un par ligne)&#10;Ex: Chargé(e) de communication&#10;Assistant(e) marketing digital">' + postes.join('\n') + '</textarea>';
+      html += '<div class="offres-edit-actions">';
+      html += '<button class="btn-save-offres" onclick="savePosteAlternance(' + c.id + ')">💾 Enregistrer</button>';
+      html += '<button class="btn-cancel-offres" onclick="toggleOffresEdit(' + c.id + ')">Annuler</button>';
+      html += '</div></div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function filterOffres(query) {
+  var q = (query || '').toLowerCase().trim();
+  var cards = document.querySelectorAll('.offres-card');
+  cards.forEach(function(card) {
+    if (!q) { card.style.display = ''; return; }
+    var nom = card.dataset.nom || '';
+    var postes = card.dataset.postes || '';
+    card.style.display = (nom.includes(q) || postes.includes(q)) ? '' : 'none';
+  });
+  // Masque les blocs filière vides
+  document.querySelectorAll('.offres-filiere-block').forEach(function(block) {
+    var visible = Array.from(block.querySelectorAll('.offres-card')).some(function(c) { return c.style.display !== 'none'; });
+    block.style.display = visible ? '' : 'none';
+  });
+}
+
+function toggleOffresEdit(companyId) {
+  var zone = document.getElementById('offres-edit-' + companyId);
+  if (!zone) return;
+  var open = zone.style.display !== 'none';
+  zone.style.display = open ? 'none' : 'block';
+  if (!open) document.getElementById('offres-ta-' + companyId).focus();
+}
+
+async function savePosteAlternance(companyId) {
+  var ta = document.getElementById('offres-ta-' + companyId);
+  if (!ta) return;
+  var postes = ta.value.split('\n').map(function(p) { return p.trim(); }).filter(function(p) { return p.length > 0; });
+  try {
+    var res = await fetch('/api/offres-alternance/' + companyId, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: crePin, postes: postes })
+    });
+    if (!res.ok) throw new Error('Erreur serveur');
+    // Met à jour le store local
+    var entry = _offresData.find(function(c) { return c.id === companyId; });
+    if (entry) entry.postes = postes;
+    // Rafraîchit l'affichage de ce seul card
+    var postesDiv = document.getElementById('offres-postes-' + companyId);
+    if (postesDiv) {
+      postesDiv.innerHTML = postes.length
+        ? postes.map(function(p) { return '<span class="offres-poste-tag">' + p + '</span>'; }).join('')
+        : '<span class="offres-no-poste">Aucun poste renseigné</span>';
+    }
+    var card = document.querySelector('.offres-card[data-company-id="' + companyId + '"]');
+    if (card) card.dataset.postes = postes.join(' ').toLowerCase();
+    toggleOffresEdit(companyId);
+    showToast('✅ Postes enregistrés', 'success');
+  } catch(e) {
+    showToast('❌ Erreur : ' + e.message, 'error');
   }
 }
 

@@ -2248,6 +2248,107 @@ body {
 }
 .cpop-mail-btn:hover { background: #dbeafe; }
 
+/* ===== OFFRES ALTERNANCE ===== */
+.offres-header {
+  padding: 1rem 1rem 0.5rem;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+  border-bottom: 1px solid var(--border);
+}
+.offres-title-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.offres-title { margin: 0; font-size: 1.05rem; color: var(--text); }
+.offres-search {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.offres-search:focus { border-color: var(--primary); }
+.offres-container { padding: 1rem; display: flex; flex-direction: column; gap: 1.5rem; }
+.offres-filiere-block {}
+.offres-filiere-header {
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  padding: 0.3rem 0.6rem;
+  margin-bottom: 0.6rem;
+  background: #f8fafc;
+  border-radius: 4px;
+}
+.offres-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.75rem;
+}
+.offres-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: box-shadow 0.15s;
+}
+.offres-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+.offres-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.offres-logo { width: 32px; height: 32px; object-fit: contain; border-radius: 4px; flex-shrink: 0; }
+.offres-logo-fallback {
+  width: 32px; height: 32px; border-radius: 6px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 700; font-size: 0.75rem;
+}
+.offres-card-nom { font-weight: 600; font-size: 0.88rem; flex: 1; color: var(--text); }
+.offres-edit-btn {
+  background: none; border: none; cursor: pointer; font-size: 0.85rem;
+  padding: 2px 4px; border-radius: 4px; opacity: 0.5; transition: opacity 0.15s;
+}
+.offres-edit-btn:hover { opacity: 1; background: #f1f5f9; }
+.offres-postes { display: flex; flex-wrap: wrap; gap: 0.35rem; min-height: 28px; }
+.offres-poste-tag {
+  background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;
+  border-radius: 20px; padding: 0.2rem 0.6rem; font-size: 0.75rem; font-weight: 500;
+}
+.offres-no-poste { font-size: 0.78rem; color: var(--text-muted); font-style: italic; }
+.offres-edit-zone { display: flex; flex-direction: column; gap: 0.4rem; }
+.offres-textarea {
+  width: 100%; min-height: 80px; padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border); border-radius: 6px;
+  font-size: 0.8rem; font-family: inherit; resize: vertical;
+  transition: border-color 0.2s; box-sizing: border-box;
+}
+.offres-textarea:focus { outline: none; border-color: var(--primary); }
+.offres-edit-actions { display: flex; gap: 0.4rem; }
+.btn-save-offres {
+  flex: 1; background: var(--primary); color: #fff; border: none;
+  border-radius: 6px; padding: 0.35rem 0.6rem; font-size: 0.78rem;
+  font-weight: 600; cursor: pointer; transition: background 0.15s;
+}
+.btn-save-offres:hover { background: var(--primary-dark); }
+.btn-cancel-offres {
+  background: #f1f5f9; color: var(--text); border: 1px solid var(--border);
+  border-radius: 6px; padding: 0.35rem 0.6rem; font-size: 0.78rem;
+  cursor: pointer; transition: background 0.15s;
+}
+.btn-cancel-offres:hover { background: #e2e8f0; }
+
 /* ===== BOUTON PLAN SALON ===== */
 .btn-plan-salon {
   padding: 0.4rem 0.9rem;

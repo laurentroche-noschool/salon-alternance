@@ -1369,6 +1369,33 @@ app.get('/api/self-register/export', async function(req, res) {
   }
 });
 
+// ─── Offres Alternance par entreprise ─────────────────────────────────────────
+// GET toutes les offres (CRE PIN)
+app.get('/api/offres-alternance', async (req, res) => {
+  try {
+    const { pin } = req.query;
+    if (pin !== CRE_PIN) return res.status(401).json({ error: 'Non autorisé' });
+    const compResult = await supabase.from('companies').select('id, nom, nomAffichage, filiere, logoFile').order('nom');
+    const companies = sbCheck(compResult, 'getCompanies');
+    const local = await getSheetLocal();
+    const result = companies.map(c => ({
+      ...c,
+      postes: (local['postes_company_' + c.id] && local['postes_company_' + c.id].postes) || []
+    }));
+    res.json(result);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST sauvegarder les postes d'une entreprise (CRE PIN)
+app.post('/api/offres-alternance/:id', async (req, res) => {
+  try {
+    const { pin, postes } = req.body;
+    if (pin !== CRE_PIN) return res.status(401).json({ error: 'Non autorisé' });
+    await setSheetLocalKey('postes_company_' + req.params.id, { postes: Array.isArray(postes) ? postes : [] });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // ─── Envoi email candidat (CRE) ───────────────────────────────────────────────
 app.post('/api/cre/send-candidate-email', async (req, res) => {
   try {
