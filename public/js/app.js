@@ -2184,6 +2184,16 @@ function renderEntStudents() {
 
       <div class="ent-rating-panel" id="ent-panel-${s.id}" style="display:none">
 
+        <!-- Coordonnées candidat -->
+        ${(s.email || s.phone) ? `
+        <div class="ent-panel-section ent-contact-section">
+          <div class="ent-section-label">📞 Coordonnées</div>
+          <div class="ent-contact-row">
+            ${s.phone ? `<a href="tel:${s.phone}" class="ent-contact-btn ent-contact-phone">📱 ${s.phone}</a>` : ''}
+            ${s.email ? `<a href="mailto:${s.email}" class="ent-contact-btn ent-contact-email">✉️ ${s.email}</a>` : ''}
+          </div>
+        </div>` : ''}
+
         <!-- Rencontré ? -->
         <div class="ent-panel-section">
           <div class="ent-section-label">Entretien réalisé ?</div>
