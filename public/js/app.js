@@ -2326,24 +2326,35 @@ async function autoSaveCRENote(studentId) {
 async function autoSaveRating(studentId) {
   const pending = { ...(entRatings[studentId] || {}), ...(entPendingChanges[studentId] || {}) };
   const comment = (document.getElementById(`ent-comment-${studentId}`) || {}).value || '';
+  const panel = document.getElementById(`ent-panel-${studentId}`);
   try {
     const res = await fetch(`/api/companies/${currentEntCompany.id}/ratings/${studentId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin: entPin, met: pending.met || false, rating: pending.rating || null, comment })
+      body: JSON.stringify({ pin: entPin, met: pending.met !== undefined ? pending.met : false, rating: pending.rating || null, comment })
     });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const saved = await res.json();
     entRatings[studentId] = saved;
     delete entPendingChanges[studentId];
     updateStudentSummary(studentId, saved);
-    // Feedback visuel discret (pas de toast intrusif)
-    const ta = document.getElementById(`ent-comment-${studentId}`);
-    if (ta) {
-      ta.style.borderColor = '#4caf50';
-      setTimeout(() => { ta.style.borderColor = ''; }, 1200);
+    // Feedback visuel sur les boutons actifs du panel
+    if (panel) {
+      panel.querySelectorAll('.ent-rating-btn.active, .ent-met-btn.active').forEach(btn => {
+        const orig = btn.textContent;
+        btn.style.outline = '2px solid #4caf50';
+        setTimeout(() => { btn.style.outline = ''; }, 1500);
+      });
     }
   } catch(e) {
-    // Silencieux en cas d'erreur auto-save
+    // Feedback d'erreur visible
+    if (panel) {
+      panel.querySelectorAll('.ent-rating-btn.active, .ent-met-btn.active').forEach(btn => {
+        btn.style.outline = '2px solid #ef4444';
+        setTimeout(() => { btn.style.outline = ''; }, 2000);
+      });
+    }
+    showToast('Erreur sauvegarde — réessayez', 'error');
   }
 }
 
