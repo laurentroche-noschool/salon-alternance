@@ -20,6 +20,18 @@ const supabase = createClient(
 );
 
 app.use(express.json());
+
+// JS et CSS : jamais mis en cache navigateur (toujours revalidé)
+app.use('/js', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  express.static(path.join(__dirname, 'public/js'))(req, res, next);
+});
+app.use('/css', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  express.static(path.join(__dirname, 'public/css'))(req, res, next);
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Health check (keep-alive ping) ───────────────────────────────────────────
