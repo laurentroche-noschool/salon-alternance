@@ -2267,6 +2267,7 @@ function setMet(studentId, met, btn) {
   const panel = document.getElementById(`ent-panel-${studentId}`);
   panel.querySelectorAll('.ent-met-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  autoSaveRating(studentId);
 }
 
 function setRating(studentId, rating, btn) {
@@ -2280,6 +2281,7 @@ function setRating(studentId, rating, btn) {
     entPendingChanges[studentId].rating = rating;
     btn.classList.add('active');
   }
+  autoSaveRating(studentId);
 }
 
 async function saveRating(studentId) {
