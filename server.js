@@ -298,18 +298,27 @@ app.get('/api/companies/:id', async (req, res) => {
 app.get('/api/companies/:id/students', async (req, res) => {
   try {
     const students = await getStudentsForCompany(parseInt(req.params.id));
-    // Map DB rows to legacy shape
-    res.json(students.map(s => ({
-      id: s.id,
-      nom: s.nom,
-      prenom: s.prenom,
-      formation: s.formation,
-      email: s.email || '',
-      phone: s.phone || '',
-      cre: s.cre || '',
-      spontaneous: !!s.spontaneous,
-      createdAt: s.created_at
-    })));
+    // Construire un index sheet par NOM+prenom pour retrouver tel/email
+    const sheetIndex = {};
+    (sheetCache.candidates || []).forEach(c => {
+      const key = (c.nom || '').toUpperCase() + '__' + (c.prenom || '').toLowerCase().trim();
+      sheetIndex[key] = c;
+    });
+    res.json(students.map(s => {
+      const key = (s.nom || '').toUpperCase() + '__' + (s.prenom || '').toLowerCase().trim();
+      const sheet = sheetIndex[key] || {};
+      return {
+        id: s.id,
+        nom: s.nom,
+        prenom: s.prenom,
+        formation: s.formation,
+        email: s.email || sheet.email || '',
+        phone: s.phone || sheet.tel || '',
+        cre: s.cre || '',
+        spontaneous: !!s.spontaneous,
+        createdAt: s.created_at
+      };
+    }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
