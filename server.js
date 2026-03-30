@@ -12,6 +12,8 @@ const CRE_PIN        = process.env.CRE_PIN        || 'CRE2026';
 const ENTERPRISE_PIN = process.env.ENTERPRISE_PIN || 'Salon2026';
 const ADMIN_PIN      = process.env.ADMIN_PIN      || 'NS2026';
 const DELETE_COMPANY_PIN = 'PIN1402';
+const APP_TITLE      = process.env.APP_TITLE      || 'Jobs Alternance';
+const APP_SUBTITLE   = process.env.APP_SUBTITLE   || 'Will.School & Noschool Bordeaux';
 
 // Supabase client
 const supabase = createClient(
@@ -36,6 +38,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Health check (keep-alive ping) ───────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
+app.get('/api/config', (req, res) => res.json({ title: APP_TITLE, subtitle: APP_SUBTITLE }));
 
 // ─── Helper: throw on Supabase error ──────────────────────────────────────────
 function sbCheck(result, label) {

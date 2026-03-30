@@ -107,6 +107,20 @@ function groupAndSort(list) {
 // ===== INIT =====
 async function init() {
   try {
+    // Charger la config (titre personnalisable par école)
+    const cfgRes = await fetch('/api/config');
+    const cfg = await cfgRes.json();
+    document.title = cfg.title + ' — ' + cfg.subtitle;
+    document.querySelectorAll('.home-title').forEach(el => {
+      const accent = el.querySelector('.home-title-accent');
+      const parts = cfg.title.split(' ');
+      el.textContent = parts.slice(0, -1).join(' ') + ' ';
+      const sp = document.createElement('span');
+      sp.className = 'home-title-accent';
+      sp.textContent = parts[parts.length - 1];
+      el.appendChild(sp);
+    });
+    document.querySelectorAll('.header-title').forEach(el => { el.textContent = cfg.title; });
     const res = await fetch('/api/companies');
     const raw = await res.json();
     // Normaliser les filières dès le chargement (défense côté client)
