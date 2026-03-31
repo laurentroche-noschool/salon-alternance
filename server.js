@@ -14,7 +14,10 @@ const ADMIN_PIN      = process.env.ADMIN_PIN      || 'NS2026';
 const DELETE_COMPANY_PIN = 'PIN1402';
 const APP_TITLE      = process.env.APP_TITLE      || 'Jobs Alternance';
 const APP_SUBTITLE   = process.env.APP_SUBTITLE   || 'Will.School & Noschool Bordeaux';
-const SHOW_WILL_LOGO = process.env.SHOW_WILL_LOGO !== 'false';
+// SHOW_WILL_LOGO : explicite via env var, sinon auto-détecté selon APP_SUBTITLE
+const SHOW_WILL_LOGO = process.env.SHOW_WILL_LOGO === 'true' ? true
+  : process.env.SHOW_WILL_LOGO === 'false' ? false
+  : (APP_SUBTITLE || '').toLowerCase().includes('will');
 
 // Supabase client
 const supabase = createClient(
