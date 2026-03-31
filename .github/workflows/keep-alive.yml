@@ -13,9 +13,19 @@ jobs:
       - name: Ping salon-alternance
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 https://salon-alternance.onrender.com/health)
-          echo "Statut HTTP : $STATUS"
+          echo "Statut HTTP salon-alternance : $STATUS"
           if [ "$STATUS" != "200" ]; then
-            echo "Avertissement : le serveur a répondu $STATUS"
+            echo "Avertissement : salon-alternance a répondu $STATUS"
           else
-            echo "Serveur actif ✓"
+            echo "salon-alternance actif ✓"
+          fi
+
+      - name: Ping jobs-dating-mdm
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 https://jobs-dating-mdm.onrender.com/api/config)
+          echo "Statut HTTP jobs-dating-mdm : $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "Avertissement : jobs-dating-mdm a répondu $STATUS"
+          else
+            echo "jobs-dating-mdm actif ✓"
           fi
