@@ -121,6 +121,9 @@ async function init() {
       el.appendChild(sp);
     });
     document.querySelectorAll('.header-title').forEach(el => { el.textContent = cfg.title; });
+    if (!cfg.showWillLogo) {
+      document.querySelectorAll('.willschool-logo').forEach(el => { el.style.display = 'none'; });
+    }
     const res = await fetch('/api/companies');
     const raw = await res.json();
     // Normaliser les filières dès le chargement (défense côté client)
