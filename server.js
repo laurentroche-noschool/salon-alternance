@@ -18,6 +18,8 @@ const APP_SUBTITLE   = process.env.APP_SUBTITLE   || 'Will.School & Noschool Bor
 const SHOW_WILL_LOGO = process.env.SHOW_WILL_LOGO === 'true' ? true
   : process.env.SHOW_WILL_LOGO === 'false' ? false
   : (APP_SUBTITLE || '').toLowerCase().includes('will');
+// SHOW_PLAN_SALON : true par défaut, false si env var explicite
+const SHOW_PLAN_SALON = process.env.SHOW_PLAN_SALON !== 'false';
 
 // Supabase client
 const supabase = createClient(
@@ -42,7 +44,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Health check (keep-alive ping) ───────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
-app.get('/api/config', (req, res) => res.json({ title: APP_TITLE, subtitle: APP_SUBTITLE, showWillLogo: SHOW_WILL_LOGO }));
+app.get('/api/config', (req, res) => res.json({ title: APP_TITLE, subtitle: APP_SUBTITLE, showWillLogo: SHOW_WILL_LOGO, showPlanSalon: SHOW_PLAN_SALON }));
 
 // ─── Helper: throw on Supabase error ──────────────────────────────────────────
 function sbCheck(result, label) {

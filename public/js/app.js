@@ -124,6 +124,11 @@ async function init() {
     if (!cfg.showWillLogo) {
       document.querySelectorAll('.willschool-logo').forEach(el => { el.style.display = 'none'; });
     }
+    if (!cfg.showPlanSalon) {
+      document.querySelectorAll('.btn-plan-salon').forEach(el => { el.style.display = 'none'; });
+      const modalPlan = document.getElementById('modal-plan-salon');
+      if (modalPlan) modalPlan.remove();
+    }
     const res = await fetch('/api/companies');
     const raw = await res.json();
     // Normaliser les filières dès le chargement (défense côté client)
