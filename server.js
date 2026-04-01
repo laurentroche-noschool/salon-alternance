@@ -186,7 +186,7 @@ function toCSV(rows) {
 const RATING_LABELS_CSV = { hire: "Je l'embauche", retained: 'Retenu(e)', maybe: 'À voir', refused: 'Refusé(e)' };
 
 // ─── Google Sheets fetch ───────────────────────────────────────────────────────
-const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1rafyD6PubGmF5F_nG2KBPg7g01325kiE7gzKkz8ED08/export?format=csv&gid=596889222';
+const SHEET_CSV_URL = process.env.SHEET_CSV_URL || 'https://docs.google.com/spreadsheets/d/1rafyD6PubGmF5F_nG2KBPg7g01325kiE7gzKkz8ED08/export?format=csv&gid=596889222';
 
 function fetchURL(url, depth) {
   depth = depth || 0;
@@ -238,9 +238,16 @@ function mapSheetRow(row) {
     email:         (row['Email'] || '').trim().toLowerCase(),
     diplome:       (row['Ton dernier diplôme obtenu'] || '').trim(),
     domaines:      (row["Le ou les domaines qui t'attirent"] || '').trim(),
-    situation:     (row['Ta situation actuelle'] || '').trim(),
+    // Ancien sheet : 'Ta situation actuelle' / Nouveau sheet MDM : 'Je suis un étudiant'
+    situation:     (row['Ta situation actuelle'] || row['Je suis un étudiant'] || '').trim(),
     notesCandidat: (row['Tu souhaites nous préciser quelque chose ?'] || '').trim(),
   };
+}
+
+function isStudentRow(row) {
+  // Nouveau format MDM : filtrer uniquement les étudiants (exclure entreprises)
+  var jesSuis = row['Je suis'] || '';
+  return !jesSuis || jesSuis.toLowerCase().includes('tudiant');
 }
 
 function getCandidateKey(c) {
@@ -1112,7 +1119,7 @@ app.get('/api/sheet-candidates', async function(req, res) {
     try {
       var csvText = await fetchURL(SHEET_CSV_URL);
       var rows = parseSheetCSV(csvText);
-      var candidates = rows.map(mapSheetRow).filter(function(c) { return c.nom && c.prenom; });
+      var candidates = rows.filter(isStudentRow).map(mapSheetRow).filter(function(c) { return c.nom && c.prenom; });
       sheetCache = { candidates: candidates, lastSync: new Date().toISOString() };
       await respond(candidates, false);
     } catch (fetchErr) {
@@ -1135,7 +1142,7 @@ app.get('/api/sheet-candidates/list', async function(req, res) {
       try {
         var csvText = await fetchURL(SHEET_CSV_URL);
         var rows = parseSheetCSV(csvText);
-        var candidates = rows.map(mapSheetRow).filter(function(c) { return c.nom && c.prenom; });
+        var candidates = rows.filter(isStudentRow).map(mapSheetRow).filter(function(c) { return c.nom && c.prenom; });
         sheetCache = { candidates: candidates, lastSync: new Date().toISOString() };
       } catch (fetchErr) {
         // Cache reste vide, on retourne ce qu'on a (self-regs uniquement)
