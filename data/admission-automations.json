@@ -1,0 +1,11 @@
+{
+  "Nouveau Lead": {
+    "enabled": true,
+    "delay": {
+      "value": 2,
+      "unit": "min"
+    },
+    "subject": "Information - Votre candidature {{formation}}",
+    "body": "Bonjour {{prenom}},\n\nNous vous informons que votre dossier a avancé.\n\nCordialement,\nL'équipe Admission"
+  }
+}

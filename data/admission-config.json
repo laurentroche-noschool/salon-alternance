@@ -1,0 +1,17 @@
+{
+  "noschool": {
+    "cookie": "",
+    "baseUrl": "https://crm.noschool.fr"
+  },
+  "will": {
+    "cookie": "",
+    "baseUrl": "https://crm.will.school"
+  },
+  "smtp": {
+    "host": "",
+    "port": 587,
+    "user": "",
+    "pass": "",
+    "fromName": "Admission Hub"
+  }
+}

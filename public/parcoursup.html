@@ -1,0 +1,2849 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRM Parcoursup - Suivi des candidats</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+    /* Header */
+    .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header h1 { font-size: 22px; font-weight: 700; }
+    .header .subtitle { font-size: 13px; opacity: 0.7; }
+    .header-actions { display: flex; gap: 8px; }
+
+    /* Tabs */
+    .tabs { display: flex; background: white; border-bottom: 2px solid #e0e0e0; padding: 0 24px; position: sticky; top: 60px; z-index: 99; }
+    .tab { padding: 12px 20px; cursor: pointer; font-weight: 600; font-size: 14px; color: #666; border-bottom: 3px solid transparent; transition: all 0.2s; }
+    .tab:hover { color: #1a1a2e; }
+    .tab.active { color: #667EEA; border-bottom-color: #667EEA; }
+    .tab .badge { background: #667EEA; color: white; border-radius: 10px; padding: 2px 8px; font-size: 11px; margin-left: 6px; }
+
+    /* Buttons */
+    .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+    .btn-primary { background: #667EEA; color: white; }
+    .btn-primary:hover { background: #5a6fd6; }
+    .btn-success { background: #2ECC71; color: white; }
+    .btn-success:hover { background: #27ae60; }
+    .btn-danger { background: #E74C3C; color: white; }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-outline { background: transparent; border: 1.5px solid #ddd; color: #555; }
+    .btn-outline:hover { border-color: #667EEA; color: #667EEA; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-icon { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+
+    /* Filter Bar */
+    .filter-bar { background: white; padding: 12px 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #eee; }
+    .filter-bar select, .filter-bar input { padding: 7px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; background: white; }
+    .filter-bar select:focus, .filter-bar input:focus { outline: none; border-color: #667EEA; }
+    .filter-count { font-size: 13px; color: #888; margin-left: auto; }
+
+    /* Kanban */
+    .kanban { display: flex; gap: 12px; padding: 16px; overflow-x: auto; min-height: calc(100vh - 200px); align-items: flex-start; }
+    .kanban-col { min-width: 280px; max-width: 320px; flex: 1; background: #f8f9fa; border-radius: 12px; display: flex; flex-direction: column; max-height: calc(100vh - 210px); }
+    .kanban-col.terminal { min-width: 220px; max-width: 250px; opacity: 0.75; }
+    .kanban-col-header { padding: 12px 16px; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: space-between; border-radius: 12px 12px 0 0; }
+    .kanban-col-header .count { background: rgba(255,255,255,0.3); border-radius: 12px; padding: 2px 10px; font-size: 12px; }
+    .kanban-col-body { padding: 8px; overflow-y: auto; flex: 1; min-height: 100px; }
+    .kanban-col-body.drag-over { background: #e3f2fd; border: 2px dashed #667EEA; border-radius: 0 0 12px 12px; }
+
+    /* Candidate Card */
+    .card { background: white; border-radius: 10px; padding: 12px; margin-bottom: 8px; cursor: grab; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 4px solid #667EEA; transition: all 0.15s; position: relative; }
+    .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-1px); }
+    .card.dragging { opacity: 0.5; }
+    .card-name { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+    .card-formation { font-size: 12px; color: #555; margin-bottom: 6px; }
+    .card-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .card-badge { font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+    .card-crm { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+    .card-relance-count { font-size: 11px; color: #888; }
+
+    /* Drawer */
+    .drawer-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 200; animation: fadeIn 0.2s; }
+    .drawer { position: fixed; top: 0; right: 0; width: 520px; max-width: 90vw; height: 100vh; background: white; z-index: 201; box-shadow: -4px 0 20px rgba(0,0,0,0.15); overflow-y: auto; animation: slideIn 0.25s ease-out; }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .drawer-header { padding: 20px 24px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: white; z-index: 1; }
+    .drawer-body { padding: 24px; }
+    .drawer-section { margin-bottom: 24px; }
+    .drawer-section h3 { font-size: 14px; font-weight: 700; color: #555; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Form */
+    .form-row { display: flex; gap: 12px; margin-bottom: 12px; }
+    .form-group { flex: 1; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667EEA; }
+    .form-group textarea { resize: vertical; min-height: 60px; }
+
+    /* Toggle */
+    .toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; }
+    .toggle-switch { width: 40px; height: 22px; background: #ddd; border-radius: 11px; position: relative; transition: 0.2s; }
+    .toggle-switch.on { background: #2ECC71; }
+    .toggle-switch::after { content: ''; position: absolute; width: 18px; height: 18px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: 0.2s; }
+    .toggle-switch.on::after { left: 20px; }
+
+    /* Timeline */
+    .timeline { position: relative; padding-left: 24px; }
+    .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: #e0e0e0; }
+    .timeline-item { position: relative; margin-bottom: 16px; padding: 10px 14px; background: #f8f9fa; border-radius: 8px; }
+    .timeline-item::before { content: ''; position: absolute; left: -20px; top: 14px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #667EEA; background: white; }
+    .timeline-item .type { font-weight: 700; font-size: 12px; text-transform: uppercase; }
+    .timeline-item .date { font-size: 11px; color: #888; }
+    .timeline-item .notes { font-size: 13px; margin-top: 4px; }
+    .timeline-item .result { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #e0e0e0; display: inline-block; margin-top: 4px; }
+
+    /* Quick Actions */
+    .quick-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .quick-action { padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; color: white; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+    .quick-action:hover { transform: scale(1.05); }
+    .quick-action.tel { background: #3498DB; }
+    .quick-action.email { background: #E74C3C; }
+    .quick-action.whatsapp { background: #25D366; }
+
+    /* Dashboard */
+    .dashboard { padding: 24px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .kpi-card .label { font-size: 12px; color: #888; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+    .kpi-card .value { font-size: 32px; font-weight: 800; margin: 8px 0 4px; }
+    .kpi-card .sub { font-size: 12px; color: #888; }
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
+    .chart-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .chart-container h3 { font-size: 15px; margin-bottom: 16px; color: #333; }
+
+    /* Table (List view) */
+    .list-view { padding: 16px 24px; }
+    .table-wrapper { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f8f9fa; padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; user-select: none; white-space: nowrap; }
+    th:hover { background: #eef; }
+    td { padding: 10px 14px; font-size: 13px; border-top: 1px solid #f0f0f0; }
+    tr:hover td { background: #f8f9ff; }
+    .stage-badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; color: white; white-space: nowrap; }
+    .ecole-badge { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; color: white; }
+
+    /* Duplicates */
+    .duplicates-view { padding: 24px; }
+    .dup-group { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid #F39C12; }
+    .dup-group h3 { font-size: 14px; margin-bottom: 12px; color: #F39C12; }
+    .dup-candidate { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 6px; }
+    .dup-candidate .info { font-size: 13px; }
+    .dup-candidate .info strong { margin-right: 8px; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 300; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s; }
+    .modal { background: white; border-radius: 16px; width: 700px; max-width: 90vw; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .modal-header { padding: 20px 24px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h2 { font-size: 18px; }
+    .modal-body { padding: 24px; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 8px; }
+
+    /* CSV Import */
+    .dropzone { border: 2px dashed #ccc; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: 0.2s; }
+    .dropzone:hover, .dropzone.active { border-color: #667EEA; background: #f0f0ff; }
+    .dropzone p { color: #888; font-size: 14px; }
+    .preview-table { max-height: 300px; overflow: auto; margin-top: 16px; }
+    .preview-table table { font-size: 12px; }
+    .mapping-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .mapping-row .csv-col { font-weight: 600; min-width: 150px; font-size: 13px; }
+
+    /* Stage Manager */
+    .stage-manager-list { list-style: none; }
+    .stage-manager-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #f8f9fa; border-radius: 10px; margin-bottom: 8px; transition: all 0.15s; }
+    .stage-manager-item:hover { background: #eef; }
+    .stage-manager-item .grip { cursor: grab; color: #bbb; display: flex; align-items: center; }
+    .stage-manager-item .color-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #ddd; cursor: pointer; flex-shrink: 0; }
+    .stage-manager-item .stage-name-input { flex: 1; border: 1.5px solid transparent; background: transparent; padding: 6px 10px; border-radius: 6px; font-size: 14px; font-weight: 600; }
+    .stage-manager-item .stage-name-input:hover { border-color: #ddd; background: white; }
+    .stage-manager-item .stage-name-input:focus { border-color: #667EEA; background: white; outline: none; }
+    .stage-manager-actions { display: flex; gap: 4px; }
+    .stage-manager-actions button { width: 30px; height: 30px; border: none; background: transparent; cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #888; transition: 0.15s; }
+    .stage-manager-actions button:hover { background: #e0e0e0; color: #333; }
+    .stage-manager-actions button.danger:hover { background: #ffe0e0; color: #E74C3C; }
+    .color-picker-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .color-picker-row .color-option { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.15s; }
+    .color-picker-row .color-option:hover { transform: scale(1.15); }
+    .color-picker-row .color-option.selected { border-color: #333; }
+    .stage-add-bar { display: flex; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #eee; }
+    .stage-add-bar input { flex: 1; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #333; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 500; animation: slideUp 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .toast.success { background: #2ECC71; }
+    .toast.error { background: #E74C3C; }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .kanban { flex-direction: column; }
+      .kanban-col { min-width: 100%; max-width: 100%; }
+      .drawer { width: 100vw; }
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+    const API = '/parcoursup/api';
+
+    // ============ API HELPERS ============
+    async function api(path, opts = {}) {
+      const res = await fetch(API + path, {
+        headers: { 'Content-Type': 'application/json' },
+        ...opts,
+        body: opts.body ? JSON.stringify(opts.body) : undefined
+      });
+      return res.json();
+    }
+
+    // ============ ICONS (inline SVG) ============
+    function Icon({ name, size = 18, color = 'currentColor' }) {
+      const icons = {
+        phone: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>,
+        mail: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
+        'message-square': <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
+        'message-circle': <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>,
+        send: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
+        plus: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+        x: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+        upload: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>,
+        search: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+        filter: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
+        check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+        users: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>,
+        'bar-chart': <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>,
+        copy: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>,
+        trash: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>,
+        edit: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+        'refresh-cw': <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>,
+        'chevron-down': <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
+        'alert-triangle': <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+        settings: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>,
+        'arrow-up': <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>,
+        'arrow-down': <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>,
+        'grip-vertical': <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>,
+      };
+      return icons[name] || null;
+    }
+
+    // ============ TOAST ============
+    function Toast({ message, type, onClose }) {
+      useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, []);
+      return <div className={`toast ${type}`}>{message}</div>;
+    }
+
+    // ============ CHART COMPONENT ============
+    function ChartComponent({ type, data, options, height = 300 }) {
+      const canvasRef = useRef(null);
+      const chartRef = useRef(null);
+      useEffect(() => {
+        if (chartRef.current) chartRef.current.destroy();
+        if (!canvasRef.current) return;
+        chartRef.current = new Chart(canvasRef.current, { type, data, options: { ...options, responsive: true, maintainAspectRatio: false } });
+        return () => { if (chartRef.current) chartRef.current.destroy(); };
+      }, [JSON.stringify(data)]);
+      return <div style={{ height }}><canvas ref={canvasRef} /></div>;
+    }
+
+    // ============ MAIN APP ============
+    function App() {
+      const [config, setConfig] = useState(null);
+      const [candidates, setCandidates] = useState([]);
+      const [relances, setRelances] = useState([]);
+      const [stats, setStats] = useState(null);
+      const [duplicates, setDuplicates] = useState({ groups: [], total: 0 });
+      const [activeTab, setActiveTab] = useState('kanban');
+      const [selectedCandidate, setSelectedCandidate] = useState(null);
+      const [showAddModal, setShowAddModal] = useState(false);
+      const [showImportModal, setShowImportModal] = useState(false);
+      const [showStageManager, setShowStageManager] = useState(false);
+      const [showBulkSend, setShowBulkSend] = useState(null); // stageId or null
+      const [queue, setQueue] = useState([]);
+      const [toast, setToast] = useState(null);
+      const [filters, setFilters] = useState({ ecole: '', formation: '', charge: '', conseiller: '', search: '' });
+      const [sortCol, setSortCol] = useState('nom');
+      const [sortDir, setSortDir] = useState('asc');
+
+      const showToast = (message, type = 'success') => setToast({ message, type });
+
+      // Load data
+      const loadData = useCallback(async () => {
+        const [cfg, cands, rels] = await Promise.all([
+          api('/config'),
+          api('/candidates'),
+          api('/relances')
+        ]);
+        setConfig(cfg);
+        setCandidates(cands);
+        setRelances(rels);
+      }, []);
+
+      const loadStats = useCallback(async () => {
+        const [s, d] = await Promise.all([api('/stats'), api('/duplicates')]);
+        setStats(s);
+        setDuplicates(d);
+      }, []);
+
+      const loadQueue = useCallback(async () => {
+        const q = await api('/queue');
+        setQueue(q);
+      }, []);
+
+      useEffect(() => { loadData(); }, []);
+      useEffect(() => { if (activeTab === 'dashboard' || activeTab === 'doublons') loadStats(); }, [activeTab]);
+      useEffect(() => { if (activeTab === 'automations') loadQueue(); }, [activeTab]);
+
+      // Filter candidates
+      const filteredCandidates = useMemo(() => {
+        let list = [...candidates];
+        if (filters.ecole) list = list.filter(c => c.ecole === filters.ecole);
+        if (filters.formation) list = list.filter(c => c.formation === filters.formation);
+        if (filters.charge) list = list.filter(c => c.chargeAdmission === filters.charge);
+        if (filters.conseiller) list = list.filter(c => c.conseillerFormation === filters.conseiller);
+        if (filters.search) {
+          const s = filters.search.toLowerCase();
+          list = list.filter(c =>
+            (c.nom || '').toLowerCase().includes(s) ||
+            (c.prenom || '').toLowerCase().includes(s) ||
+            (c.email || '').toLowerCase().includes(s) ||
+            (c.telephone || '').includes(s)
+          );
+        }
+        return list;
+      }, [candidates, filters]);
+
+      // Available formations based on selected school filter
+      const availableFormations = useMemo(() => {
+        if (!config) return [];
+        if (filters.ecole && config.ecoles[filters.ecole]) {
+          return Object.keys(config.ecoles[filters.ecole].formations);
+        }
+        // All formations
+        const all = new Set();
+        Object.values(config.ecoles || {}).forEach(e => Object.keys(e.formations).forEach(f => all.add(f)));
+        return [...all].sort();
+      }, [config, filters.ecole]);
+
+      // Available conseillers
+      const availableConseillers = useMemo(() => {
+        if (!config) return [];
+        const all = new Set();
+        Object.values(config.ecoles || {}).forEach(e =>
+          Object.values(e.formations).forEach(f => { if (f.conseiller) all.add(f.conseiller); })
+        );
+        return [...all].sort();
+      }, [config]);
+
+      // Move candidate stage
+      const moveCandidate = async (candidateId, newStage) => {
+        await api(`/candidates/${candidateId}/stage`, { method: 'PATCH', body: { stage: newStage } });
+        setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, stage: newStage } : c));
+      };
+
+      // Add candidate
+      const addCandidate = async (data) => {
+        const result = await api('/candidates', { method: 'POST', body: data });
+        setCandidates(prev => [...prev, result]);
+        showToast('Candidat ajouté');
+      };
+
+      // Update candidate
+      const updateCandidate = async (id, data) => {
+        const result = await api(`/candidates/${id}`, { method: 'PUT', body: data });
+        setCandidates(prev => prev.map(c => c.id === id ? result : c));
+        setSelectedCandidate(result);
+      };
+
+      // Delete candidate
+      const deleteCandidate = async (id) => {
+        await api(`/candidates/${id}`, { method: 'DELETE' });
+        setCandidates(prev => prev.filter(c => c.id !== id));
+        setSelectedCandidate(null);
+        showToast('Candidat supprimé');
+      };
+
+      // Add relance
+      const addRelance = async (data) => {
+        const result = await api('/relances', { method: 'POST', body: data });
+        setRelances(prev => [...prev, result]);
+        showToast('Relance enregistrée');
+      };
+
+      // Bulk send to a stage
+      const bulkSend = async (stageId, channel, subject, message, delayMinutes) => {
+        const result = await api('/queue/bulk-send', { method: 'POST', body: { stageId, channel, subject, message, delayMinutes } });
+        showToast(`${result.queued} message(s) programmé(s)`);
+        loadQueue();
+        // Process immediately if no delay
+        if (!delayMinutes) {
+          await api('/queue/process', { method: 'POST' });
+          await loadData(); // Refresh relances
+          loadQueue();
+        }
+      };
+
+      // Save automations
+      const saveAutomations = async (automations) => {
+        await api('/automations', { method: 'POST', body: automations });
+        const cfg = await api('/config');
+        setConfig(cfg);
+        showToast('Automatisations sauvegardées');
+      };
+
+      // Cancel queued item
+      const cancelQueueItem = async (id) => {
+        await api(`/queue/${id}`, { method: 'DELETE' });
+        loadQueue();
+        showToast('Envoi annulé');
+      };
+
+      // Update stages config
+      const updateStages = async (newStages) => {
+        const newConfig = { ...config, stages: newStages };
+        await api('/config', { method: 'POST', body: newConfig });
+        setConfig(newConfig);
+        showToast('Colonnes Kanban mises à jour');
+      };
+
+      // Import CSV
+      const importCandidates = async (newCandidates) => {
+        const result = await api('/candidates/bulk', { method: 'POST', body: { candidates: newCandidates } });
+        await loadData();
+        showToast(`${result.imported} candidats importés`);
+      };
+
+      // Merge duplicates
+      const mergeDuplicates = async (keepId, removeIds) => {
+        await api('/duplicates/merge', { method: 'POST', body: { keepId, removeIds } });
+        await loadData();
+        await loadStats();
+        showToast('Doublons fusionnés');
+      };
+
+      if (!config) return <div style={{ padding: 40, textAlign: 'center' }}>Chargement...</div>;
+
+      return (
+        <div>
+          <header className="header">
+            <div className="header-left">
+              <div>
+                <h1>CRM Parcoursup</h1>
+                <div className="subtitle">Suivi des candidats - Noschool / NS MDM / WILL.SCHOOL</div>
+              </div>
+            </div>
+            <div className="header-actions">
+              <button className="btn btn-outline" onClick={() => setShowImportModal(true)}>
+                <Icon name="upload" size={16} /> Importer CSV
+              </button>
+              <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+                <Icon name="plus" size={16} /> Nouveau candidat
+              </button>
+            </div>
+          </header>
+
+          <div className="tabs">
+            <div className={`tab ${activeTab === 'kanban' ? 'active' : ''}`} onClick={() => setActiveTab('kanban')}>
+              Kanban <span className="badge">{filteredCandidates.length}</span>
+            </div>
+            <div className={`tab ${activeTab === 'liste' ? 'active' : ''}`} onClick={() => setActiveTab('liste')}>
+              Liste
+            </div>
+            <div className={`tab ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+              Tableau de bord
+            </div>
+            <div className={`tab ${activeTab === 'automations' ? 'active' : ''}`} onClick={() => setActiveTab('automations')}>
+              Automatisations
+            </div>
+            <div className={`tab ${activeTab === 'doublons' ? 'active' : ''}`} onClick={() => setActiveTab('doublons')}>
+              Doublons {duplicates.total > 0 && <span className="badge" style={{ background: '#F39C12' }}>{duplicates.total}</span>}
+            </div>
+          </div>
+
+          {(activeTab === 'kanban' || activeTab === 'liste') && (
+            <FilterBar
+              config={config}
+              filters={filters}
+              setFilters={setFilters}
+              availableFormations={availableFormations}
+              availableConseillers={availableConseillers}
+              count={filteredCandidates.length}
+              total={candidates.length}
+            />
+          )}
+
+          {activeTab === 'kanban' && (
+            <>
+              <div style={{ padding: '8px 24px 0', display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="btn btn-sm btn-outline" onClick={() => setShowStageManager(true)}>
+                  <Icon name="settings" size={14} /> Gérer les colonnes
+                </button>
+              </div>
+              <KanbanView
+                config={config}
+                candidates={filteredCandidates}
+                relances={relances}
+                onCardClick={setSelectedCandidate}
+                onMove={moveCandidate}
+                onBulkSend={setShowBulkSend}
+              />
+            </>
+          )}
+
+          {activeTab === 'liste' && (
+            <ListView
+              config={config}
+              candidates={filteredCandidates}
+              relances={relances}
+              onRowClick={setSelectedCandidate}
+              sortCol={sortCol}
+              sortDir={sortDir}
+              onSort={(col) => {
+                if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+                else { setSortCol(col); setSortDir('asc'); }
+              }}
+            />
+          )}
+
+          {activeTab === 'dashboard' && stats && (
+            <DashboardView config={config} stats={stats} />
+          )}
+
+          {activeTab === 'automations' && (
+            <AutomationsView
+              config={config}
+              candidates={candidates}
+              queue={queue}
+              onSave={saveAutomations}
+              onCancelQueue={cancelQueueItem}
+              onRefreshQueue={loadQueue}
+            />
+          )}
+
+          {activeTab === 'doublons' && (
+            <DuplicatesView
+              duplicates={duplicates}
+              config={config}
+              onMerge={mergeDuplicates}
+              onRefresh={loadStats}
+            />
+          )}
+
+          {selectedCandidate && (
+            <CandidateDrawer
+              candidate={selectedCandidate}
+              config={config}
+              relances={relances.filter(r => r.candidateId === selectedCandidate.id)}
+              onClose={() => setSelectedCandidate(null)}
+              onUpdate={updateCandidate}
+              onDelete={deleteCandidate}
+              onAddRelance={addRelance}
+            />
+          )}
+
+          {showAddModal && (
+            <AddCandidateModal
+              config={config}
+              onClose={() => setShowAddModal(false)}
+              onAdd={(data) => { addCandidate(data); setShowAddModal(false); }}
+            />
+          )}
+
+          {showImportModal && (
+            <CSVImportModal
+              config={config}
+              onClose={() => setShowImportModal(false)}
+              onImport={(data) => { importCandidates(data); setShowImportModal(false); }}
+            />
+          )}
+
+          {showBulkSend && (
+            <BulkSendModal
+              config={config}
+              stageId={showBulkSend}
+              candidates={candidates.filter(c => c.stage === showBulkSend)}
+              onClose={() => setShowBulkSend(null)}
+              onSend={(channel, subject, message, delay) => {
+                bulkSend(showBulkSend, channel, subject, message, delay);
+                setShowBulkSend(null);
+              }}
+              onSaveAutomation={async (stageId, autoData) => {
+                const allAutos = { ...(config.automations || {}), [stageId]: autoData };
+                await saveAutomations(allAutos);
+              }}
+            />
+          )}
+
+          {showStageManager && (
+            <StageManagerModal
+              config={config}
+              candidates={candidates}
+              onClose={() => setShowStageManager(false)}
+              onSave={(newStages) => { updateStages(newStages); setShowStageManager(false); }}
+            />
+          )}
+
+          {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+        </div>
+      );
+    }
+
+    // ============ FILTER BAR ============
+    function FilterBar({ config, filters, setFilters, availableFormations, availableConseillers, count, total }) {
+      return (
+        <div className="filter-bar">
+          <Icon name="filter" size={16} color="#888" />
+          <select value={filters.ecole} onChange={e => setFilters(f => ({ ...f, ecole: e.target.value, formation: '' }))}>
+            <option value="">Toutes les écoles</option>
+            {Object.keys(config.ecoles).map(e => <option key={e} value={e}>{e}</option>)}
+          </select>
+          <select value={filters.formation} onChange={e => setFilters(f => ({ ...f, formation: e.target.value }))}>
+            <option value="">Toutes les formations</option>
+            {availableFormations.map(f => <option key={f} value={f}>{f}</option>)}
+          </select>
+          <select value={filters.charge} onChange={e => setFilters(f => ({ ...f, charge: e.target.value }))}>
+            <option value="">Tous les chargés</option>
+            {config.chargesAdmission.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={filters.conseiller} onChange={e => setFilters(f => ({ ...f, conseiller: e.target.value }))}>
+            <option value="">Tous les conseillers</option>
+            {availableConseillers.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <div style={{ position: 'relative' }}>
+            <input
+              type="text"
+              placeholder="Rechercher..."
+              value={filters.search}
+              onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
+              style={{ paddingLeft: 30 }}
+            />
+            <Icon name="search" size={14} color="#aaa" />
+          </div>
+          {(filters.ecole || filters.formation || filters.charge || filters.conseiller || filters.search) && (
+            <button className="btn btn-sm btn-outline" onClick={() => setFilters({ ecole: '', formation: '', charge: '', conseiller: '', search: '' })}>
+              Réinitialiser
+            </button>
+          )}
+          <span className="filter-count">{count} / {total} candidats</span>
+        </div>
+      );
+    }
+
+    // ============ KANBAN VIEW ============
+    function KanbanView({ config, candidates, relances, onCardClick, onMove, onBulkSend }) {
+      const [dragOverCol, setDragOverCol] = useState(null);
+      const dragItemRef = useRef(null);
+
+      // Toutes les colonnes dans l'ordre du config
+      const allStages = config.stages;
+
+      // Vérifie si une automatisation est active sur un stage
+      const hasAutoForStage = (stageId) => {
+        const auto = (config.automations || {})[stageId];
+        return auto && auto.enabled && (auto.actions || []).length > 0;
+      };
+
+      const handleTriggerAll = async (stageId, stageLabel) => {
+        const count = candidates.filter(c => c.stage === stageId).length;
+        if (count === 0) {
+          showToast('Aucun candidat dans cette colonne', 'warning');
+          return;
+        }
+        if (!confirm(`Déclencher l'automatisation pour les ${count} candidat(s) actuellement dans "${stageLabel}" ?\n\nCela enverra les messages programmés (mail/WhatsApp) selon les délais configurés.`)) return;
+        try {
+          const resp = await fetch('/parcoursup/api/automations/trigger-all', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stageId })
+          });
+          const data = await resp.json();
+          if (data.triggered > 0) {
+            showToast(`${data.triggered} action(s) programmée(s) pour ${data.candidates} candidat(s)`, 'success');
+          } else if (data.reason === 'automation_disabled') {
+            showToast('L\'automatisation est désactivée pour cette colonne. Activez-la d\'abord via le bouton ✈️.', 'warning');
+          } else {
+            showToast('Automatisation déjà déclenchée pour tous les candidats de cette colonne', 'info');
+          }
+        } catch (err) {
+          showToast('Erreur lors du déclenchement', 'error');
+        }
+      };
+
+      const handleDragStart = (e, candidateId) => {
+        dragItemRef.current = candidateId;
+        e.dataTransfer.effectAllowed = 'move';
+        e.target.classList.add('dragging');
+      };
+
+      const handleDragEnd = (e) => {
+        e.target.classList.remove('dragging');
+        dragItemRef.current = null;
+        setDragOverCol(null);
+      };
+
+      const handleDragOver = (e, stageId) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        setDragOverCol(stageId);
+      };
+
+      const handleDragLeave = () => setDragOverCol(null);
+
+      const handleDrop = (e, stageId) => {
+        e.preventDefault();
+        setDragOverCol(null);
+        if (dragItemRef.current) {
+          onMove(dragItemRef.current, stageId);
+        }
+      };
+
+      const getRelanceCount = (candidateId) => relances.filter(r => r.candidateId === candidateId).length;
+      const getLastRelance = (candidateId) => {
+        const cRelances = relances.filter(r => r.candidateId === candidateId);
+        if (cRelances.length === 0) return null;
+        return cRelances.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+      };
+
+      const renderColumn = (stage, isTerminal = false) => {
+        const colCandidates = candidates.filter(c => c.stage === stage.id);
+        return (
+          <div key={stage.id} className={`kanban-col ${isTerminal ? 'terminal' : ''}`}>
+            <div className="kanban-col-header" style={{ background: stage.color, color: 'white' }}>
+              <span>{stage.label}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onBulkSend(stage.id); }}
+                  title={colCandidates.length > 0 ? `Envoyer Mail/WhatsApp aux ${colCandidates.length} candidat(s)` : 'Configurer un envoi pour cette colonne'}
+                  style={{ background: 'rgba(255,255,255,0.25)', border: 'none', borderRadius: 6, padding: '2px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'white' }}
+                >
+                  <Icon name="send" size={12} />
+                </button>
+                {hasAutoForStage(stage.id) && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleTriggerAll(stage.id, stage.label); }}
+                    title={`Déclencher l'automatisation pour les ${colCandidates.length} candidat(s) déjà dans cette colonne`}
+                    style={{ background: 'rgba(255,255,0,0.3)', border: 'none', borderRadius: 6, padding: '2px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'white', fontSize: 10, gap: 3 }}
+                  >
+                    ⚡ Go
+                  </button>
+                )}
+                <span className="count">{colCandidates.length}</span>
+              </div>
+            </div>
+            <div
+              className={`kanban-col-body ${dragOverCol === stage.id ? 'drag-over' : ''}`}
+              onDragOver={(e) => handleDragOver(e, stage.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, stage.id)}
+            >
+              {colCandidates.map(c => {
+                const ecoleColor = config.ecoles[c.ecole]?.color || '#999';
+                const relCount = getRelanceCount(c.id);
+                const lastRel = getLastRelance(c.id);
+                return (
+                  <div
+                    key={c.id}
+                    className="card"
+                    style={{ borderLeftColor: ecoleColor }}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, c.id)}
+                    onDragEnd={handleDragEnd}
+                    onClick={() => onCardClick(c)}
+                  >
+                    {c.statutCRM && (
+                      <div className="card-crm" style={{ background: '#2ECC71', color: 'white' }} title="Déjà dans le CRM">
+                        <Icon name="check" size={12} />
+                      </div>
+                    )}
+                    <div className="card-name">{c.prenom} {c.nom}</div>
+                    <div className="card-formation">{c.formation}</div>
+                    <div className="card-meta">
+                      <span className="card-badge" style={{ background: ecoleColor + '22', color: ecoleColor }}>{c.ecole}</span>
+                      {c.chargeAdmission && (
+                        <span className="card-badge" style={{ background: '#f0f0f0', color: '#555' }}>{c.chargeAdmission}</span>
+                      )}
+                      {relCount > 0 && (
+                        <span className="card-relance-count" title="Relances">
+                          <Icon name="phone" size={11} /> {relCount}
+                        </span>
+                      )}
+                      {lastRel && (
+                        <span className="card-relance-count" title={`Dernière relance: ${new Date(lastRel.date).toLocaleDateString('fr-FR')}`}>
+                          {timeAgo(lastRel.date)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {colCandidates.length === 0 && (
+                <div style={{ padding: '20px 10px', textAlign: 'center', color: '#bbb', fontSize: 13 }}>
+                  Déposez ici
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      return (
+        <div className="kanban">
+          {allStages.map(s => renderColumn(s))}
+        </div>
+      );
+    }
+
+    // ============ LIST VIEW ============
+    function ListView({ config, candidates, relances, onRowClick, sortCol, sortDir, onSort }) {
+      const sorted = useMemo(() => {
+        return [...candidates].sort((a, b) => {
+          let va = a[sortCol] || '', vb = b[sortCol] || '';
+          if (typeof va === 'string') va = va.toLowerCase();
+          if (typeof vb === 'string') vb = vb.toLowerCase();
+          if (va < vb) return sortDir === 'asc' ? -1 : 1;
+          if (va > vb) return sortDir === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }, [candidates, sortCol, sortDir]);
+
+      const arrow = (col) => sortCol === col ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '';
+
+      return (
+        <div className="list-view">
+          <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th onClick={() => onSort('nom')}>Nom{arrow('nom')}</th>
+                  <th onClick={() => onSort('prenom')}>Prénom{arrow('prenom')}</th>
+                  <th onClick={() => onSort('ecole')}>École{arrow('ecole')}</th>
+                  <th onClick={() => onSort('formation')}>Formation{arrow('formation')}</th>
+                  <th onClick={() => onSort('stage')}>Stage{arrow('stage')}</th>
+                  <th onClick={() => onSort('chargeAdmission')}>Chargé Adm.{arrow('chargeAdmission')}</th>
+                  <th onClick={() => onSort('conseillerFormation')}>Conseiller{arrow('conseillerFormation')}</th>
+                  <th>Tél</th>
+                  <th>Email</th>
+                  <th>CRM</th>
+                  <th>Relances</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map(c => {
+                  const ecoleColor = config.ecoles[c.ecole]?.color || '#999';
+                  const stageInfo = config.stages.find(s => s.id === c.stage);
+                  const relCount = relances.filter(r => r.candidateId === c.id).length;
+                  return (
+                    <tr key={c.id} onClick={() => onRowClick(c)} style={{ cursor: 'pointer' }}>
+                      <td><strong>{c.nom}</strong></td>
+                      <td>{c.prenom}</td>
+                      <td><span className="ecole-badge" style={{ background: ecoleColor }}>{c.ecole}</span></td>
+                      <td>{c.formation}</td>
+                      <td><span className="stage-badge" style={{ background: stageInfo?.color || '#999' }}>{stageInfo?.label || c.stage}</span></td>
+                      <td>{c.chargeAdmission}</td>
+                      <td>{c.conseillerFormation}</td>
+                      <td>{c.telephone}</td>
+                      <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.email}</td>
+                      <td>{c.statutCRM ? <Icon name="check" size={16} color="#2ECC71" /> : ''}</td>
+                      <td>{relCount > 0 ? relCount : ''}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {sorted.length === 0 && (
+              <div style={{ padding: 40, textAlign: 'center', color: '#bbb' }}>Aucun candidat</div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ============ DASHBOARD ============
+    function DashboardView({ config, stats }) {
+      const [selectedCharge, setSelectedCharge] = useState(null);
+      const stageColors = {};
+      config.stages.forEach(s => stageColors[s.id] = s.color);
+      const stageLabels = {};
+      config.stages.forEach(s => stageLabels[s.id] = s.label);
+      const chargeDetails = stats.chargeDetails || {};
+      const charges = Object.keys(chargeDetails);
+      const chargeColors = ['#667EEA', '#E74C3C', '#2ECC71', '#F39C12', '#9B59B6', '#1ABC9C', '#E67E22', '#3498DB'];
+
+      const formatHours = (h) => {
+        if (h === undefined || h === null) return '-';
+        if (h < 1) return `${Math.round(h * 60)}min`;
+        if (h < 24) return `${Math.round(h)}h`;
+        return `${Math.round(h / 24)}j`;
+      };
+
+      return (
+        <div className="dashboard">
+          {/* ===== KPI GLOBAUX ===== */}
+          <div className="kpi-grid">
+            <div className="kpi-card">
+              <div className="label">Total Candidats</div>
+              <div className="value">{stats.total}</div>
+            </div>
+            {Object.entries(config.ecoles).map(([name, ecole]) => (
+              <div key={name} className="kpi-card">
+                <div className="label" style={{ color: ecole.color }}>{name}</div>
+                <div className="value" style={{ color: ecole.color }}>{stats.parEcole[name] || 0}</div>
+              </div>
+            ))}
+            <div className="kpi-card">
+              <div className="label">Taux conversion</div>
+              <div className="value" style={{ color: '#2ECC71' }}>{stats.conversion}%</div>
+              <div className="sub">Voeu → Inscrit</div>
+            </div>
+            <div className="kpi-card">
+              <div className="label">Basculés CRM</div>
+              <div className="value" style={{ color: '#667EEA' }}>{stats.totalCRM || 0} <span style={{ fontSize: 16, color: '#888' }}>/ {stats.total}</span></div>
+              <div className="sub" style={{ color: (stats.tauxCRMGlobal || 0) >= 50 ? '#2ECC71' : '#E74C3C' }}>{stats.tauxCRMGlobal || 0}% dans le CRM</div>
+            </div>
+            <div className="kpi-card">
+              <div className="label">Relances effectuées</div>
+              <div className="value" style={{ color: '#3498DB' }}>{stats.relancesTotal}</div>
+            </div>
+            <div className="kpi-card">
+              <div className="label">Doublons</div>
+              <div className="value" style={{ color: stats.doublons > 0 ? '#F39C12' : '#2ECC71' }}>{stats.doublons}</div>
+            </div>
+          </div>
+
+          {/* ===== CLASSEMENT HEBDO + PIPELINE ===== */}
+          <div className="charts-grid">
+            <div className="chart-container">
+              <h3>Pipeline des candidats</h3>
+              <ChartComponent
+                type="bar"
+                height={280}
+                data={{
+                  labels: config.stages.map(s => s.label),
+                  datasets: [{
+                    data: config.stages.map(s => stats.parStage[s.id] || 0),
+                    backgroundColor: config.stages.map(s => s.color),
+                    borderRadius: 6, borderSkipped: false,
+                  }]
+                }}
+                options={{
+                  indexAxis: 'y',
+                  plugins: { legend: { display: false } },
+                  scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }}
+              />
+            </div>
+
+            <div className="chart-container">
+              <h3>Temps moyen de traitement par colonne</h3>
+              {Object.keys(stats.tempsGlobalParStage || {}).length > 0 ? (
+                <ChartComponent
+                  type="bar"
+                  height={280}
+                  data={{
+                    labels: config.stages.filter(s => stats.tempsGlobalParStage[s.id] !== undefined).map(s => s.label),
+                    datasets: [{
+                      label: 'Heures',
+                      data: config.stages.filter(s => stats.tempsGlobalParStage[s.id] !== undefined).map(s => stats.tempsGlobalParStage[s.id]),
+                      backgroundColor: config.stages.filter(s => stats.tempsGlobalParStage[s.id] !== undefined).map(s => s.color + 'CC'),
+                      borderRadius: 6, borderSkipped: false,
+                    }]
+                  }}
+                  options={{
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => formatHours(ctx.raw) } } },
+                    scales: { x: { beginAtZero: true, title: { display: true, text: 'Heures' } } }
+                  }}
+                />
+              ) : (
+                <div style={{ padding: 40, textAlign: 'center', color: '#aaa', fontSize: 13 }}>Pas encore assez de données</div>
+              )}
+            </div>
+          </div>
+
+          {/* ===== SECTION PERFORMANCE INDIVIDUELLE ===== */}
+          <div style={{ margin: '24px 0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2e' }}>Performance par chargé(e) d'admission</h2>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className={`btn btn-sm ${selectedCharge === null ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setSelectedCharge(null)}>Vue globale</button>
+              {charges.map((ch, i) => (
+                <button key={ch} className={`btn btn-sm ${selectedCharge === ch ? 'btn-primary' : 'btn-outline'}`}
+                  style={selectedCharge === ch ? { background: chargeColors[i % chargeColors.length] } : {}}
+                  onClick={() => setSelectedCharge(ch)}>{ch}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* === VUE GLOBALE : Tableau comparatif === */}
+          {selectedCharge === null && (
+            <>
+              {/* Tableau comparatif */}
+              <div className="chart-container" style={{ marginBottom: 20, overflowX: 'auto' }}>
+                <h3>Tableau de bord comparatif</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 12 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid #e0e0e0' }}>
+                      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 700, color: '#555' }}>Chargé(e)</th>
+                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#555' }}>Candidats</th>
+                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#555' }}>Aujourd'hui</th>
+                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#555' }}>Semaine</th>
+                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#555' }}>Mois</th>
+                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#555' }}>Total</th>
+                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#555' }}>Sans relance</th>
+                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#2ECC71' }}>CRM</th>
+                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#667EEA' }}>Taux CRM</th>
+                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#2ECC71' }}>Inscrits</th>
+                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#2ECC71' }}>Taux inscrit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {charges.map((ch, i) => {
+                      const d = chargeDetails[ch];
+                      return (
+                        <tr key={ch} style={{ borderBottom: '1px solid #f0f0f0', cursor: 'pointer', transition: 'background 0.15s' }}
+                          onClick={() => setSelectedCharge(ch)}
+                          onMouseEnter={e => e.currentTarget.style.background = '#f8f9ff'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                          <td style={{ padding: '10px 12px', fontWeight: 700 }}>
+                            <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: chargeColors[i % chargeColors.length], marginRight: 8 }} />
+                            {ch}
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 600 }}>{d.totalCandidats}</td>
+                          <td style={{ textAlign: 'center', padding: '10px 8px' }}>
+                            <span style={{ background: d.relancesToday > 0 ? '#2ECC7122' : '#f5f5f5', color: d.relancesToday > 0 ? '#2ECC71' : '#ccc', padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.relancesToday}</span>
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '10px 8px' }}>
+                            <span style={{ background: '#667EEA22', color: '#667EEA', padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.relancesWeek}</span>
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '10px 8px' }}>
+                            <span style={{ background: '#3498DB22', color: '#3498DB', padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.relancesMonth}</span>
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 600 }}>{d.relancesTotal}</td>
+                          <td style={{ textAlign: 'center', padding: '10px 8px' }}>
+                            <span style={{ background: d.sansRelance > 0 ? '#E74C3C22' : '#2ECC7122', color: d.sansRelance > 0 ? '#E74C3C' : '#2ECC71', padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.sansRelance}</span>
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 600 }}>{d.crmCount}</td>
+                          <td style={{ textAlign: 'center', padding: '10px 8px' }}>
+                            <span style={{ background: d.tauxCRM >= 50 ? '#2ECC7133' : d.tauxCRM >= 25 ? '#F39C1233' : '#E74C3C22',
+                              color: d.tauxCRM >= 50 ? '#27ae60' : d.tauxCRM >= 25 ? '#e67e22' : '#E74C3C',
+                              padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.tauxCRM}%</span>
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 600 }}>{d.inscritCount}</td>
+                          <td style={{ textAlign: 'center', padding: '10px 8px' }}>
+                            <span style={{ background: d.tauxInscrit >= 30 ? '#2ECC7133' : '#F39C1233',
+                              color: d.tauxInscrit >= 30 ? '#27ae60' : '#e67e22',
+                              padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.tauxInscrit}%</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {/* Ligne total */}
+                    <tr style={{ borderTop: '2px solid #1a1a2e', background: '#f8f9fa', fontWeight: 700 }}>
+                      <td style={{ padding: '10px 12px' }}>TOTAL</td>
+                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{stats.total}</td>
+                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{charges.reduce((s, c) => s + chargeDetails[c].relancesToday, 0)}</td>
+                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{charges.reduce((s, c) => s + chargeDetails[c].relancesWeek, 0)}</td>
+                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{charges.reduce((s, c) => s + chargeDetails[c].relancesMonth, 0)}</td>
+                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{stats.relancesTotal}</td>
+                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{charges.reduce((s, c) => s + chargeDetails[c].sansRelance, 0)}</td>
+                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{stats.totalCRM || 0}</td>
+                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{stats.tauxCRMGlobal || 0}%</td>
+                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{stats.inscrits}</td>
+                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{stats.conversion}%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Graphiques comparatifs */}
+              <div className="charts-grid">
+                <div className="chart-container">
+                  <h3>Actions par chargé(e) : Jour / Semaine / Mois</h3>
+                  <ChartComponent
+                    type="bar"
+                    height={300}
+                    data={{
+                      labels: charges,
+                      datasets: [
+                        { label: "Aujourd'hui", data: charges.map(c => chargeDetails[c].relancesToday), backgroundColor: '#2ECC71', borderRadius: 4 },
+                        { label: 'Semaine', data: charges.map(c => chargeDetails[c].relancesWeek), backgroundColor: '#667EEA', borderRadius: 4 },
+                        { label: 'Mois', data: charges.map(c => chargeDetails[c].relancesMonth), backgroundColor: '#3498DB', borderRadius: 4 },
+                      ]
+                    }}
+                    options={{
+                      plugins: { legend: { position: 'bottom' } },
+                      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    }}
+                  />
+                </div>
+
+                <div className="chart-container">
+                  <h3>Transformation CRM par chargé(e)</h3>
+                  <ChartComponent
+                    type="bar"
+                    height={300}
+                    data={{
+                      labels: charges,
+                      datasets: [
+                        { label: 'Total candidats', data: charges.map(c => chargeDetails[c].totalCandidats), backgroundColor: '#ddd', borderRadius: 4 },
+                        { label: 'Basculés CRM', data: charges.map(c => chargeDetails[c].crmCount), backgroundColor: '#667EEA', borderRadius: 4 },
+                        { label: 'Inscrits', data: charges.map(c => chargeDetails[c].inscritCount), backgroundColor: '#2ECC71', borderRadius: 4 },
+                      ]
+                    }}
+                    options={{
+                      plugins: { legend: { position: 'bottom' } },
+                      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    }}
+                  />
+                </div>
+
+                <div className="chart-container">
+                  <h3>Relances par type</h3>
+                  <ChartComponent
+                    type="doughnut"
+                    height={300}
+                    data={{
+                      labels: config.relanceTypes.map(t => t.label),
+                      datasets: [{
+                        data: config.relanceTypes.map(t => stats.relancesParType[t.id] || 0),
+                        backgroundColor: ['#3498DB', '#E74C3C', '#F39C12', '#25D366', '#9B59B6'],
+                        borderWidth: 0,
+                      }]
+                    }}
+                    options={{ plugins: { legend: { position: 'bottom' } } }}
+                  />
+                </div>
+
+                <div className="chart-container">
+                  <h3>Répartition école / stage</h3>
+                  <ChartComponent
+                    type="bar"
+                    height={300}
+                    data={{
+                      labels: Object.keys(config.ecoles),
+                      datasets: config.stages.filter(s => !['refuse', 'abandonne'].includes(s.id)).map(stage => ({
+                        label: stage.label,
+                        data: Object.keys(config.ecoles).map(ecole => (stats.parEcoleStage[ecole] || {})[stage.id] || 0),
+                        backgroundColor: stage.color, borderRadius: 4,
+                      }))
+                    }}
+                    options={{
+                      plugins: { legend: { position: 'bottom' } },
+                      scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } } }
+                    }}
+                  />
+                </div>
+
+                {Object.keys(stats.relancesParJour).length > 0 && (
+                  <div className="chart-container" style={{ gridColumn: '1 / -1' }}>
+                    <h3>Activité relances (30 derniers jours)</h3>
+                    <ChartComponent
+                      type="line"
+                      height={220}
+                      data={{
+                        labels: Object.keys(stats.relancesParJour).sort(),
+                        datasets: [{
+                          label: 'Relances',
+                          data: Object.keys(stats.relancesParJour).sort().map(k => stats.relancesParJour[k]),
+                          borderColor: '#667EEA', backgroundColor: 'rgba(102,126,234,0.1)',
+                          fill: true, tension: 0.3, pointRadius: 4,
+                        }]
+                      }}
+                      options={{
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* === VUE INDIVIDUELLE === */}
+          {selectedCharge !== null && chargeDetails[selectedCharge] && (() => {
+            const d = chargeDetails[selectedCharge];
+            const ci = charges.indexOf(selectedCharge);
+            const color = chargeColors[ci % chargeColors.length];
+            return (
+              <>
+                {/* KPIs individuels */}
+                <div className="kpi-grid">
+                  <div className="kpi-card" style={{ borderLeft: `4px solid ${color}` }}>
+                    <div className="label">Candidats assignés</div>
+                    <div className="value">{d.totalCandidats}</div>
+                  </div>
+                  <div className="kpi-card" style={{ borderLeft: '4px solid #2ECC71' }}>
+                    <div className="label">Actions aujourd'hui</div>
+                    <div className="value" style={{ color: d.relancesToday > 0 ? '#2ECC71' : '#E74C3C' }}>{d.relancesToday}</div>
+                  </div>
+                  <div className="kpi-card" style={{ borderLeft: '4px solid #667EEA' }}>
+                    <div className="label">Actions semaine</div>
+                    <div className="value" style={{ color: '#667EEA' }}>{d.relancesWeek}</div>
+                  </div>
+                  <div className="kpi-card" style={{ borderLeft: '4px solid #3498DB' }}>
+                    <div className="label">Actions mois</div>
+                    <div className="value" style={{ color: '#3498DB' }}>{d.relancesMonth}</div>
+                  </div>
+                  <div className="kpi-card" style={{ borderLeft: '4px solid #F39C12' }}>
+                    <div className="label">Total relances</div>
+                    <div className="value">{d.relancesTotal}</div>
+                  </div>
+                  <div className="kpi-card" style={{ borderLeft: '4px solid #E74C3C' }}>
+                    <div className="label">Sans relance</div>
+                    <div className="value" style={{ color: d.sansRelance > 0 ? '#E74C3C' : '#2ECC71' }}>{d.sansRelance}</div>
+                    <div className="sub">{d.totalCandidats > 0 ? Math.round((d.sansRelance / d.totalCandidats) * 100) : 0}% non traités</div>
+                  </div>
+                  <div className="kpi-card" style={{ borderLeft: '4px solid #9B59B6' }}>
+                    <div className="label">Basculés CRM</div>
+                    <div className="value" style={{ color: '#9B59B6' }}>{d.crmCount} <span style={{ fontSize: 14, color: '#aaa' }}>({d.tauxCRM}%)</span></div>
+                  </div>
+                  <div className="kpi-card" style={{ borderLeft: '4px solid #2ECC71' }}>
+                    <div className="label">Inscrits</div>
+                    <div className="value" style={{ color: '#2ECC71' }}>{d.inscritCount} <span style={{ fontSize: 14, color: '#aaa' }}>({d.tauxInscrit}%)</span></div>
+                  </div>
+                </div>
+
+                <div className="charts-grid">
+                  {/* Activité 7 derniers jours */}
+                  <div className="chart-container">
+                    <h3>Activité des 7 derniers jours</h3>
+                    <ChartComponent
+                      type="bar"
+                      height={260}
+                      data={{
+                        labels: Object.keys(d.last7Days).map(k => {
+                          const dt = new Date(k);
+                          const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+                          return days[dt.getDay()] + ' ' + dt.getDate() + '/' + (dt.getMonth()+1);
+                        }),
+                        datasets: [{
+                          label: 'Actions',
+                          data: Object.values(d.last7Days),
+                          backgroundColor: Object.values(d.last7Days).map(v => v > 0 ? color : '#eee'),
+                          borderRadius: 6, borderSkipped: false,
+                        }]
+                      }}
+                      options={{
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                      }}
+                    />
+                  </div>
+
+                  {/* Répartition types d'actions */}
+                  <div className="chart-container">
+                    <h3>Types d'actions</h3>
+                    <ChartComponent
+                      type="doughnut"
+                      height={260}
+                      data={{
+                        labels: config.relanceTypes.map(t => t.label),
+                        datasets: [{
+                          data: config.relanceTypes.map(t => d.actionsByType[t.id] || 0),
+                          backgroundColor: ['#3498DB', '#E74C3C', '#F39C12', '#25D366', '#9B59B6'],
+                          borderWidth: 0,
+                        }]
+                      }}
+                      options={{ plugins: { legend: { position: 'bottom' } } }}
+                    />
+                  </div>
+
+                  {/* Pipeline individuel */}
+                  <div className="chart-container">
+                    <h3>Pipeline de {selectedCharge}</h3>
+                    <ChartComponent
+                      type="bar"
+                      height={260}
+                      data={{
+                        labels: config.stages.map(s => s.label),
+                        datasets: [{
+                          data: config.stages.map(s => d.pipeline[s.id] || 0),
+                          backgroundColor: config.stages.map(s => s.color),
+                          borderRadius: 6, borderSkipped: false,
+                        }]
+                      }}
+                      options={{
+                        indexAxis: 'y',
+                        plugins: { legend: { display: false } },
+                        scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                      }}
+                    />
+                  </div>
+
+                  {/* Temps de traitement par stage */}
+                  <div className="chart-container">
+                    <h3>Temps moyen de 1ère relance par colonne</h3>
+                    {Object.keys(d.tempsTraitement).length > 0 ? (
+                      <div style={{ padding: '8px 0' }}>
+                        {config.stages.map(s => {
+                          const t = d.tempsTraitement[s.id];
+                          const max = Math.max(...Object.values(d.tempsTraitement), 1);
+                          return (
+                            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                              <div style={{ width: 120, fontSize: 12, fontWeight: 600, color: '#555', textAlign: 'right', flexShrink: 0 }}>{s.label}</div>
+                              <div style={{ flex: 1, background: '#f0f0f0', borderRadius: 6, height: 22, position: 'relative', overflow: 'hidden' }}>
+                                {t !== undefined && (
+                                  <div style={{ width: `${Math.min((t / max) * 100, 100)}%`, height: '100%', background: s.color, borderRadius: 6, transition: 'width 0.5s', minWidth: 2 }} />
+                                )}
+                              </div>
+                              <div style={{ width: 50, fontSize: 13, fontWeight: 700, color: t !== undefined ? '#333' : '#ccc', textAlign: 'right' }}>
+                                {formatHours(t)}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div style={{ padding: 40, textAlign: 'center', color: '#aaa', fontSize: 13 }}>Pas encore assez de données</div>
+                    )}
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      );
+    }
+
+    // ============ DUPLICATES VIEW ============
+    function DuplicatesView({ duplicates, config, onMerge, onRefresh }) {
+      return (
+        <div className="duplicates-view">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <div>
+              <h2 style={{ fontSize: 20 }}>Doublons détectés</h2>
+              <p style={{ color: '#888', fontSize: 13, marginTop: 4 }}>{duplicates.total} groupe(s) de doublons identifiés (basé sur nom + email + téléphone)</p>
+            </div>
+            <button className="btn btn-outline" onClick={onRefresh}>
+              <Icon name="refresh-cw" size={16} /> Rafraîchir
+            </button>
+          </div>
+
+          {duplicates.groups.length === 0 && (
+            <div style={{ padding: 60, textAlign: 'center', color: '#aaa' }}>
+              <Icon name="check" size={40} color="#2ECC71" />
+              <p style={{ marginTop: 12, fontSize: 16 }}>Aucun doublon détecté</p>
+            </div>
+          )}
+
+          {duplicates.groups.map((group, gi) => (
+            <div key={gi} className="dup-group">
+              <h3><Icon name="alert-triangle" size={16} /> Groupe de {group.length} doublons</h3>
+              {group.map(c => {
+                const ecoleColor = config.ecoles[c.ecole]?.color || '#999';
+                const stageInfo = config.stages.find(s => s.id === c.stage);
+                return (
+                  <div key={c.id} className="dup-candidate">
+                    <div className="info">
+                      <strong>{c.prenom} {c.nom}</strong>
+                      <span className="ecole-badge" style={{ background: ecoleColor, marginLeft: 8 }}>{c.ecole}</span>
+                      <span style={{ marginLeft: 8 }}>{c.formation}</span>
+                      <span style={{ marginLeft: 8, color: '#888' }}>{c.email} | {c.telephone}</span>
+                      <span className="stage-badge" style={{ background: stageInfo?.color || '#999', marginLeft: 8 }}>{stageInfo?.label}</span>
+                    </div>
+                    <button
+                      className="btn btn-sm btn-success"
+                      onClick={() => {
+                        const removeIds = group.filter(x => x.id !== c.id).map(x => x.id);
+                        onMerge(c.id, removeIds);
+                      }}
+                    >
+                      Garder celui-ci
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // ============ CANDIDATE DRAWER ============
+    function CandidateDrawer({ candidate, config, relances, onClose, onUpdate, onDelete, onAddRelance }) {
+      const [form, setForm] = useState({ ...candidate });
+      const [relanceForm, setRelanceForm] = useState({ type: 'telephone', notes: '', result: 'autre', createdBy: '' });
+      const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+      const saveTimeoutRef = useRef(null);
+
+      // Auto-save on form change (debounced)
+      const handleChange = (field, value) => {
+        const updated = { ...form, [field]: value };
+        // Auto-fill conseiller when ecole + formation change
+        if (field === 'ecole' || field === 'formation') {
+          const ecole = field === 'ecole' ? value : form.ecole;
+          const formation = field === 'formation' ? value : form.formation;
+          if (ecole && formation && config.ecoles[ecole]?.formations[formation]) {
+            updated.conseillerFormation = config.ecoles[ecole].formations[formation].conseiller || '';
+          }
+          if (field === 'ecole') updated.formation = '';
+        }
+        setForm(updated);
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = setTimeout(() => onUpdate(candidate.id, updated), 800);
+      };
+
+      const handleAddRelance = () => {
+        if (!relanceForm.type) return;
+        onAddRelance({ ...relanceForm, candidateId: candidate.id });
+        setRelanceForm({ type: 'telephone', notes: '', result: 'autre', createdBy: '' });
+      };
+
+      const formations = form.ecole && config.ecoles[form.ecole]
+        ? Object.keys(config.ecoles[form.ecole].formations)
+        : [];
+
+      const phoneClean = (form.telephone || '').replace(/\s/g, '').replace(/^0/, '+33');
+
+      const sortedRelances = [...relances].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      return (
+        <>
+          <div className="drawer-overlay" onClick={onClose} />
+          <div className="drawer">
+            <div className="drawer-header">
+              <h2 style={{ fontSize: 18 }}>{form.prenom} {form.nom}</h2>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn btn-sm btn-danger" onClick={() => setShowDeleteConfirm(true)}>
+                  <Icon name="trash" size={14} />
+                </button>
+                <button className="btn btn-sm btn-outline" onClick={onClose}>
+                  <Icon name="x" size={14} />
+                </button>
+              </div>
+            </div>
+
+            <div className="drawer-body">
+              {showDeleteConfirm && (
+                <div style={{ background: '#fff3f3', padding: 16, borderRadius: 8, marginBottom: 16 }}>
+                  <p style={{ fontSize: 13, marginBottom: 8 }}>Supprimer ce candidat et toutes ses relances ?</p>
+                  <button className="btn btn-sm btn-danger" onClick={() => onDelete(candidate.id)} style={{ marginRight: 8 }}>Confirmer</button>
+                  <button className="btn btn-sm btn-outline" onClick={() => setShowDeleteConfirm(false)}>Annuler</button>
+                </div>
+              )}
+
+              <div className="drawer-section">
+                <h3>Informations</h3>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Nom</label>
+                    <input value={form.nom} onChange={e => handleChange('nom', e.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label>Prénom</label>
+                    <input value={form.prenom} onChange={e => handleChange('prenom', e.target.value)} />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Téléphone</label>
+                    <input value={form.telephone} onChange={e => handleChange('telephone', e.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input value={form.email} onChange={e => handleChange('email', e.target.value)} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="drawer-section">
+                <h3>Affectation</h3>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>École</label>
+                    <select value={form.ecole} onChange={e => handleChange('ecole', e.target.value)}>
+                      <option value="">--</option>
+                      {Object.keys(config.ecoles).map(e => <option key={e} value={e}>{e}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Formation</label>
+                    <select value={form.formation} onChange={e => handleChange('formation', e.target.value)}>
+                      <option value="">--</option>
+                      {formations.map(f => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Chargé d'admission</label>
+                    <select value={form.chargeAdmission} onChange={e => handleChange('chargeAdmission', e.target.value)}>
+                      <option value="">--</option>
+                      {config.chargesAdmission.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Conseiller en formation</label>
+                    <input value={form.conseillerFormation} onChange={e => handleChange('conseillerFormation', e.target.value)} placeholder="Auto-rempli ou saisie libre" />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Stage</label>
+                    <select value={form.stage} onChange={e => handleChange('stage', e.target.value)}>
+                      {config.stages.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}>
+                    <label
+                      className="toggle"
+                      onClick={() => handleChange('statutCRM', !form.statutCRM)}
+                    >
+                      <div className={`toggle-switch ${form.statutCRM ? 'on' : ''}`} />
+                      Déjà dans le CRM
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="drawer-section">
+                <h3>Notes</h3>
+                <div className="form-group">
+                  <textarea
+                    value={form.notes}
+                    onChange={e => handleChange('notes', e.target.value)}
+                    placeholder="Notes sur le candidat..."
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              <div className="drawer-section">
+                <h3>Actions rapides</h3>
+                <p style={{ fontSize: 11, color: '#999', marginBottom: 8 }}>Un clic = ouvre l'action avec message pré-rempli + enregistre la relance</p>
+                <div className="quick-actions">
+                  {form.telephone && (
+                    <a href={`tel:${form.telephone}`} className="quick-action tel" onClick={() => {
+                      onAddRelance({ candidateId: candidate.id, type: 'telephone', notes: `Appel vers ${form.telephone}`, result: 'autre', createdBy: '' });
+                    }}>
+                      <Icon name="phone" size={14} /> Appeler
+                    </a>
+                  )}
+                  {form.email && (
+                    <a href={`mailto:${form.email}?subject=${encodeURIComponent(`Votre candidature ${form.formation || ''} - ${form.ecole || ''}`)}&body=${encodeURIComponent(`Bonjour ${form.prenom || ''},\n\nNous avons bien reçu votre candidature pour la formation ${form.formation || ''} au sein de ${form.ecole || ''}.\n\nNous souhaitions échanger avec vous concernant votre dossier.\n\nN'hésitez pas à nous recontacter.\n\nCordialement,\nService Admissions`)}`} className="quick-action email" onClick={() => {
+                      onAddRelance({ candidateId: candidate.id, type: 'mail', notes: `Email envoyé à ${form.email}`, result: 'envoye', createdBy: '' });
+                    }}>
+                      <Icon name="mail" size={14} /> Email
+                    </a>
+                  )}
+                  {form.telephone && (
+                    <a href={`https://wa.me/${phoneClean}?text=${encodeURIComponent(`Bonjour ${form.prenom || ''} ! 😊\n\nNous avons bien reçu votre candidature pour ${form.formation || ''} chez ${form.ecole || ''}.\n\nPouvons-nous échanger à ce sujet ?\n\nCordialement, Service Admissions`)}`} target="_blank" className="quick-action whatsapp" onClick={() => {
+                      onAddRelance({ candidateId: candidate.id, type: 'whatsapp', notes: `WhatsApp envoyé à ${form.telephone}`, result: 'envoye', createdBy: '' });
+                    }}>
+                      <Icon name="message-circle" size={14} /> WhatsApp
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              <div className="drawer-section">
+                <h3>Nouvelle relance</h3>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Type</label>
+                    <select value={relanceForm.type} onChange={e => setRelanceForm(f => ({ ...f, type: e.target.value }))}>
+                      {config.relanceTypes.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Résultat</label>
+                    <select value={relanceForm.result} onChange={e => setRelanceForm(f => ({ ...f, result: e.target.value }))}>
+                      {config.relanceResults.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Par</label>
+                    <select value={relanceForm.createdBy} onChange={e => setRelanceForm(f => ({ ...f, createdBy: e.target.value }))}>
+                      <option value="">--</option>
+                      {config.chargesAdmission.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Notes</label>
+                  <textarea
+                    value={relanceForm.notes}
+                    onChange={e => setRelanceForm(f => ({ ...f, notes: e.target.value }))}
+                    placeholder="Détails de la relance..."
+                    rows={2}
+                  />
+                </div>
+                <button className="btn btn-primary" onClick={handleAddRelance} style={{ marginTop: 8 }}>
+                  <Icon name="plus" size={14} /> Enregistrer la relance
+                </button>
+              </div>
+
+              <div className="drawer-section">
+                <h3>Historique des relances ({sortedRelances.length})</h3>
+                {sortedRelances.length === 0 && (
+                  <p style={{ color: '#aaa', fontSize: 13 }}>Aucune relance enregistrée</p>
+                )}
+                <div className="timeline">
+                  {sortedRelances.map(r => {
+                    const typeInfo = config.relanceTypes.find(t => t.id === r.type);
+                    const resultInfo = config.relanceResults.find(x => x.id === r.result);
+                    const typeColors = { telephone: '#3498DB', mail: '#E74C3C', sms: '#F39C12', whatsapp: '#25D366', courrier: '#9B59B6' };
+                    return (
+                      <div key={r.id} className="timeline-item">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span className="type" style={{ color: typeColors[r.type] || '#555' }}>
+                            {typeInfo?.label || r.type}
+                          </span>
+                          <span className="date">{new Date(r.date).toLocaleDateString('fr-FR')} {new Date(r.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        {r.notes && <div className="notes">{r.notes}</div>}
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          {resultInfo && <span className="result">{resultInfo.label}</span>}
+                          {r.createdBy && <span style={{ fontSize: 11, color: '#888' }}>par {r.createdBy}</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // ============ ADD CANDIDATE MODAL ============
+    function AddCandidateModal({ config, onClose, onAdd }) {
+      const [form, setForm] = useState({
+        nom: '', prenom: '', telephone: '', email: '',
+        ecole: '', formation: '', chargeAdmission: '', conseillerFormation: '',
+        stage: 'voeu_recu', statutCRM: false, notes: ''
+      });
+
+      const handleChange = (field, value) => {
+        const updated = { ...form, [field]: value };
+        if (field === 'ecole' || field === 'formation') {
+          const ecole = field === 'ecole' ? value : form.ecole;
+          const formation = field === 'formation' ? value : form.formation;
+          if (ecole && formation && config.ecoles[ecole]?.formations[formation]) {
+            updated.conseillerFormation = config.ecoles[ecole].formations[formation].conseiller || '';
+          }
+          if (field === 'ecole') updated.formation = '';
+        }
+        setForm(updated);
+      };
+
+      const formations = form.ecole && config.ecoles[form.ecole]
+        ? Object.keys(config.ecoles[form.ecole].formations)
+        : [];
+
+      const handleSubmit = () => {
+        if (!form.nom || !form.prenom) return alert('Nom et prénom requis');
+        onAdd(form);
+      };
+
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Nouveau candidat</h2>
+              <button className="btn btn-icon btn-outline" onClick={onClose}><Icon name="x" size={18} /></button>
+            </div>
+            <div className="modal-body">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Nom *</label>
+                  <input value={form.nom} onChange={e => handleChange('nom', e.target.value)} autoFocus />
+                </div>
+                <div className="form-group">
+                  <label>Prénom *</label>
+                  <input value={form.prenom} onChange={e => handleChange('prenom', e.target.value)} />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Téléphone</label>
+                  <input value={form.telephone} onChange={e => handleChange('telephone', e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label>Email</label>
+                  <input type="email" value={form.email} onChange={e => handleChange('email', e.target.value)} />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>École</label>
+                  <select value={form.ecole} onChange={e => handleChange('ecole', e.target.value)}>
+                    <option value="">-- Choisir --</option>
+                    {Object.keys(config.ecoles).map(e => <option key={e} value={e}>{e}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Formation</label>
+                  <select value={form.formation} onChange={e => handleChange('formation', e.target.value)}>
+                    <option value="">-- Choisir --</option>
+                    {formations.map(f => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Chargé d'admission</label>
+                  <select value={form.chargeAdmission} onChange={e => handleChange('chargeAdmission', e.target.value)}>
+                    <option value="">-- Choisir --</option>
+                    {config.chargesAdmission.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Conseiller en formation</label>
+                  <input value={form.conseillerFormation} onChange={e => handleChange('conseillerFormation', e.target.value)} placeholder="Auto-rempli ou saisie libre" />
+                </div>
+              </div>
+              <div className="form-group">
+                <label
+                  className="toggle"
+                  onClick={() => handleChange('statutCRM', !form.statutCRM)}
+                  style={{ marginTop: 8 }}
+                >
+                  <div className={`toggle-switch ${form.statutCRM ? 'on' : ''}`} />
+                  Déjà inscrit dans le CRM
+                </label>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={onClose}>Annuler</button>
+              <button className="btn btn-primary" onClick={handleSubmit}>
+                <Icon name="plus" size={14} /> Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ============ BULK SEND MODAL (2 modes: envoi immédiat OU automatisation) ============
+    function BulkSendModal({ config, stageId, candidates, onClose, onSend, onSaveAutomation }) {
+      const [mode, setMode] = useState('immediate'); // 'immediate' ou 'auto'
+      const stageInfo = config.stages.find(s => s.id === stageId);
+      const stageAuto = (config.automations || {})[stageId] || { enabled: false, actions: [] };
+
+      // === Mode Envoi Immédiat ===
+      const [channel, setChannel] = useState('mail');
+      const [subject, setSubject] = useState('');
+      const [message, setMessage] = useState('');
+      const [delayMinutes, setDelayMinutes] = useState(0);
+      const [delayUnit, setDelayUnit] = useState('minutes');
+
+      // === Mode Automatisation ===
+      const [actions, setActions] = useState(
+        stageAuto.actions && stageAuto.actions.length > 0
+          ? stageAuto.actions.map(a => ({ ...a }))
+          : [{ channel: 'mail', subject: '', message: '', delayMinutes: 10 }]
+      );
+      const [autoEnabled, setAutoEnabled] = useState(stageAuto.enabled || false);
+
+      const emailCount = candidates.filter(c => c.email).length;
+      const phoneCount = candidates.filter(c => c.telephone).length;
+      const templateVars = ['{{prenom}}', '{{nom}}', '{{formation}}', '{{ecole}}', '{{email}}', '{{telephone}}'];
+
+      const getDelayInMinutes = () => {
+        const val = parseInt(delayMinutes) || 0;
+        if (delayUnit === 'heures') return val * 60;
+        if (delayUnit === 'jours') return val * 60 * 24;
+        return val;
+      };
+
+      const formatDelay = (mins) => {
+        if (mins < 60) return `${mins} min`;
+        if (mins < 1440) return `${Math.round(mins/60)}h`;
+        return `${Math.round(mins/1440)}j`;
+      };
+
+      const addAction = () => {
+        const lastDelay = actions.length > 0 ? (actions[actions.length - 1].delayMinutes || 0) : 0;
+        setActions([...actions, { channel: 'mail', subject: '', message: '', delayMinutes: lastDelay + 30 }]);
+      };
+
+      const updateAction = (idx, field, value) => {
+        const updated = [...actions];
+        updated[idx] = { ...updated[idx], [field]: value };
+        setActions(updated);
+      };
+
+      const removeAction = (idx) => {
+        setActions(actions.filter((_, i) => i !== idx));
+      };
+
+      const handleSaveAuto = async () => {
+        // Auto-enable if there are actions with content
+        const shouldEnable = actions.length > 0 && actions.some(a => a.message?.trim());
+        const finalEnabled = shouldEnable ? true : autoEnabled;
+        onSaveAutomation(stageId, { enabled: finalEnabled, actions, id: stageId });
+
+        // If enabled and there are candidates already in the column, propose retroactive trigger
+        if (finalEnabled && candidates.length > 0) {
+          const doTrigger = confirm(
+            `Automatisation sauvegardée et activée !\n\n` +
+            `Il y a ${candidates.length} candidat(s) déjà dans "${stageInfo?.label}".\n` +
+            `Voulez-vous déclencher l'automatisation pour eux maintenant ?\n\n` +
+            `(Sinon, seuls les NOUVEAUX candidats déplacés dans cette colonne seront traités)`
+          );
+          if (doTrigger) {
+            try {
+              const resp = await fetch('/parcoursup/api/automations/trigger-all', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stageId })
+              });
+              const data = await resp.json();
+              if (data.triggered > 0) {
+                alert(`${data.triggered} action(s) programmée(s) pour ${data.candidates} candidat(s) !\n\nLes messages seront envoyés selon les délais configurés.`);
+              } else {
+                alert('Automatisation déjà déclenchée pour tous les candidats de cette colonne.');
+              }
+            } catch (err) {
+              alert('Erreur lors du déclenchement rétroactif.');
+            }
+          }
+        }
+        onClose();
+      };
+
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ width: 720, maxHeight: '90vh' }}>
+            <div className="modal-header">
+              <h2><Icon name="send" size={20} /> {stageInfo?.label}</h2>
+              <button className="btn btn-icon btn-outline" onClick={onClose}><Icon name="x" size={18} /></button>
+            </div>
+
+            {/* Toggle entre les 2 modes */}
+            <div style={{ display: 'flex', borderBottom: '2px solid #eee' }}>
+              <div
+                onClick={() => setMode('immediate')}
+                style={{
+                  flex: 1, padding: '12px 16px', cursor: 'pointer', textAlign: 'center', fontSize: 14, fontWeight: 600,
+                  background: mode === 'immediate' ? '#667EEA' : 'white', color: mode === 'immediate' ? 'white' : '#666',
+                  transition: '0.2s'
+                }}
+              >
+                <Icon name="send" size={16} /> Envoi immédiat
+              </div>
+              <div
+                onClick={() => setMode('auto')}
+                style={{
+                  flex: 1, padding: '12px 16px', cursor: 'pointer', textAlign: 'center', fontSize: 14, fontWeight: 600,
+                  background: mode === 'auto' ? '#667EEA' : 'white', color: mode === 'auto' ? 'white' : '#666',
+                  transition: '0.2s'
+                }}
+              >
+                ⚡ Automatisation à l'entrée
+              </div>
+            </div>
+
+            <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+
+              {/* ===== MODE ENVOI IMMEDIAT ===== */}
+              {mode === 'immediate' && (
+                <>
+                  <div style={{ background: '#f0f7ff', padding: 12, borderRadius: 8, marginBottom: 16, fontSize: 13 }}>
+                    <strong>{candidates.length}</strong> candidat(s) actuellement dans cette colonne
+                    {' '}({emailCount} email, {phoneCount} tél)
+                  </div>
+
+                  {candidates.length === 0 && (
+                    <div style={{ background: '#fff8e1', padding: 12, borderRadius: 8, marginBottom: 16, fontSize: 13 }}>
+                      <Icon name="alert-triangle" size={14} color="#F39C12" /> Cette colonne est vide. Ajoutez des candidats ou utilisez le mode <strong>Automatisation</strong> pour déclencher des envois dès qu'une fiche y entre.
+                    </div>
+                  )}
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Canal d'envoi</label>
+                      <select value={channel} onChange={e => setChannel(e.target.value)}>
+                        <option value="mail">Email</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="sms">SMS</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Délai avant envoi</label>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <input type="number" min="0" value={delayMinutes} onChange={e => setDelayMinutes(e.target.value)} style={{ width: 80 }} />
+                        <select value={delayUnit} onChange={e => setDelayUnit(e.target.value)}>
+                          <option value="minutes">minutes</option>
+                          <option value="heures">heures</option>
+                          <option value="jours">jours</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {channel === 'mail' && (
+                    <div className="form-group">
+                      <label>Objet du mail</label>
+                      <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Ex: Votre candidature {{formation}} - {{ecole}}" />
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label>Message</label>
+                    <textarea value={message} onChange={e => setMessage(e.target.value)} rows={5}
+                      placeholder={`Bonjour {{prenom}},\n\nNous avons bien reçu votre voeu pour {{formation}} à {{ecole}}.\n\nCordialement`} />
+                  </div>
+
+                  <div style={{ fontSize: 12, color: '#888', marginTop: 6 }}>
+                    <strong>Variables :</strong>{' '}
+                    {templateVars.map(v => (
+                      <code key={v} style={{ background: '#f0f0f0', padding: '1px 5px', borderRadius: 4, cursor: 'pointer', marginRight: 4 }}
+                        onClick={() => setMessage(m => m + v)}>{v}</code>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* ===== MODE AUTOMATISATION ===== */}
+              {mode === 'auto' && (
+                <>
+                  <div style={{ background: '#f0f7ff', padding: 12, borderRadius: 8, marginBottom: 16, fontSize: 13 }}>
+                    <strong>Dès qu'un candidat entre dans "{stageInfo?.label}"</strong>, les messages ci-dessous seront envoyés automatiquement selon le délai configuré. Chaque envoi est historisé dans la fiche du candidat.
+                    <br/><span style={{ color: '#e67e22', fontWeight: 600 }}>💡 À la sauvegarde, si des candidats sont déjà dans cette colonne, vous pourrez déclencher l'automatisation pour eux aussi.</span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                    <label className="toggle" onClick={() => setAutoEnabled(!autoEnabled)}>
+                      <div className={`toggle-switch ${autoEnabled ? 'on' : ''}`} />
+                      <strong style={{ fontSize: 14 }}>Automatisation {autoEnabled ? 'activée' : 'désactivée'}</strong>
+                    </label>
+                  </div>
+
+                  {actions.map((action, idx) => (
+                    <div key={idx} style={{ background: '#f8f9fa', padding: 14, borderRadius: 10, marginBottom: 10, borderLeft: `4px solid ${stageInfo?.color || '#667EEA'}`, position: 'relative' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                        <strong style={{ fontSize: 14, color: '#333' }}>
+                          Message N°{idx + 1}
+                          <span style={{ fontWeight: 400, color: '#888', marginLeft: 8, fontSize: 12 }}>
+                            (envoi à +{formatDelay(action.delayMinutes || 0)} après entrée)
+                          </span>
+                        </strong>
+                        {actions.length > 1 && (
+                          <button className="btn btn-icon" style={{ color: '#ccc' }} onClick={() => removeAction(idx)} title="Supprimer">
+                            <Icon name="x" size={14} />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group" style={{ maxWidth: 140 }}>
+                          <label>Canal</label>
+                          <select value={action.channel} onChange={e => updateAction(idx, 'channel', e.target.value)}>
+                            <option value="mail">Email</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="sms">SMS</option>
+                          </select>
+                        </div>
+                        <div className="form-group" style={{ maxWidth: 220 }}>
+                          <label>Délai après entrée dans la colonne</label>
+                          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                            <input type="number" min="0" value={action.delayMinutes || 0}
+                              onChange={e => updateAction(idx, 'delayMinutes', parseInt(e.target.value) || 0)}
+                              style={{ width: 70 }} />
+                            <span style={{ fontSize: 12, color: '#888' }}>minutes</span>
+                            <span style={{ fontSize: 11, color: '#aaa', marginLeft: 4 }}>
+                              ({formatDelay(action.delayMinutes || 0)})
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {action.channel === 'mail' && (
+                        <div className="form-group">
+                          <label>Objet</label>
+                          <input value={action.subject || ''} onChange={e => updateAction(idx, 'subject', e.target.value)}
+                            placeholder="Ex: Votre candidature {{formation}} - Relance N°1" />
+                        </div>
+                      )}
+
+                      <div className="form-group">
+                        <label>Message</label>
+                        <textarea value={action.message || ''} onChange={e => updateAction(idx, 'message', e.target.value)}
+                          rows={3} placeholder="Bonjour {{prenom}}, ..." />
+                      </div>
+
+                      <div style={{ fontSize: 11, color: '#aaa' }}>
+                        Variables : {templateVars.map(v => (
+                          <code key={v} style={{ background: '#e8e8e8', padding: '0 4px', borderRadius: 3, cursor: 'pointer', marginRight: 3 }}
+                            onClick={() => updateAction(idx, 'message', (action.message || '') + v)}>{v}</code>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+
+                  <button className="btn btn-outline" onClick={addAction} style={{ marginTop: 4 }}>
+                    <Icon name="plus" size={14} /> Ajouter un message N°{actions.length + 1}
+                  </button>
+
+                  {/* Résumé visuel de la séquence */}
+                  {actions.length > 0 && (
+                    <div style={{ marginTop: 16, padding: 14, background: '#f0f7ff', borderRadius: 8, fontSize: 12 }}>
+                      <strong>Résumé de la séquence :</strong>
+                      <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ background: stageInfo?.color, color: 'white', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600 }}>
+                            Candidat entre dans {stageInfo?.label}
+                          </span>
+                        </div>
+                        {actions.map((a, i) => (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 16 }}>
+                            <span style={{ color: '#aaa' }}>↓ +{formatDelay(a.delayMinutes || 0)}</span>
+                            <span style={{
+                              padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, color: 'white',
+                              background: a.channel === 'mail' ? '#E74C3C' : a.channel === 'whatsapp' ? '#25D366' : '#F39C12'
+                            }}>
+                              {a.channel === 'mail' ? 'Email' : a.channel === 'whatsapp' ? 'WhatsApp' : 'SMS'} N°{i+1}
+                            </span>
+                            <span style={{ color: '#888' }}>{a.subject || (a.message || '').substring(0, 40) || '(message à rédiger)'}{(a.message || '').length > 40 ? '...' : ''}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={onClose}>Annuler</button>
+              {mode === 'immediate' && (
+                <button className="btn btn-primary"
+                  onClick={() => onSend(channel, subject, message, getDelayInMinutes())}
+                  disabled={!message.trim() || candidates.length === 0}>
+                  <Icon name="send" size={14} />{' '}
+                  {parseInt(delayMinutes) > 0 ? 'Programmer' : 'Envoyer'} à {candidates.length} candidat(s)
+                </button>
+              )}
+              {mode === 'auto' && (
+                <button className="btn btn-success" onClick={handleSaveAuto}
+                  disabled={actions.some(a => !a.message?.trim())}>
+                  <Icon name="check" size={14} /> Sauvegarder l'automatisation ({actions.length} message{actions.length > 1 ? 's' : ''})
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ============ AUTOMATIONS VIEW ============
+    function WhatsAppConfig() {
+      const [status, setStatus] = useState({ status: 'disconnected' });
+      const [loading, setLoading] = useState(false);
+
+      const fetchStatus = () => {
+        fetch('/parcoursup/api/whatsapp/status').then(r => r.json()).then(setStatus).catch(() => {});
+      };
+
+      useEffect(() => {
+        fetchStatus();
+        const interval = setInterval(fetchStatus, 3000); // Poll every 3s for QR updates
+        return () => clearInterval(interval);
+      }, []);
+
+      const handleReconnect = async () => {
+        setLoading(true);
+        await fetch('/parcoursup/api/whatsapp/reconnect', { method: 'POST' });
+        setTimeout(() => { setLoading(false); fetchStatus(); }, 2000);
+      };
+
+      const handleLogout = async () => {
+        if (!confirm('Déconnecter WhatsApp ?')) return;
+        await fetch('/parcoursup/api/whatsapp/logout', { method: 'POST' });
+        fetchStatus();
+      };
+
+      const statusColor = status.status === 'connected' ? '#2ECC71' : status.status === 'qr_pending' ? '#F39C12' : '#E74C3C';
+      const statusLabel = {
+        connected: 'Connecté',
+        qr_pending: 'En attente du QR Code',
+        disconnected: 'Déconnecté',
+        error: 'Erreur'
+      }[status.status] || 'Inconnu';
+
+      return (
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: 18, marginBottom: 12 }}>Configuration WhatsApp (gratuit)</h2>
+          <div className="chart-container" style={{ borderLeft: '4px solid #25D366' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 12, height: 12, borderRadius: '50%', background: statusColor, boxShadow: `0 0 8px ${statusColor}` }} />
+                <strong style={{ fontSize: 15 }}>{statusLabel}</strong>
+              </div>
+              {status.status === 'connected' && status.phone && (
+                <span style={{ fontSize: 13, color: '#888' }}>
+                  {status.name || ''} (+{status.phone})
+                </span>
+              )}
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+                {status.status !== 'connected' && (
+                  <button className="btn btn-sm btn-success" onClick={handleReconnect} disabled={loading}>
+                    {loading ? 'Connexion...' : 'Connecter WhatsApp'}
+                  </button>
+                )}
+                {status.status === 'connected' && (
+                  <button className="btn btn-sm btn-outline" onClick={handleLogout}>Déconnecter</button>
+                )}
+              </div>
+            </div>
+
+            {status.status === 'qr_pending' && status.qrCode && (
+              <div style={{ textAlign: 'center', padding: 20, background: '#f8f9fa', borderRadius: 12, marginBottom: 16 }}>
+                <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: '#333' }}>
+                  Scannez ce QR Code avec WhatsApp sur votre téléphone :
+                </p>
+                <p style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>
+                  WhatsApp &gt; Menu (trois points) &gt; Appareils connectés &gt; Connecter un appareil
+                </p>
+                <img src={status.qrCode} alt="QR Code WhatsApp" style={{ width: 280, height: 280, borderRadius: 12, border: '2px solid #25D366' }} />
+              </div>
+            )}
+
+            {status.status === 'connected' && (
+              <div style={{ padding: 12, background: '#e8f5e9', borderRadius: 8, fontSize: 13, color: '#2e7d32' }}>
+                WhatsApp est connecté et prêt à envoyer des messages automatiques. Les messages programmés dans la file d'attente seront envoyés automatiquement aux candidats.
+              </div>
+            )}
+
+            {status.status === 'disconnected' && (
+              <div style={{ padding: 12, background: '#fff3e0', borderRadius: 8, fontSize: 13, color: '#e65100' }}>
+                WhatsApp n'est pas connecté. Cliquez sur "Connecter WhatsApp" puis scannez le QR Code pour activer l'envoi automatique.
+                Les messages en attente seront envoyés dès la connexion.
+              </div>
+            )}
+
+            {status.status === 'error' && (
+              <div style={{ padding: 12, background: '#fce4ec', borderRadius: 8, fontSize: 13, color: '#c62828' }}>
+                Erreur de connexion WhatsApp. Essayez de vous reconnecter.
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function SmtpConfig() {
+      const [smtp, setSmtp] = useState({ host: '', port: 587, user: '', pass: '', fromName: 'CRM Parcoursup' });
+      const [status, setStatus] = useState(null); // null, 'loading', 'success', 'error'
+      const [message, setMessage] = useState('');
+      const [loaded, setLoaded] = useState(false);
+      const [showPass, setShowPass] = useState(false);
+
+      useEffect(() => {
+        fetch('/parcoursup/api/smtp-config').then(r => r.json()).then(data => {
+          setSmtp(prev => ({ ...prev, host: data.host || '', port: data.port || 587, user: '', fromName: data.fromName || 'CRM Parcoursup' }));
+          if (data.configured) {
+            setStatus('configured');
+            setMessage(`SMTP configuré (${data.user}@${data.host})`);
+          }
+          setLoaded(true);
+        }).catch(() => setLoaded(true));
+      }, []);
+
+      const handleSave = async () => {
+        if (!smtp.host || !smtp.user || !smtp.pass) {
+          setStatus('error'); setMessage('Tous les champs sont requis');
+          return;
+        }
+        setStatus('loading'); setMessage('Sauvegarde...');
+        try {
+          await fetch('/parcoursup/api/smtp-config', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(smtp)
+          });
+          setStatus('loading'); setMessage('Test de connexion...');
+          const test = await fetch('/parcoursup/api/smtp-test', { method: 'POST' });
+          const result = await test.json();
+          if (result.ok) {
+            setStatus('success'); setMessage('SMTP configuré et connecté !');
+          } else {
+            setStatus('error'); setMessage(`Erreur: ${result.error}`);
+          }
+        } catch (e) {
+          setStatus('error'); setMessage(`Erreur: ${e.message}`);
+        }
+      };
+
+      if (!loaded) return null;
+
+      return (
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: 18, marginBottom: 12 }}>Configuration Email (SMTP)</h2>
+          <div className="chart-container" style={{ borderLeft: '4px solid #E74C3C' }}>
+            <p style={{ fontSize: 13, color: '#666', marginBottom: 16 }}>
+              Configurez votre serveur SMTP pour que les emails automatiques soient <strong>réellement envoyés</strong> aux candidats.
+              Pour Gmail : utilisez <code>smtp.gmail.com</code>, port <code>587</code>, et un <strong>mot de passe d'application</strong> (pas votre mot de passe Gmail).
+            </p>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Serveur SMTP</label>
+                <input value={smtp.host} onChange={e => setSmtp(s => ({...s, host: e.target.value}))} placeholder="smtp.gmail.com" />
+              </div>
+              <div className="form-group" style={{ maxWidth: 100 }}>
+                <label>Port</label>
+                <input type="number" value={smtp.port} onChange={e => setSmtp(s => ({...s, port: parseInt(e.target.value) || 587}))} />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Email / Identifiant</label>
+                <input value={smtp.user} onChange={e => setSmtp(s => ({...s, user: e.target.value}))} placeholder="votre.email@gmail.com" />
+              </div>
+              <div className="form-group">
+                <label>Mot de passe / App Password</label>
+                <div style={{ position: 'relative' }}>
+                  <input type={showPass ? 'text' : 'password'} value={smtp.pass} onChange={e => setSmtp(s => ({...s, pass: e.target.value}))}
+                    placeholder="Mot de passe d'application" style={{ paddingRight: 40 }} />
+                  <button type="button" onClick={() => setShowPass(!showPass)}
+                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#888' }}>
+                    {showPass ? 'Masquer' : 'Voir'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Nom d'expéditeur</label>
+                <input value={smtp.fromName} onChange={e => setSmtp(s => ({...s, fromName: e.target.value}))} placeholder="Service Admissions" />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
+              <button className="btn btn-primary" onClick={handleSave} disabled={status === 'loading'}>
+                {status === 'loading' ? 'Test en cours...' : 'Sauvegarder & Tester'}
+              </button>
+              {status && status !== 'loading' && (
+                <span style={{ fontSize: 13, fontWeight: 600,
+                  color: status === 'success' || status === 'configured' ? '#2ECC71' : '#E74C3C' }}>
+                  {message}
+                </span>
+              )}
+            </div>
+
+            <div style={{ marginTop: 16, padding: 12, background: '#fff8e1', borderRadius: 8, fontSize: 12, color: '#e65100' }}>
+              <strong>Pour Gmail :</strong> Allez sur <a href="https://myaccount.google.com/apppasswords" target="_blank" style={{ color: '#e65100' }}>myaccount.google.com/apppasswords</a>,
+              créez un "Mot de passe d'application" et utilisez-le ici. La validation en 2 étapes doit être activée.
+              <br/><strong>Pour WhatsApp :</strong> Les messages WhatsApp ouvrent automatiquement WhatsApp Web/Desktop avec le message pré-rempli. L'envoi 100% automatique nécessite l'API WhatsApp Business (payante).
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function AutomationsView({ config, candidates, queue, onSave, onCancelQueue, onRefreshQueue }) {
+      const [automations, setAutomations] = useState(config.automations || {});
+      const [editingStage, setEditingStage] = useState(null);
+      const [hasChanges, setHasChanges] = useState(false);
+
+      const templateVars = ['{{prenom}}', '{{nom}}', '{{formation}}', '{{ecole}}', '{{email}}', '{{telephone}}'];
+      const pendingQueue = queue.filter(q => q.status === 'pending');
+      const sentQueue = queue.filter(q => q.status === 'sent').slice(-50).reverse();
+
+      const updateAutomation = (stageId, data) => {
+        const updated = { ...automations, [stageId]: { ...automations[stageId], ...data } };
+        setAutomations(updated);
+        setHasChanges(true);
+      };
+
+      const addAction = (stageId) => {
+        const stageAuto = automations[stageId] || { enabled: true, actions: [] };
+        stageAuto.actions = [...(stageAuto.actions || []), { channel: 'mail', subject: '', message: '', delayMinutes: 0 }];
+        updateAutomation(stageId, stageAuto);
+      };
+
+      const updateAction = (stageId, actionIdx, field, value) => {
+        const stageAuto = { ...automations[stageId] };
+        stageAuto.actions = [...stageAuto.actions];
+        stageAuto.actions[actionIdx] = { ...stageAuto.actions[actionIdx], [field]: value };
+        updateAutomation(stageId, stageAuto);
+      };
+
+      const removeAction = (stageId, actionIdx) => {
+        const stageAuto = { ...automations[stageId] };
+        stageAuto.actions = stageAuto.actions.filter((_, i) => i !== actionIdx);
+        updateAutomation(stageId, stageAuto);
+      };
+
+      const handleSave = () => {
+        onSave(automations);
+        setHasChanges(false);
+      };
+
+      return (
+        <div className="dashboard" style={{ maxWidth: 1100 }}>
+          {/* Connexions WhatsApp + SMTP en premier */}
+          <WhatsAppConfig />
+          <SmtpConfig />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <div>
+              <h2 style={{ fontSize: 20 }}>Automatisations par colonne</h2>
+              <p style={{ color: '#888', fontSize: 13, marginTop: 4 }}>
+                Configurez des envois automatiques (Mail/WhatsApp/SMS) déclenchés quand un candidat entre dans une colonne.
+                Chaque envoi est historisé dans la fiche du candidat.
+              </p>
+            </div>
+            {hasChanges && (
+              <button className="btn btn-success" onClick={handleSave}>
+                <Icon name="check" size={14} /> Sauvegarder
+              </button>
+            )}
+          </div>
+
+          {/* Automation rules per stage */}
+          <div style={{ display: 'grid', gap: 16, marginBottom: 32 }}>
+            {config.stages.map(stage => {
+              const stageAuto = automations[stage.id] || { enabled: false, actions: [] };
+              const isExpanded = editingStage === stage.id;
+              const stageCount = candidates.filter(c => c.stage === stage.id).length;
+
+              return (
+                <div key={stage.id} className="chart-container" style={{ borderLeft: `4px solid ${stage.color}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <label className="toggle" onClick={() => {
+                        updateAutomation(stage.id, { ...stageAuto, enabled: !stageAuto.enabled, actions: stageAuto.actions || [] });
+                      }}>
+                        <div className={`toggle-switch ${stageAuto.enabled ? 'on' : ''}`} />
+                      </label>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: 15 }}>{stage.label}</h3>
+                        <span style={{ fontSize: 12, color: '#888' }}>{stageCount} candidat(s) | {(stageAuto.actions || []).length} action(s)</span>
+                      </div>
+                    </div>
+                    <button className="btn btn-sm btn-outline" onClick={() => setEditingStage(isExpanded ? null : stage.id)}>
+                      {isExpanded ? 'Réduire' : 'Configurer'}
+                    </button>
+                  </div>
+
+                  {isExpanded && (
+                    <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #eee' }}>
+                      {(stageAuto.actions || []).length === 0 && (
+                        <p style={{ color: '#aaa', fontSize: 13, marginBottom: 12 }}>Aucune action configurée. Ajoutez une action ci-dessous.</p>
+                      )}
+
+                      {(stageAuto.actions || []).map((action, ai) => (
+                        <div key={ai} style={{ background: '#f8f9fa', padding: 14, borderRadius: 8, marginBottom: 10, position: 'relative' }}>
+                          <button
+                            className="btn btn-icon"
+                            style={{ position: 'absolute', top: 8, right: 8, color: '#ccc' }}
+                            onClick={() => removeAction(stage.id, ai)}
+                            title="Supprimer cette action"
+                          >
+                            <Icon name="x" size={14} />
+                          </button>
+
+                          <div className="form-row">
+                            <div className="form-group" style={{ maxWidth: 160 }}>
+                              <label>Canal</label>
+                              <select value={action.channel} onChange={e => updateAction(stage.id, ai, 'channel', e.target.value)}>
+                                <option value="mail">Email</option>
+                                <option value="whatsapp">WhatsApp</option>
+                                <option value="sms">SMS</option>
+                              </select>
+                            </div>
+                            <div className="form-group" style={{ maxWidth: 200 }}>
+                              <label>Délai après entrée colonne</label>
+                              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                                <input type="number" min="0" value={action.delayMinutes || 0}
+                                  onChange={e => updateAction(stage.id, ai, 'delayMinutes', parseInt(e.target.value) || 0)}
+                                  style={{ width: 70 }}
+                                />
+                                <span style={{ fontSize: 12, color: '#888' }}>min</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {action.channel === 'mail' && (
+                            <div className="form-group">
+                              <label>Objet</label>
+                              <input value={action.subject || ''} onChange={e => updateAction(stage.id, ai, 'subject', e.target.value)}
+                                placeholder="Ex: Votre candidature {{formation}}" />
+                            </div>
+                          )}
+
+                          <div className="form-group">
+                            <label>Message</label>
+                            <textarea value={action.message || ''} onChange={e => updateAction(stage.id, ai, 'message', e.target.value)}
+                              rows={3} placeholder="Bonjour {{prenom}}, ..." />
+                          </div>
+
+                          <div style={{ fontSize: 11, color: '#aaa' }}>
+                            Variables : {templateVars.map((v, i) => (
+                              <code key={v} style={{ background: '#e8e8e8', padding: '0 4px', borderRadius: 3, cursor: 'pointer', marginRight: 4 }}
+                                onClick={() => updateAction(stage.id, ai, 'message', (action.message || '') + v)}
+                              >{v}</code>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+
+                      <button className="btn btn-sm btn-outline" onClick={() => addAction(stage.id)} style={{ marginTop: 4 }}>
+                        <Icon name="plus" size={14} /> Ajouter une action
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Pending Queue */}
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h2 style={{ fontSize: 18 }}>File d'attente ({pendingQueue.length} en attente)</h2>
+              <button className="btn btn-sm btn-outline" onClick={onRefreshQueue}>
+                <Icon name="refresh-cw" size={14} /> Rafraîchir
+              </button>
+            </div>
+
+            {pendingQueue.length === 0 ? (
+              <div style={{ background: 'white', padding: 30, borderRadius: 12, textAlign: 'center', color: '#aaa' }}>
+                Aucun envoi en attente
+              </div>
+            ) : (
+              <div className="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Candidat</th>
+                      <th>Canal</th>
+                      <th>Colonne</th>
+                      <th>Message</th>
+                      <th>Programmé pour</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingQueue.map(item => (
+                      <tr key={item.id}>
+                        <td><strong>{item.candidateName}</strong></td>
+                        <td>
+                          <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, color: 'white',
+                            background: item.channel === 'mail' ? '#E74C3C' : item.channel === 'whatsapp' ? '#25D366' : '#F39C12' }}>
+                            {item.channel === 'mail' ? 'Email' : item.channel === 'whatsapp' ? 'WhatsApp' : 'SMS'}
+                          </span>
+                        </td>
+                        <td>{item.stageLabel}</td>
+                        <td style={{ maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.message}</td>
+                        <td>{new Date(item.scheduledAt).toLocaleString('fr-FR')}</td>
+                        <td>
+                          <button className="btn btn-sm btn-danger" onClick={() => onCancelQueue(item.id)}>Annuler</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Sent History */}
+          {sentQueue.length > 0 && (
+            <div>
+              <h2 style={{ fontSize: 18, marginBottom: 12 }}>Historique des envois (50 derniers)</h2>
+              <div className="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Candidat</th>
+                      <th>Canal</th>
+                      <th>Colonne</th>
+                      <th>Message</th>
+                      <th>Envoyé le</th>
+                      <th>Source</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sentQueue.map(item => (
+                      <tr key={item.id}>
+                        <td>{item.candidateName}</td>
+                        <td>
+                          <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, color: 'white',
+                            background: item.channel === 'mail' ? '#E74C3C' : item.channel === 'whatsapp' ? '#25D366' : '#F39C12' }}>
+                            {item.channel === 'mail' ? 'Email' : item.channel === 'whatsapp' ? 'WhatsApp' : 'SMS'}
+                          </span>
+                        </td>
+                        <td>{item.stageLabel}</td>
+                        <td style={{ maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.message}</td>
+                        <td>{new Date(item.sentAt).toLocaleString('fr-FR')}</td>
+                        <td><span style={{ fontSize: 11, color: '#888' }}>{item.automationId ? 'Auto' : 'Manuel'}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ============ STAGE MANAGER MODAL ============
+    function StageManagerModal({ config, candidates, onClose, onSave }) {
+      const [stages, setStages] = useState(config.stages.map(s => ({ ...s })));
+      const [newName, setNewName] = useState('');
+      const [newColor, setNewColor] = useState('#3498DB');
+      const [editingColorIdx, setEditingColorIdx] = useState(null);
+
+      const PALETTE = ['#9B59B6', '#3498DB', '#F39C12', '#2ECC71', '#27AE60', '#E74C3C', '#95A5A6', '#1ABC9C', '#E91E63', '#FF5722', '#607D8B', '#795548', '#667EEA', '#00BCD4'];
+
+      // Count candidates per stage
+      const candidateCount = (stageId) => candidates.filter(c => c.stage === stageId).length;
+
+      // Rename
+      const handleRename = (idx, newLabel) => {
+        const updated = [...stages];
+        updated[idx] = { ...updated[idx], label: newLabel };
+        setStages(updated);
+      };
+
+      // Move up
+      const handleMoveUp = (idx) => {
+        if (idx <= 0) return;
+        const updated = [...stages];
+        [updated[idx - 1], updated[idx]] = [updated[idx], updated[idx - 1]];
+        updated.forEach((s, i) => s.order = i);
+        setStages(updated);
+      };
+
+      // Move down
+      const handleMoveDown = (idx) => {
+        if (idx >= stages.length - 1) return;
+        const updated = [...stages];
+        [updated[idx], updated[idx + 1]] = [updated[idx + 1], updated[idx]];
+        updated.forEach((s, i) => s.order = i);
+        setStages(updated);
+      };
+
+      // Delete
+      const handleDelete = (idx) => {
+        const stage = stages[idx];
+        const count = candidateCount(stage.id);
+        if (count > 0) {
+          alert(`Impossible de supprimer "${stage.label}" : ${count} candidat(s) sont dans cette colonne. Déplacez-les d'abord.`);
+          return;
+        }
+        if (!confirm(`Supprimer la colonne "${stage.label}" ?`)) return;
+        const updated = stages.filter((_, i) => i !== idx);
+        updated.forEach((s, i) => s.order = i);
+        setStages(updated);
+      };
+
+      // Change color
+      const handleColorChange = (idx, color) => {
+        const updated = [...stages];
+        updated[idx] = { ...updated[idx], color };
+        setStages(updated);
+        setEditingColorIdx(null);
+      };
+
+      // Add new stage
+      const handleAdd = () => {
+        if (!newName.trim()) return;
+        const id = newName.trim().toLowerCase()
+          .replace(/[éèêë]/g, 'e').replace(/[àâä]/g, 'a').replace(/[ùûü]/g, 'u').replace(/[ôö]/g, 'o').replace(/[îï]/g, 'i').replace(/ç/g, 'c')
+          .replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        if (stages.find(s => s.id === id)) {
+          alert('Une colonne avec cet identifiant existe déjà.');
+          return;
+        }
+        setStages([...stages, { id, label: newName.trim(), color: newColor, order: stages.length }]);
+        setNewName('');
+        setNewColor('#3498DB');
+      };
+
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ width: 600 }}>
+            <div className="modal-header">
+              <h2><Icon name="settings" size={20} /> Gérer les colonnes Kanban</h2>
+              <button className="btn btn-icon btn-outline" onClick={onClose}><Icon name="x" size={18} /></button>
+            </div>
+            <div className="modal-body">
+              <p style={{ fontSize: 13, color: '#888', marginBottom: 16 }}>
+                Réorganisez, renommez, ajoutez ou supprimez les colonnes du Kanban. Les colonnes contenant des candidats ne peuvent pas être supprimées.
+              </p>
+
+              <div className="stage-manager-list">
+                {stages.map((stage, idx) => (
+                  <div key={stage.id} className="stage-manager-item">
+                    <div className="grip" title="Position">
+                      <Icon name="grip-vertical" size={16} />
+                    </div>
+
+                    <div
+                      className="color-dot"
+                      style={{ background: stage.color }}
+                      title="Changer la couleur"
+                      onClick={() => setEditingColorIdx(editingColorIdx === idx ? null : idx)}
+                    />
+
+                    <input
+                      className="stage-name-input"
+                      value={stage.label}
+                      onChange={e => handleRename(idx, e.target.value)}
+                      placeholder="Nom de la colonne"
+                    />
+
+                    <span style={{ fontSize: 11, color: '#aaa', minWidth: 30, textAlign: 'center' }}>
+                      {candidateCount(stage.id) > 0 ? `${candidateCount(stage.id)}` : '0'}
+                    </span>
+
+                    <div className="stage-manager-actions">
+                      <button onClick={() => handleMoveUp(idx)} disabled={idx === 0} title="Monter">
+                        <Icon name="arrow-up" size={14} />
+                      </button>
+                      <button onClick={() => handleMoveDown(idx)} disabled={idx === stages.length - 1} title="Descendre">
+                        <Icon name="arrow-down" size={14} />
+                      </button>
+                      <button className="danger" onClick={() => handleDelete(idx)} title="Supprimer">
+                        <Icon name="trash" size={14} />
+                      </button>
+                    </div>
+
+                    {editingColorIdx === idx && (
+                      <div className="color-picker-row" style={{ position: 'absolute', marginTop: 50, zIndex: 10, background: 'white', padding: 10, borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}>
+                        {PALETTE.map(c => (
+                          <div
+                            key={c}
+                            className={`color-option ${stage.color === c ? 'selected' : ''}`}
+                            style={{ background: c }}
+                            onClick={() => handleColorChange(idx, c)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="stage-add-bar">
+                <div
+                  className="color-dot"
+                  style={{ background: newColor, width: 32, height: 32, borderRadius: '50%', border: '2px solid white', boxShadow: '0 0 0 1px #ddd', cursor: 'pointer', flexShrink: 0 }}
+                  onClick={() => {
+                    const idx = PALETTE.indexOf(newColor);
+                    setNewColor(PALETTE[(idx + 1) % PALETTE.length]);
+                  }}
+                  title="Cliquez pour changer la couleur"
+                />
+                <input
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  placeholder="Nom de la nouvelle colonne..."
+                  style={{ flex: 1, padding: '8px 12px', border: '1.5px solid #ddd', borderRadius: 8, fontSize: 14 }}
+                  onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }}
+                />
+                <button className="btn btn-primary" onClick={handleAdd} disabled={!newName.trim()}>
+                  <Icon name="plus" size={14} /> Ajouter
+                </button>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={onClose}>Annuler</button>
+              <button className="btn btn-success" onClick={() => onSave(stages)}>
+                <Icon name="check" size={14} /> Enregistrer
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ============ CSV IMPORT MODAL ============
+    function CSVImportModal({ config, onClose, onImport }) {
+      const [step, setStep] = useState(1); // 1: upload, 2: mapping, 3: preview
+      const [csvData, setCsvData] = useState(null);
+      const [headers, setHeaders] = useState([]);
+      const [mapping, setMapping] = useState({});
+      const [preview, setPreview] = useState([]);
+      const fileRef = useRef(null);
+
+      const targetFields = [
+        { key: 'nom', label: 'Nom' },
+        { key: 'prenom', label: 'Prénom' },
+        { key: 'telephone', label: 'Téléphone' },
+        { key: 'email', label: 'Email' },
+        { key: 'ecole', label: 'École' },
+        { key: 'formation', label: 'Formation' },
+        { key: 'chargeAdmission', label: 'Chargé admission' },
+      ];
+
+      const handleFile = (file) => {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (result) => {
+            setCsvData(result.data);
+            setHeaders(result.meta.fields || []);
+            // Auto-map by name similarity
+            const autoMap = {};
+            targetFields.forEach(tf => {
+              const match = (result.meta.fields || []).find(h =>
+                h.toLowerCase().includes(tf.key.toLowerCase()) ||
+                tf.label.toLowerCase().includes(h.toLowerCase()) ||
+                h.toLowerCase().replace(/[^a-z]/g, '') === tf.key.toLowerCase()
+              );
+              if (match) autoMap[tf.key] = match;
+            });
+            setMapping(autoMap);
+            setStep(2);
+          }
+        });
+      };
+
+      const handleDrop = (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) handleFile(file);
+      };
+
+      const generatePreview = () => {
+        const mapped = csvData.map(row => {
+          const candidate = {};
+          targetFields.forEach(tf => {
+            candidate[tf.key] = mapping[tf.key] ? (row[mapping[tf.key]] || '').trim() : '';
+          });
+          candidate.conseillerFormation = '';
+          if (candidate.ecole && candidate.formation && config.ecoles[candidate.ecole]?.formations[candidate.formation]) {
+            candidate.conseillerFormation = config.ecoles[candidate.ecole].formations[candidate.formation].conseiller || '';
+          }
+          return candidate;
+        }).filter(c => c.nom || c.prenom);
+        setPreview(mapped);
+        setStep(3);
+      };
+
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Importer un fichier CSV</h2>
+              <button className="btn btn-icon btn-outline" onClick={onClose}><Icon name="x" size={18} /></button>
+            </div>
+            <div className="modal-body">
+              {step === 1 && (
+                <div
+                  className="dropzone"
+                  onDrop={handleDrop}
+                  onDragOver={e => e.preventDefault()}
+                  onClick={() => fileRef.current?.click()}
+                >
+                  <Icon name="upload" size={40} color="#667EEA" />
+                  <p style={{ marginTop: 12 }}>Glissez votre fichier CSV ici ou cliquez pour sélectionner</p>
+                  <p style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>Format CSV avec en-têtes (séparateur , ou ;)</p>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept=".csv,.txt"
+                    style={{ display: 'none' }}
+                    onChange={e => { if (e.target.files[0]) handleFile(e.target.files[0]); }}
+                  />
+                </div>
+              )}
+
+              {step === 2 && (
+                <>
+                  <p style={{ marginBottom: 16, fontSize: 14 }}><strong>{csvData.length}</strong> lignes détectées. Mappez les colonnes :</p>
+                  {targetFields.map(tf => (
+                    <div key={tf.key} className="mapping-row">
+                      <span className="csv-col">{tf.label}</span>
+                      <span style={{ color: '#aaa' }}>←</span>
+                      <select
+                        value={mapping[tf.key] || ''}
+                        onChange={e => setMapping(m => ({ ...m, [tf.key]: e.target.value }))}
+                        style={{ flex: 1, padding: '6px 10px', borderRadius: 6, border: '1.5px solid #ddd' }}
+                      >
+                        <option value="">-- Ignorer --</option>
+                        {headers.map(h => <option key={h} value={h}>{h}</option>)}
+                      </select>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {step === 3 && (
+                <>
+                  <p style={{ marginBottom: 16, fontSize: 14 }}>
+                    <strong>{preview.length}</strong> candidats prêts à importer (stage: Voeu reçu)
+                  </p>
+                  <div className="preview-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Nom</th><th>Prénom</th><th>Email</th><th>Tél</th><th>École</th><th>Formation</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {preview.slice(0, 15).map((c, i) => (
+                          <tr key={i}>
+                            <td>{c.nom}</td><td>{c.prenom}</td><td>{c.email}</td><td>{c.telephone}</td><td>{c.ecole}</td><td>{c.formation}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {preview.length > 15 && <p style={{ textAlign: 'center', color: '#888', padding: 8 }}>... et {preview.length - 15} de plus</p>}
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="modal-footer">
+              {step > 1 && (
+                <button className="btn btn-outline" onClick={() => setStep(s => s - 1)}>Retour</button>
+              )}
+              <button className="btn btn-outline" onClick={onClose}>Annuler</button>
+              {step === 2 && (
+                <button className="btn btn-primary" onClick={generatePreview}>Prévisualiser</button>
+              )}
+              {step === 3 && (
+                <button className="btn btn-success" onClick={() => onImport(preview)}>
+                  <Icon name="check" size={14} /> Importer {preview.length} candidats
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ============ HELPERS ============
+    function timeAgo(dateStr) {
+      const diff = Date.now() - new Date(dateStr).getTime();
+      const mins = Math.floor(diff / 60000);
+      if (mins < 60) return `${mins}min`;
+      const hours = Math.floor(mins / 60);
+      if (hours < 24) return `${hours}h`;
+      const days = Math.floor(hours / 24);
+      if (days < 7) return `${days}j`;
+      return `${Math.floor(days / 7)}sem`;
+    }
+
+    // ============ RENDER ============
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

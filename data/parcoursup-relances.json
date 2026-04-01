@@ -1,0 +1,326 @@
+[
+  {
+    "id": "mnfoar1pqtnvl",
+    "candidateId": "mnfo9x3408wgp",
+    "type": "telephone",
+    "date": "2026-04-01T06:36:48.877Z",
+    "notes": "Message envoyé ",
+    "result": "no_answer",
+    "createdBy": "Cécilia"
+  },
+  {
+    "id": "mnfoioiodkvns",
+    "candidateId": "mnfo9x3408wgp",
+    "type": "mail",
+    "date": "2026-04-01T06:42:58.848Z",
+    "notes": "Mail envoyé le 01/04 en attente retour ",
+    "result": "envoye",
+    "createdBy": "Cécilia"
+  },
+  {
+    "id": "mnfokmkpywc7p",
+    "candidateId": "mnfo9x3408wgp",
+    "type": "whatsapp",
+    "date": "2026-04-01T06:44:29.641Z",
+    "notes": "Envoyé message Whatsapp pour relance 3",
+    "result": "envoye",
+    "createdBy": "Lisa"
+  },
+  {
+    "id": "mng0tfpj11xit",
+    "candidateId": "mnfo9x3408wgp",
+    "type": "mail",
+    "date": "2026-04-01T12:27:16.039Z",
+    "notes": "Email envoyé à laurent.roche@noschool.fr",
+    "result": "envoye",
+    "createdBy": ""
+  },
+  {
+    "id": "mng0u1nauvnyk",
+    "candidateId": "mnfo9x3408wgp",
+    "type": "whatsapp",
+    "date": "2026-04-01T12:27:44.470Z",
+    "notes": "WhatsApp envoyé à 0660020489",
+    "result": "envoye",
+    "createdBy": ""
+  },
+  {
+    "id": "mng0ul89ig7od",
+    "candidateId": "mnfo9x3408wgp",
+    "type": "telephone",
+    "date": "2026-04-01T12:28:09.849Z",
+    "notes": "Appel vers 0660020489",
+    "result": "autre",
+    "createdBy": ""
+  },
+  {
+    "id": "mng3xdizkxbgw",
+    "candidateId": "mng13e5rvh72j",
+    "type": "whatsapp",
+    "date": "2026-04-01T13:54:18.684Z",
+    "notes": "WhatsApp envoyé à 0610837674",
+    "result": "envoye",
+    "createdBy": ""
+  },
+  {
+    "id": "mng40umrks9ew",
+    "candidateId": "mnfo9x3408wgp",
+    "type": "whatsapp",
+    "date": "2026-04-01T13:57:00.818Z",
+    "notes": "[AUTO] Colonne: Relance mail N°1 - Bonjour ROCHE\nBienvene chez Noschool et ravi de t'accueillir l'année prochaine en BTS Assurance \nMer",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mng40umr2hz1o",
+    "candidateId": "mnfpxm8sh9io4",
+    "type": "whatsapp",
+    "date": "2026-04-01T13:57:00.818Z",
+    "notes": "[AUTO] Colonne: Relance mail N°1 - Bonjour Lorette\nBienvene chez WILL.SCHOOL et ravi de t'accueillir l'année prochaine en BTS MCO \nMerc",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mng40umrid4gz",
+    "candidateId": "mng13e5rvh72j",
+    "type": "whatsapp",
+    "date": "2026-04-01T13:57:00.818Z",
+    "notes": "[AUTO] Colonne: Relance mail N°1 - Bonjour Anne\nBienvene chez Noschool et ravi de t'accueillir l'année prochaine en BTS Assurance \nMerc",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mnggx53zv7o0r",
+    "candidateId": "mnfpxm8sh9io4",
+    "type": "mail",
+    "date": "2026-04-01T19:58:02.784Z",
+    "notes": "Email envoyé à laurent.roche@will.school",
+    "result": "envoye",
+    "createdBy": ""
+  },
+  {
+    "id": "mnggy6fqs2j9u",
+    "candidateId": "mnfpxm8sh9io4",
+    "type": "courrier",
+    "date": "2026-04-01T19:58:51.158Z",
+    "notes": "Courrier envoyé à Lorette le 15/05/2025",
+    "result": "autre",
+    "createdBy": "Cécilia"
+  },
+  {
+    "id": "mnghwew1x68kg",
+    "candidateId": "mnfo9x3408wgp",
+    "type": "whatsapp",
+    "date": "2026-04-01T20:25:28.417Z",
+    "notes": "[AUTO] Contacté | Bonjour ROCHEAppelle moi vite car je dois échanger avec toi sur ta formation en  BTS Assurance chez Noschool\nBelle journ",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mnghxp77mw3d9",
+    "candidateId": "mnfo9x3408wgp",
+    "type": "mail",
+    "date": "2026-04-01T20:26:28.434Z",
+    "notes": "[AUTO] Contacté | bienvenue chez Noschool ...appelle moi vite | Bonjour ROCHEAppelle moi vite car je dois échanger avec toi sur ta formation en  BTS Assurance chez Noschool\nBelle journ",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mngi09tkawini",
+    "candidateId": "mnfpxm8sh9io4",
+    "type": "whatsapp",
+    "date": "2026-04-01T20:28:28.472Z",
+    "notes": "[AUTO] Relance mail N°1 | BonjourLorette j'espère que tu vas bien ? peux tu me dire si tu as bien reçu ce Whatsapp la bistte ",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mngi09tkb53ff",
+    "candidateId": "mng13e5rvh72j",
+    "type": "whatsapp",
+    "date": "2026-04-01T20:28:28.472Z",
+    "notes": "[AUTO] Relance mail N°1 | BonjourAnne j'espère que tu vas bien ? peux tu me dire si tu as bien reçu ce Whatsapp la bistte ",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mngi3hlbmpoxz",
+    "candidateId": "mnghqum1zwkoy",
+    "type": "whatsapp",
+    "date": "2026-04-01T20:30:58.511Z",
+    "notes": "[AUTO] Voeu reçu | Bonjour Carole ROCHE\nWelcome Test via Parcoursup \nLaurent ",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mngi3hlbu1jjd",
+    "candidateId": "mnghutt41egyq",
+    "type": "whatsapp",
+    "date": "2026-04-01T20:30:58.511Z",
+    "notes": "[AUTO] Voeu reçu | Bonjour Juliette ROCHE \nWelcome Test via Parcoursup \nLaurent ",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mngi4rwga977p",
+    "candidateId": "mnghqum1zwkoy",
+    "type": "mail",
+    "date": "2026-04-01T20:31:58.528Z",
+    "notes": "[AUTO] Voeu reçu | Bonjour Carole\nParcoursup TEST\nLaurent ",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mngi4rwgo2w77",
+    "candidateId": "mnghutt41egyq",
+    "type": "mail",
+    "date": "2026-04-01T20:31:58.528Z",
+    "notes": "[AUTO] Voeu reçu | Bonjour Juliette\nParcoursup TEST\nLaurent ",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mngi6pdhnsxgu",
+    "candidateId": "mnfpxm8sh9io4",
+    "type": "mail",
+    "date": "2026-04-01T20:33:28.565Z",
+    "notes": "[AUTO] Relance mail N°1 | BonjourLorette j'espère que tu vas bien ? \nTest auto à 10mn \nBienvenue dans chez WILL.SCHOOL dans la BTS MCO\nWelcome",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mngi6pdhwjzda",
+    "candidateId": "mng13e5rvh72j",
+    "type": "mail",
+    "date": "2026-04-01T20:33:28.565Z",
+    "notes": "[AUTO] Relance mail N°1 | BonjourAnne j'espère que tu vas bien ? \nTest auto à 10mn \nBienvenue dans chez Noschool dans la BTS Assurance\nWelcome",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mngj43omolmsa",
+    "candidateId": "mnghqum1zwkoy",
+    "type": "whatsapp",
+    "date": "2026-04-01T20:59:26.758Z",
+    "notes": "WhatsApp envoyé à 0664935917",
+    "result": "envoye",
+    "createdBy": ""
+  },
+  {
+    "id": "mngj4scfb9hsp",
+    "candidateId": "mnghqum1zwkoy",
+    "type": "whatsapp",
+    "date": "2026-04-01T20:59:58.719Z",
+    "notes": "WhatsApp envoyé à 0664935917",
+    "result": "envoye",
+    "createdBy": ""
+  },
+  {
+    "id": "mngj55jrjd9v4",
+    "candidateId": "mnghqum1zwkoy",
+    "type": "whatsapp",
+    "date": "2026-04-01T21:00:15.831Z",
+    "notes": "WhatsApp envoyé à 0664935917",
+    "result": "envoye",
+    "createdBy": ""
+  },
+  {
+    "id": "mngj608x22r8n",
+    "candidateId": "mnghutt41egyq",
+    "type": "whatsapp",
+    "date": "2026-04-01T21:00:55.617Z",
+    "notes": "WhatsApp envoyé à 0602469248",
+    "result": "envoye",
+    "createdBy": ""
+  },
+  {
+    "id": "mngjhvj1ji1zy",
+    "candidateId": "mnghqum1zwkoy",
+    "type": "whatsapp",
+    "date": "2026-04-01T21:10:09.373Z",
+    "notes": "WhatsApp envoyé à 0664935917",
+    "result": "envoye",
+    "createdBy": ""
+  },
+  {
+    "id": "mngjjrop1kd2l",
+    "candidateId": "mnghutt41egyq",
+    "type": "whatsapp",
+    "date": "2026-04-01T21:11:37.705Z",
+    "notes": "WhatsApp envoyé à 0602469248",
+    "result": "envoye",
+    "createdBy": ""
+  },
+  {
+    "id": "mngjkz39j1u33",
+    "candidateId": "mnghutt41egyq",
+    "type": "telephone",
+    "date": "2026-04-01T21:12:33.957Z",
+    "notes": "Appel vers 0602469248",
+    "result": "autre",
+    "createdBy": ""
+  },
+  {
+    "id": "mngjl1v9dn573",
+    "candidateId": "mnghutt41egyq",
+    "type": "mail",
+    "date": "2026-04-01T21:12:37.557Z",
+    "notes": "Email envoyé à julietter1011@gmail.com",
+    "result": "envoye",
+    "createdBy": ""
+  },
+  {
+    "id": "mngjl7f9n3can",
+    "candidateId": "mnghqum1zwkoy",
+    "type": "whatsapp",
+    "date": "2026-04-01T21:12:44.757Z",
+    "notes": "[AUTO] Relance mail N°1 | BonjourCarole j'espère que tu vas bien ? peux tu me dire si tu as bien reçu ce Whatsapp la bistte ",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mngjljtz2zczp",
+    "candidateId": "mnghutt41egyq",
+    "type": "whatsapp",
+    "date": "2026-04-01T21:13:00.839Z",
+    "notes": "WhatsApp envoyé à 0602469248",
+    "result": "envoye",
+    "createdBy": ""
+  },
+  {
+    "id": "mngjlukqcqoa8",
+    "candidateId": "mnghutt41egyq",
+    "type": "whatsapp",
+    "date": "2026-04-01T21:13:14.762Z",
+    "notes": "[AUTO] Relance mail N°1 | BonjourJuliette j'espère que tu vas bien ? peux tu me dire si tu as bien reçu ce Whatsapp la bistte ",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mngjrlfn39hq0",
+    "candidateId": "mnghqum1zwkoy",
+    "type": "mail",
+    "date": "2026-04-01T21:17:42.851Z",
+    "notes": "[AUTO] Relance mail N°1 | BonjourCarole j'espère que tu vas bien ? \nTest auto à 10mn \nBienvenue dans chez WILL.SCHOOL dans la BTS ESF\nWelcome",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mngjsvqmsc76k",
+    "candidateId": "mnghutt41egyq",
+    "type": "mail",
+    "date": "2026-04-01T21:18:42.862Z",
+    "notes": "[AUTO] Relance mail N°1 | BonjourJuliette j'espère que tu vas bien ? \nTest auto à 10mn \nBienvenue dans chez Noschool dans la BTS TOURISME\nWelcome",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  },
+  {
+    "id": "mngld79zwv6x7",
+    "candidateId": "test",
+    "type": "whatsapp",
+    "date": "2026-04-01T22:02:30.179Z",
+    "notes": "[AUTO] Test | Bonjour ! Ceci est un test du CRM Parcoursup. Les automatisations WhatsApp fonctionnent correctement.",
+    "result": "envoye",
+    "createdBy": "Automatisation"
+  }
+]
