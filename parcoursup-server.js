@@ -64,17 +64,24 @@ function initWhatsApp() {
       waQRCode = null;
       waInfo = null;
       console.log('[WhatsApp] Déconnecté:', reason);
-      // Auto-reconnect after 5s
-      setTimeout(() => {
-        console.log('[WhatsApp] Tentative de reconnexion...');
-        initWhatsApp();
-      }, 5000);
+      // Auto-reconnect after 5s (only if not in cloud without Chromium)
+      if (reason !== 'NAVIGATION') {
+        setTimeout(() => {
+          console.log('[WhatsApp] Tentative de reconnexion...');
+          initWhatsApp();
+        }, 5000);
+      }
     });
 
-    waClient.initialize();
+    waClient.initialize().catch(err => {
+      waStatus = 'unavailable';
+      waClient = null;
+      console.error('[WhatsApp] Erreur init (Chromium absent ?):', err.message);
+    });
     console.log('[WhatsApp] Initialisation en cours...');
   } catch (e) {
-    waStatus = 'error';
+    waStatus = 'unavailable';
+    waClient = null;
     console.error('[WhatsApp] Erreur init:', e.message);
   }
 }
@@ -897,12 +904,22 @@ app.post('/parcoursup/api/queue/bulk-send', (req, res) => {
 // ============ SMTP CONFIG ============
 
 function getSmtpConfig() {
-  // Shared SMTP config - check parcoursup config first, then admission config as fallback
+  // 1. Check env vars (for cloud deployment like Render)
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    return {
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT) || 587,
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+      fromName: process.env.SMTP_FROM_NAME || 'Service Admissions'
+    };
+  }
+  // 2. Check parcoursup config file
   const pConfig = loadJSON('parcoursup-config.json');
   if (pConfig.smtp && pConfig.smtp.host && pConfig.smtp.user && pConfig.smtp.pass) {
     return pConfig.smtp;
   }
-  // Fallback to admission config (shared between CRMs)
+  // 3. Fallback to admission config (shared between CRMs)
   const aConfig = loadJSON('admission-config.json');
   if (aConfig.smtp && aConfig.smtp.host) return aConfig.smtp;
   return null;
