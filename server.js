@@ -219,9 +219,20 @@ function parseCSVLine(line) {
 
 function parseSheetCSV(text) {
   var lines = text.replace(/^\ufeff/, '').trim().split('\n');
-  if (lines.length < 2) return [];
-  var headers = parseCSVLine(lines[0]).map(function(h) { return h.trim(); });
-  return lines.slice(1).filter(function(l) { return l.trim(); }).map(function(l) {
+  // Ignorer les lignes vides en tête (ex: ligne "Tableau1" vide dans certains exports Google Sheets)
+  lines = lines.filter(function(l, i) {
+    if (i === 0) return true; // garder pour l'instant, on cherchera le vrai header
+    return true;
+  });
+  // Trouver la première ligne non-vide comme header
+  var headerIdx = 0;
+  for (var i = 0; i < lines.length; i++) {
+    var cells = parseCSVLine(lines[i]).map(function(c) { return c.trim(); });
+    if (cells.some(function(c) { return c.length > 0; })) { headerIdx = i; break; }
+  }
+  var headers = parseCSVLine(lines[headerIdx]).map(function(h) { return h.trim(); });
+  if (lines.length <= headerIdx + 1) return [];
+  return lines.slice(headerIdx + 1).filter(function(l) { return l.trim(); }).map(function(l) {
     var vals = parseCSVLine(l);
     var obj = {};
     headers.forEach(function(h, i) { obj[h] = (vals[i] || '').trim(); });
