@@ -179,15 +179,42 @@ const DEFAULT_PARCOURSUP_CONFIG = {
     { id: "envoye", label: "Envoyé" },
     { id: "autre", label: "Autre" }
   ],
-  automations: {}
+  automations: {
+    voeu_recu: {
+      enabled: true, id: "voeu_recu",
+      actions: [
+        { channel: "mail", subject: "", message: "Bonjour {{prenom}}\nParcoursup TEST\nLaurent ", delayMinutes: 6 },
+        { channel: "whatsapp", subject: "", message: "Bonjour {{prenom}} {{nom}}\nWelcome Test via Parcoursup \nLaurent ", delayMinutes: 5 }
+      ]
+    },
+    relance_mail_n1: {
+      enabled: true, id: "relance_mail_n1",
+      actions: [
+        { channel: "mail", subject: "", message: "Bonjour{{prenom}} j'espère que tu vas bien ? \nTest auto à 10mn \nBienvenue dans chez {{ecole}} dans la {{formation}}\nWelcome", delayMinutes: 10 },
+        { channel: "whatsapp", subject: "", message: "Bonjour{{prenom}} j'espère que tu vas bien ? peux tu me dire si tu as bien reçu ce Whatsapp la bistte ", delayMinutes: 5 }
+      ]
+    },
+    contacte: {
+      enabled: true, id: "contacte",
+      actions: [
+        { channel: "mail", subject: "bienvenue chez {{ecole}} ...appelle moi vite", message: "Bonjour {{prenom}}Appelle moi vite car je dois échanger avec toi sur ta formation en  {{formation}} chez {{ecole}}\nBelle journée Laurent ", delayMinutes: 3 },
+        { channel: "whatsapp", subject: "", message: "Bonjour {{prenom}}Appelle moi vite car je dois échanger avec toi sur ta formation en  {{formation}} chez {{ecole}}\nBelle journée Laurent ", delayMinutes: 2 }
+      ]
+    }
+  }
 };
 
 // ============ CONFIG ============
 app.get('/parcoursup/api/config', (req, res) => {
   const cfg = loadJSON('parcoursup-config.json');
-  // If config is empty (fresh deploy), return default config and save it
+  // If config is empty or missing key sections (fresh deploy), merge with defaults
   if (!cfg.stages || !cfg.ecoles) {
+    // Deep merge: keep user overrides, fill missing with defaults
     const merged = { ...DEFAULT_PARCOURSUP_CONFIG, ...cfg };
+    // Ensure automations are preserved: if user has none, use defaults
+    if (!cfg.automations || Object.keys(cfg.automations).length === 0) {
+      merged.automations = DEFAULT_PARCOURSUP_CONFIG.automations;
+    }
     saveJSON('parcoursup-config.json', merged);
     return res.json(merged);
   }
@@ -287,9 +314,11 @@ function triggerAutomation(candidateId, stageId) {
     const stageInfo = (config.stages || []).find(s => s.id === stageId);
     const now = new Date();
 
-    // Avoid duplicates
+    // Avoid duplicates: only block if same candidate+stage automation is pending or was sent in the last 10 minutes
+    const tenMinAgo = new Date(now.getTime() - 10 * 60 * 1000).toISOString();
     const alreadyQueued = queue.some(q =>
-      q.candidateId === candidateId && q.stageId === stageId && q.automationId && (q.status === 'pending' || q.status === 'sent')
+      q.candidateId === candidateId && q.stageId === stageId && q.automationId &&
+      (q.status === 'pending' || (q.status === 'sent' && q.createdAt > tenMinAgo))
     );
     if (alreadyQueued) return;
 
