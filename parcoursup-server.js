@@ -147,9 +147,51 @@ function genId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
 
+// ============ DEFAULT CONFIG (used when data file doesn't exist, e.g. fresh Render deploy) ============
+const DEFAULT_PARCOURSUP_CONFIG = {
+  ecoles: {
+    "Noschool": { color: "#667EEA", formations: { "BTS Assurance": { conseiller: null }, "BTS COMMUNICATION": { conseiller: "Alexandra" }, "BTS CG": { conseiller: "Thomas" }, "BTS GPME": { conseiller: "Annick" }, "BTS MCO": { conseiller: "Alexandra" }, "BTS NDRC": { conseiller: "Alexandra" }, "BTS PIM": { conseiller: "Arnaud" }, "BTS SAM": { conseiller: "Annick" }, "BTS TOURISME": { conseiller: "Annick" } } },
+    "NS MDM": { color: "#E91E8C", formations: { "BTS COMMUNICATION": { conseiller: "Laurine" }, "BTS GPME": { conseiller: "Laurine" }, "BTS MCO": { conseiller: "Laurine" }, "BTS NDRC": { conseiller: "Laurine" } } },
+    "WILL.SCHOOL": { color: "#2ECC71", formations: { "BTS COMMUNICATION": { conseiller: "Maud" }, "BTS ESF": { conseiller: "Camille" }, "BTS GPME": { conseiller: "Camille" }, "BTS MCO": { conseiller: "Maud" }, "BTS NDRC": { conseiller: "Maud" }, "BTS SP3S": { conseiller: "Camille" } } }
+  },
+  chargesAdmission: ["Cécilia", "Lisa", "Elio", "Peyo", "Lynn", "Kilian"],
+  stages: [
+    { id: "voeu_recu", label: "Voeu reçu", color: "#9B59B6", order: 0 },
+    { id: "relance_mail_n1", label: "Relance mail N°1", color: "#3498DB", order: 1 },
+    { id: "contacte", label: "Contacté", color: "#3498DB", order: 2 },
+    { id: "rdv_planifie", label: "RDV Planifié", color: "#F39C12", order: 3 },
+    { id: "admis", label: "Admis", color: "#2ECC71", order: 4 },
+    { id: "inscrit", label: "Inscrit", color: "#27AE60", order: 5 },
+    { id: "refuse", label: "Refusé", color: "#E74C3C", order: 6 },
+    { id: "abandonne", label: "Abandonné", color: "#95A5A6", order: 7 }
+  ],
+  relanceTypes: [
+    { id: "telephone", label: "Téléphone", icon: "phone" },
+    { id: "mail", label: "Mail", icon: "mail" },
+    { id: "sms", label: "SMS", icon: "message-square" },
+    { id: "whatsapp", label: "WhatsApp", icon: "message-circle" },
+    { id: "courrier", label: "Courrier", icon: "send" }
+  ],
+  relanceResults: [
+    { id: "repondu", label: "Répondu" },
+    { id: "no_answer", label: "Pas de réponse" },
+    { id: "message_laisse", label: "Message laissé" },
+    { id: "envoye", label: "Envoyé" },
+    { id: "autre", label: "Autre" }
+  ],
+  automations: {}
+};
+
 // ============ CONFIG ============
 app.get('/parcoursup/api/config', (req, res) => {
-  res.json(loadJSON('parcoursup-config.json'));
+  const cfg = loadJSON('parcoursup-config.json');
+  // If config is empty (fresh deploy), return default config and save it
+  if (!cfg.stages || !cfg.ecoles) {
+    const merged = { ...DEFAULT_PARCOURSUP_CONFIG, ...cfg };
+    saveJSON('parcoursup-config.json', merged);
+    return res.json(merged);
+  }
+  res.json(cfg);
 });
 
 app.post('/parcoursup/api/config', (req, res) => {
