@@ -66,6 +66,35 @@
     .card-crm { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; }
     .card-relance-count { font-size: 11px; color: #888; }
 
+    /* Mobile move selector on cards */
+    .card-move-mobile { display: none; }
+
+    /* Responsive Mobile */
+    @media (max-width: 768px) {
+      .header { padding: 10px 12px; }
+      .header h1 { font-size: 16px; }
+      .header .subtitle { display: none; }
+      .header-actions .btn span { display: none; }
+      .tabs { padding: 0 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .tab { padding: 10px 12px; font-size: 12px; white-space: nowrap; }
+      .filter-bar { padding: 8px 12px; gap: 6px; }
+      .filter-bar select, .filter-bar input { font-size: 11px; padding: 5px 8px; min-width: 0; flex: 1; }
+      .filter-count { font-size: 11px; }
+      .kanban { padding: 8px; gap: 8px; min-height: calc(100vh - 160px); -webkit-overflow-scrolling: touch; }
+      .kanban-col { min-width: 240px; max-width: 280px; }
+      .kanban-col.terminal { min-width: 200px; max-width: 220px; }
+      .kanban-col-header { padding: 8px 10px; font-size: 12px; }
+      .card { padding: 10px; }
+      .card-name { font-size: 13px; }
+      .card-move-mobile {
+        display: block; margin-top: 6px; width: 100%;
+        padding: 5px 8px; font-size: 11px; border: 1.5px solid #667EEA;
+        border-radius: 6px; background: #f0f2ff; color: #667EEA;
+        font-weight: 600; cursor: pointer;
+      }
+      .card-move-mobile:focus { outline: none; border-color: #5a6fd6; }
+    }
+
     /* Drawer */
     .drawer-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 200; animation: fadeIn 0.2s; }
     .drawer { position: fixed; top: 0; right: 0; width: 520px; max-width: 90vw; height: 100vh; background: white; z-index: 201; box-shadow: -4px 0 20px rgba(0,0,0,0.15); overflow-y: auto; animation: slideIn 0.25s ease-out; }
@@ -788,6 +817,14 @@
                         </span>
                       )}
                     </div>
+                    <select
+                      className="card-move-mobile"
+                      value={c.stage}
+                      onChange={(e) => { e.stopPropagation(); onMove(c.id, e.target.value); }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {allStages.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                    </select>
                   </div>
                 );
               })}
