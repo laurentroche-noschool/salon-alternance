@@ -151,9 +151,31 @@ function requireAuth(req, res, next) {
 
 // Apply auth to all API routes except /auth and /health
 app.use('/parcoursup/api', (req, res, next) => {
-  if (req.path === '/auth' || req.path === '/health') return next();
+  if (req.path === '/auth' || req.path === '/health' || req.path === '/events') return next();
   requireAuth(req, res, next);
 });
+
+// ============ SSE (Server-Sent Events) for real-time sync ============
+const sseClients = new Set();
+
+app.get('/parcoursup/api/events', (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*'
+  });
+  res.write('data: connected\n\n');
+  sseClients.add(res);
+  req.on('close', () => sseClients.delete(res));
+});
+
+function broadcast(event = 'update') {
+  const msg = `data: ${event}\n\n`;
+  for (const client of sseClients) {
+    try { client.write(msg); } catch(e) { sseClients.delete(client); }
+  }
+}
 
 // JSON helpers
 const DATA_DIR = path.join(__dirname, 'data');
@@ -299,6 +321,7 @@ app.post('/parcoursup/api/candidates', (req, res) => {
   };
   candidates.push(candidate);
   saveJSON('parcoursup-candidates.json', candidates);
+  broadcast('candidates');
   res.json(candidate);
 });
 
@@ -308,6 +331,7 @@ app.put('/parcoursup/api/candidates/:id', (req, res) => {
   if (idx === -1) return res.status(404).json({ error: 'Candidat non trouvé' });
   candidates[idx] = { ...candidates[idx], ...req.body, updatedAt: new Date().toISOString() };
   saveJSON('parcoursup-candidates.json', candidates);
+  broadcast('candidates');
   res.json(candidates[idx]);
 });
 
@@ -326,6 +350,7 @@ app.patch('/parcoursup/api/candidates/:id/stage', (req, res) => {
     triggerAutomation(candidates[idx].id, newStage);
   }
 
+  broadcast('candidates');
   res.json(candidates[idx]);
 });
 
@@ -392,6 +417,7 @@ app.delete('/parcoursup/api/candidates/:id', (req, res) => {
   let relances = loadJSON('parcoursup-relances.json');
   relances = relances.filter(r => r.candidateId !== req.params.id);
   saveJSON('parcoursup-relances.json', relances);
+  broadcast('candidates');
   res.json({ success: true });
 });
 
@@ -417,6 +443,7 @@ app.post('/parcoursup/api/candidates/bulk', (req, res) => {
   }));
   const all = [...existing, ...newCandidates];
   saveJSON('parcoursup-candidates.json', all);
+  broadcast('candidates');
   res.json({ imported: newCandidates.length, total: all.length });
 });
 
@@ -442,6 +469,7 @@ app.post('/parcoursup/api/relances', (req, res) => {
   };
   relances.push(relance);
   saveJSON('parcoursup-relances.json', relances);
+  broadcast('relances');
   res.json(relance);
 });
 
@@ -509,6 +537,7 @@ app.post('/parcoursup/api/duplicates/merge', (req, res) => {
 
   saveJSON('parcoursup-candidates.json', candidates);
   saveJSON('parcoursup-relances.json', relances);
+  broadcast('candidates');
   res.json({ success: true, remaining: candidates.length });
 });
 

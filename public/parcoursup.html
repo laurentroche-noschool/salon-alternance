@@ -421,6 +421,19 @@
       useEffect(() => { if (activeTab === 'dashboard' || activeTab === 'doublons') loadStats(); }, [activeTab]);
       useEffect(() => { if (activeTab === 'automations') loadQueue(); }, [activeTab]);
 
+      // Real-time sync via SSE
+      useEffect(() => {
+        const es = new EventSource(API + '/events');
+        es.onmessage = (e) => {
+          if (e.data === 'connected') return;
+          loadData();
+          if (activeTab === 'dashboard' || activeTab === 'doublons') loadStats();
+          if (activeTab === 'automations') loadQueue();
+        };
+        es.onerror = () => { es.close(); setTimeout(() => { /* reconnect handled by browser */ }, 5000); };
+        return () => es.close();
+      }, [activeTab, loadData, loadStats, loadQueue]);
+
       // Filter candidates
       const filteredCandidates = useMemo(() => {
         let list = [...candidates];
