@@ -24,26 +24,26 @@
     .tabs { display: flex; background: white; border-bottom: 2px solid #e0e0e0; padding: 0 24px; position: sticky; top: 60px; z-index: 99; }
     .tab { padding: 12px 20px; cursor: pointer; font-weight: 600; font-size: 14px; color: #666; border-bottom: 3px solid transparent; transition: all 0.2s; }
     .tab:hover { color: #1a1a2e; }
-    .tab.active { color: #667EEA; border-bottom-color: #667EEA; }
-    .tab .badge { background: #667EEA; color: white; border-radius: 10px; padding: 2px 8px; font-size: 11px; margin-left: 6px; }
+    .tab.active { color: #002FA7; border-bottom-color: #002FA7; }
+    .tab .badge { background: #002FA7; color: white; border-radius: 10px; padding: 2px 8px; font-size: 11px; margin-left: 6px; }
 
     /* Buttons */
     .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
-    .btn-primary { background: #667EEA; color: white; }
-    .btn-primary:hover { background: #5a6fd6; }
+    .btn-primary { background: #002FA7; color: white; }
+    .btn-primary:hover { background: #001F7A; }
     .btn-success { background: #2ECC71; color: white; }
     .btn-success:hover { background: #27ae60; }
     .btn-danger { background: #E74C3C; color: white; }
     .btn-danger:hover { background: #c0392b; }
     .btn-outline { background: transparent; border: 1.5px solid #ddd; color: #555; }
-    .btn-outline:hover { border-color: #667EEA; color: #667EEA; }
+    .btn-outline:hover { border-color: #002FA7; color: #002FA7; }
     .btn-sm { padding: 5px 10px; font-size: 12px; }
     .btn-icon { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
 
     /* Filter Bar */
     .filter-bar { background: white; padding: 12px 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #eee; }
     .filter-bar select, .filter-bar input { padding: 7px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; background: white; }
-    .filter-bar select:focus, .filter-bar input:focus { outline: none; border-color: #667EEA; }
+    .filter-bar select:focus, .filter-bar input:focus { outline: none; border-color: #002FA7; }
     .filter-count { font-size: 13px; color: #888; margin-left: auto; }
 
     /* Kanban */
@@ -53,10 +53,10 @@
     .kanban-col-header { padding: 12px 16px; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: space-between; border-radius: 12px 12px 0 0; }
     .kanban-col-header .count { background: rgba(255,255,255,0.3); border-radius: 12px; padding: 2px 10px; font-size: 12px; }
     .kanban-col-body { padding: 8px; overflow-y: auto; flex: 1; min-height: 100px; }
-    .kanban-col-body.drag-over { background: #e3f2fd; border: 2px dashed #667EEA; border-radius: 0 0 12px 12px; }
+    .kanban-col-body.drag-over { background: #e3f2fd; border: 2px dashed #002FA7; border-radius: 0 0 12px 12px; }
 
     /* Candidate Card */
-    .card { background: white; border-radius: 10px; padding: 12px; margin-bottom: 8px; cursor: grab; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 4px solid #667EEA; transition: all 0.15s; position: relative; }
+    .card { background: white; border-radius: 10px; padding: 12px; margin-bottom: 8px; cursor: grab; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 4px solid #002FA7; transition: all 0.15s; position: relative; }
     .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-1px); }
     .card.dragging { opacity: 0.5; }
     .card-name { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
@@ -88,11 +88,11 @@
       .card-name { font-size: 13px; }
       .card-move-mobile {
         display: block; margin-top: 6px; width: 100%;
-        padding: 5px 8px; font-size: 11px; border: 1.5px solid #667EEA;
-        border-radius: 6px; background: #f0f2ff; color: #667EEA;
+        padding: 5px 8px; font-size: 11px; border: 1.5px solid #002FA7;
+        border-radius: 6px; background: #e8eeff; color: #002FA7;
         font-weight: 600; cursor: pointer;
       }
-      .card-move-mobile:focus { outline: none; border-color: #5a6fd6; }
+      .card-move-mobile:focus { outline: none; border-color: #001F7A; }
     }
 
     /* Drawer */
@@ -110,7 +110,7 @@
     .form-group { flex: 1; }
     .form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
     .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667EEA; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #002FA7; }
     .form-group textarea { resize: vertical; min-height: 60px; }
 
     /* Toggle */
@@ -124,7 +124,7 @@
     .timeline { position: relative; padding-left: 24px; }
     .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: #e0e0e0; }
     .timeline-item { position: relative; margin-bottom: 16px; padding: 10px 14px; background: #f8f9fa; border-radius: 8px; }
-    .timeline-item::before { content: ''; position: absolute; left: -20px; top: 14px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #667EEA; background: white; }
+    .timeline-item::before { content: ''; position: absolute; left: -20px; top: 14px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #002FA7; background: white; }
     .timeline-item .type { font-weight: 700; font-size: 12px; text-transform: uppercase; }
     .timeline-item .date { font-size: 11px; color: #888; }
     .timeline-item .notes { font-size: 13px; margin-top: 4px; }
@@ -178,7 +178,7 @@
 
     /* CSV Import */
     .dropzone { border: 2px dashed #ccc; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: 0.2s; }
-    .dropzone:hover, .dropzone.active { border-color: #667EEA; background: #f0f0ff; }
+    .dropzone:hover, .dropzone.active { border-color: #002FA7; background: #f0f0ff; }
     .dropzone p { color: #888; font-size: 14px; }
     .preview-table { max-height: 300px; overflow: auto; margin-top: 16px; }
     .preview-table table { font-size: 12px; }
@@ -193,7 +193,7 @@
     .stage-manager-item .color-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #ddd; cursor: pointer; flex-shrink: 0; }
     .stage-manager-item .stage-name-input { flex: 1; border: 1.5px solid transparent; background: transparent; padding: 6px 10px; border-radius: 6px; font-size: 14px; font-weight: 600; }
     .stage-manager-item .stage-name-input:hover { border-color: #ddd; background: white; }
-    .stage-manager-item .stage-name-input:focus { border-color: #667EEA; background: white; outline: none; }
+    .stage-manager-item .stage-name-input:focus { border-color: #002FA7; background: white; outline: none; }
     .stage-manager-actions { display: flex; gap: 4px; }
     .stage-manager-actions button { width: 30px; height: 30px; border: none; background: transparent; cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #888; transition: 0.15s; }
     .stage-manager-actions button:hover { background: #e0e0e0; color: #333; }
@@ -232,13 +232,23 @@
 
     const API = '/parcoursup/api';
 
+    // ============ AUTH TOKEN ============
+    function getToken() { return sessionStorage.getItem('parcoursup_token') || ''; }
+    function setToken(t) { sessionStorage.setItem('parcoursup_token', t); }
+    function clearToken() { sessionStorage.removeItem('parcoursup_token'); }
+
     // ============ API HELPERS ============
     async function api(path, opts = {}) {
       const res = await fetch(API + path, {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
         ...opts,
         body: opts.body ? JSON.stringify(opts.body) : undefined
       });
+      if (res.status === 401) {
+        clearToken();
+        window.location.reload();
+        return {};
+      }
       return res.json();
     }
 
@@ -291,8 +301,80 @@
       return <div style={{ height }}><canvas ref={canvasRef} /></div>;
     }
 
+    // ============ LOGIN SCREEN ============
+    function LoginScreen({ onLogin }) {
+      const [pin, setPin] = useState('');
+      const [error, setError] = useState('');
+      const [loading, setLoading] = useState(false);
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+        try {
+          const res = await fetch(API + '/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin })
+          });
+          const data = await res.json();
+          if (data.success) {
+            setToken(data.token);
+            onLogin();
+          } else {
+            setError(data.error || 'Code PIN incorrect');
+          }
+        } catch (err) {
+          setError('Erreur de connexion au serveur');
+        }
+        setLoading(false);
+      };
+
+      return (
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' }}>
+          <div style={{ background: 'white', borderRadius: 20, padding: '48px 40px', width: 420, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 32 }}>
+              <img src="/parcoursup/assets/images/logo-noschool.png" alt="Noschool" style={{ height: 50, objectFit: 'contain' }} />
+              <img src="/parcoursup/assets/images/logo-willschool.png" alt="Will.School" style={{ height: 50, objectFit: 'contain' }} />
+            </div>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a2e', marginBottom: 4 }}>CRM Parcoursup</h1>
+            <p style={{ color: '#888', fontSize: 14, marginBottom: 32 }}>Accès réservé aux équipes Admission</p>
+            <form onSubmit={handleSubmit}>
+              <input
+                type="password"
+                placeholder="Code PIN"
+                value={pin}
+                onChange={e => setPin(e.target.value)}
+                autoFocus
+                style={{ width: '100%', padding: '14px 16px', fontSize: 18, textAlign: 'center', border: '2px solid #ddd', borderRadius: 12, outline: 'none', letterSpacing: 8, fontWeight: 700, marginBottom: 16, transition: 'border-color 0.2s' }}
+                onFocus={e => e.target.style.borderColor = '#002FA7'}
+                onBlur={e => e.target.style.borderColor = '#ddd'}
+              />
+              {error && <div style={{ color: '#E74C3C', fontSize: 13, marginBottom: 12, fontWeight: 600 }}>{error}</div>}
+              <button type="submit" disabled={loading || !pin} style={{
+                width: '100%', padding: '14px', fontSize: 16, fontWeight: 700, color: 'white', border: 'none',
+                borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s',
+                background: loading || !pin ? '#ccc' : 'linear-gradient(135deg, #002FA7 0%, #E91E8C 100%)'
+              }}>
+                {loading ? 'Connexion...' : 'Accéder au CRM'}
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    // ============ AUTH WRAPPER ============
+    function AppWrapper() {
+      const [authenticated, setAuthenticated] = useState(!!getToken());
+      if (!authenticated) {
+        return <LoginScreen onLogin={() => setAuthenticated(true)} />;
+      }
+      return <App onLogout={() => { clearToken(); setAuthenticated(false); }} />;
+    }
+
     // ============ MAIN APP ============
-    function App() {
+    function App({ onLogout }) {
       const [config, setConfig] = useState(null);
       const [candidates, setCandidates] = useState([]);
       const [relances, setRelances] = useState([]);
@@ -472,17 +554,22 @@
         <div>
           <header className="header">
             <div className="header-left">
+              <img src="/parcoursup/assets/images/logo-noschool.png" alt="Noschool" style={{ height: 36, objectFit: 'contain' }} />
+              <img src="/parcoursup/assets/images/logo-willschool.png" alt="Will.School" style={{ height: 36, objectFit: 'contain' }} />
               <div>
                 <h1>CRM Parcoursup</h1>
-                <div className="subtitle">Suivi des candidats - Noschool / NS MDM / WILL.SCHOOL</div>
+                <div className="subtitle">Suivi des candidats Admission</div>
               </div>
             </div>
             <div className="header-actions">
               <button className="btn btn-outline" onClick={() => setShowImportModal(true)}>
-                <Icon name="upload" size={16} /> Importer CSV
+                <Icon name="upload" size={16} /> <span>Importer CSV</span>
               </button>
               <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
-                <Icon name="plus" size={16} /> Nouveau candidat
+                <Icon name="plus" size={16} /> <span>Nouveau candidat</span>
+              </button>
+              <button className="btn btn-outline" style={{ borderColor: '#E74C3C', color: '#E74C3C' }} onClick={onLogout}>
+                <Icon name="x" size={14} /> <span>Déconnexion</span>
               </button>
             </div>
           </header>
@@ -919,7 +1006,7 @@
       config.stages.forEach(s => stageLabels[s.id] = s.label);
       const chargeDetails = stats.chargeDetails || {};
       const charges = Object.keys(chargeDetails);
-      const chargeColors = ['#667EEA', '#E74C3C', '#2ECC71', '#F39C12', '#9B59B6', '#1ABC9C', '#E67E22', '#3498DB'];
+      const chargeColors = ['#002FA7', '#E74C3C', '#2ECC71', '#F39C12', '#9B59B6', '#1ABC9C', '#E67E22', '#3498DB'];
 
       const formatHours = (h) => {
         if (h === undefined || h === null) return '-';
@@ -949,7 +1036,7 @@
             </div>
             <div className="kpi-card">
               <div className="label">Basculés CRM</div>
-              <div className="value" style={{ color: '#667EEA' }}>{stats.totalCRM || 0} <span style={{ fontSize: 16, color: '#888' }}>/ {stats.total}</span></div>
+              <div className="value" style={{ color: '#002FA7' }}>{stats.totalCRM || 0} <span style={{ fontSize: 16, color: '#888' }}>/ {stats.total}</span></div>
               <div className="sub" style={{ color: (stats.tauxCRMGlobal || 0) >= 50 ? '#2ECC71' : '#E74C3C' }}>{stats.tauxCRMGlobal || 0}% dans le CRM</div>
             </div>
             <div className="kpi-card">
@@ -1043,7 +1130,7 @@
                       <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#555' }}>Total</th>
                       <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#555' }}>Sans relance</th>
                       <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#2ECC71' }}>CRM</th>
-                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#667EEA' }}>Taux CRM</th>
+                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#002FA7' }}>Taux CRM</th>
                       <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#2ECC71' }}>Inscrits</th>
                       <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#2ECC71' }}>Taux inscrit</th>
                     </tr>
@@ -1065,7 +1152,7 @@
                             <span style={{ background: d.relancesToday > 0 ? '#2ECC7122' : '#f5f5f5', color: d.relancesToday > 0 ? '#2ECC71' : '#ccc', padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.relancesToday}</span>
                           </td>
                           <td style={{ textAlign: 'center', padding: '10px 8px' }}>
-                            <span style={{ background: '#667EEA22', color: '#667EEA', padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.relancesWeek}</span>
+                            <span style={{ background: '#002FA722', color: '#002FA7', padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.relancesWeek}</span>
                           </td>
                           <td style={{ textAlign: 'center', padding: '10px 8px' }}>
                             <span style={{ background: '#3498DB22', color: '#3498DB', padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.relancesMonth}</span>
@@ -1118,7 +1205,7 @@
                       labels: charges,
                       datasets: [
                         { label: "Aujourd'hui", data: charges.map(c => chargeDetails[c].relancesToday), backgroundColor: '#2ECC71', borderRadius: 4 },
-                        { label: 'Semaine', data: charges.map(c => chargeDetails[c].relancesWeek), backgroundColor: '#667EEA', borderRadius: 4 },
+                        { label: 'Semaine', data: charges.map(c => chargeDetails[c].relancesWeek), backgroundColor: '#002FA7', borderRadius: 4 },
                         { label: 'Mois', data: charges.map(c => chargeDetails[c].relancesMonth), backgroundColor: '#3498DB', borderRadius: 4 },
                       ]
                     }}
@@ -1138,7 +1225,7 @@
                       labels: charges,
                       datasets: [
                         { label: 'Total candidats', data: charges.map(c => chargeDetails[c].totalCandidats), backgroundColor: '#ddd', borderRadius: 4 },
-                        { label: 'Basculés CRM', data: charges.map(c => chargeDetails[c].crmCount), backgroundColor: '#667EEA', borderRadius: 4 },
+                        { label: 'Basculés CRM', data: charges.map(c => chargeDetails[c].crmCount), backgroundColor: '#002FA7', borderRadius: 4 },
                         { label: 'Inscrits', data: charges.map(c => chargeDetails[c].inscritCount), backgroundColor: '#2ECC71', borderRadius: 4 },
                       ]
                     }}
@@ -1197,7 +1284,7 @@
                         datasets: [{
                           label: 'Relances',
                           data: Object.keys(stats.relancesParJour).sort().map(k => stats.relancesParJour[k]),
-                          borderColor: '#667EEA', backgroundColor: 'rgba(102,126,234,0.1)',
+                          borderColor: '#002FA7', backgroundColor: 'rgba(102,126,234,0.1)',
                           fill: true, tension: 0.3, pointRadius: 4,
                         }]
                       }}
@@ -1229,9 +1316,9 @@
                     <div className="label">Actions aujourd'hui</div>
                     <div className="value" style={{ color: d.relancesToday > 0 ? '#2ECC71' : '#E74C3C' }}>{d.relancesToday}</div>
                   </div>
-                  <div className="kpi-card" style={{ borderLeft: '4px solid #667EEA' }}>
+                  <div className="kpi-card" style={{ borderLeft: '4px solid #002FA7' }}>
                     <div className="label">Actions semaine</div>
-                    <div className="value" style={{ color: '#667EEA' }}>{d.relancesWeek}</div>
+                    <div className="value" style={{ color: '#002FA7' }}>{d.relancesWeek}</div>
                   </div>
                   <div className="kpi-card" style={{ borderLeft: '4px solid #3498DB' }}>
                     <div className="label">Actions mois</div>
@@ -1637,7 +1724,7 @@
                   {sortedRelances.map(r => {
                     const typeInfo = config.relanceTypes.find(t => t.id === r.type);
                     const resultInfo = config.relanceResults.find(x => x.id === r.result);
-                    const typeColors = { telephone: '#3498DB', mail: '#E74C3C', sms: '#F39C12', whatsapp: '#25D366', courrier: '#9B59B6' };
+                    const typeColors = { telephone: '#3498DB', mail: '#E74C3C', whatsapp: '#25D366', courrier: '#9B59B6' };
                     return (
                       <div key={r.id} className="timeline-item">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1872,7 +1959,7 @@
                 onClick={() => setMode('immediate')}
                 style={{
                   flex: 1, padding: '12px 16px', cursor: 'pointer', textAlign: 'center', fontSize: 14, fontWeight: 600,
-                  background: mode === 'immediate' ? '#667EEA' : 'white', color: mode === 'immediate' ? 'white' : '#666',
+                  background: mode === 'immediate' ? '#002FA7' : 'white', color: mode === 'immediate' ? 'white' : '#666',
                   transition: '0.2s'
                 }}
               >
@@ -1882,7 +1969,7 @@
                 onClick={() => setMode('auto')}
                 style={{
                   flex: 1, padding: '12px 16px', cursor: 'pointer', textAlign: 'center', fontSize: 14, fontWeight: 600,
-                  background: mode === 'auto' ? '#667EEA' : 'white', color: mode === 'auto' ? 'white' : '#666',
+                  background: mode === 'auto' ? '#002FA7' : 'white', color: mode === 'auto' ? 'white' : '#666',
                   transition: '0.2s'
                 }}
               >
@@ -1912,7 +1999,6 @@
                       <select value={channel} onChange={e => setChannel(e.target.value)}>
                         <option value="mail">Email</option>
                         <option value="whatsapp">WhatsApp</option>
-                        <option value="sms">SMS</option>
                       </select>
                     </div>
                     <div className="form-group">
@@ -1967,7 +2053,7 @@
                   </div>
 
                   {actions.map((action, idx) => (
-                    <div key={idx} style={{ background: '#f8f9fa', padding: 14, borderRadius: 10, marginBottom: 10, borderLeft: `4px solid ${stageInfo?.color || '#667EEA'}`, position: 'relative' }}>
+                    <div key={idx} style={{ background: '#f8f9fa', padding: 14, borderRadius: 10, marginBottom: 10, borderLeft: `4px solid ${stageInfo?.color || '#002FA7'}`, position: 'relative' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                         <strong style={{ fontSize: 14, color: '#333' }}>
                           Message N°{idx + 1}
@@ -1988,7 +2074,6 @@
                           <select value={action.channel} onChange={e => updateAction(idx, 'channel', e.target.value)}>
                             <option value="mail">Email</option>
                             <option value="whatsapp">WhatsApp</option>
-                            <option value="sms">SMS</option>
                           </select>
                         </div>
                         <div className="form-group" style={{ maxWidth: 220 }}>
@@ -2047,9 +2132,9 @@
                             <span style={{ color: '#aaa' }}>↓ +{formatDelay(a.delayMinutes || 0)}</span>
                             <span style={{
                               padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, color: 'white',
-                              background: a.channel === 'mail' ? '#E74C3C' : a.channel === 'whatsapp' ? '#25D366' : '#F39C12'
+                              background: a.channel === 'mail' ? '#E74C3C' : '#25D366'
                             }}>
-                              {a.channel === 'mail' ? 'Email' : a.channel === 'whatsapp' ? 'WhatsApp' : 'SMS'} N°{i+1}
+                              {a.channel === 'mail' ? 'Email' : 'WhatsApp'} N°{i+1}
                             </span>
                             <span style={{ color: '#888' }}>{a.subject || (a.message || '').substring(0, 40) || '(message à rédiger)'}{(a.message || '').length > 40 ? '...' : ''}</span>
                           </div>
@@ -2339,7 +2424,7 @@
             <div>
               <h2 style={{ fontSize: 20 }}>Automatisations par colonne</h2>
               <p style={{ color: '#888', fontSize: 13, marginTop: 4 }}>
-                Configurez des envois automatiques (Mail/WhatsApp/SMS) déclenchés quand un candidat entre dans une colonne.
+                Configurez des envois automatiques (Mail/WhatsApp) déclenchés quand un candidat entre dans une colonne.
                 Chaque envoi est historisé dans la fiche du candidat.
               </p>
             </div>
@@ -2399,7 +2484,6 @@
                               <select value={action.channel} onChange={e => updateAction(stage.id, ai, 'channel', e.target.value)}>
                                 <option value="mail">Email</option>
                                 <option value="whatsapp">WhatsApp</option>
-                                <option value="sms">SMS</option>
                               </select>
                             </div>
                             <div className="form-group" style={{ maxWidth: 200 }}>
@@ -2480,8 +2564,8 @@
                         <td><strong>{item.candidateName}</strong></td>
                         <td>
                           <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, color: 'white',
-                            background: item.channel === 'mail' ? '#E74C3C' : item.channel === 'whatsapp' ? '#25D366' : '#F39C12' }}>
-                            {item.channel === 'mail' ? 'Email' : item.channel === 'whatsapp' ? 'WhatsApp' : 'SMS'}
+                            background: item.channel === 'mail' ? '#E74C3C' : '#25D366' }}>
+                            {item.channel === 'mail' ? 'Email' : 'WhatsApp'}
                           </span>
                         </td>
                         <td>{item.stageLabel}</td>
@@ -2520,8 +2604,8 @@
                         <td>{item.candidateName}</td>
                         <td>
                           <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, color: 'white',
-                            background: item.channel === 'mail' ? '#E74C3C' : item.channel === 'whatsapp' ? '#25D366' : '#F39C12' }}>
-                            {item.channel === 'mail' ? 'Email' : item.channel === 'whatsapp' ? 'WhatsApp' : 'SMS'}
+                            background: item.channel === 'mail' ? '#E74C3C' : '#25D366' }}>
+                            {item.channel === 'mail' ? 'Email' : 'WhatsApp'}
                           </span>
                         </td>
                         <td>{item.stageLabel}</td>
@@ -2546,7 +2630,7 @@
       const [newColor, setNewColor] = useState('#3498DB');
       const [editingColorIdx, setEditingColorIdx] = useState(null);
 
-      const PALETTE = ['#9B59B6', '#3498DB', '#F39C12', '#2ECC71', '#27AE60', '#E74C3C', '#95A5A6', '#1ABC9C', '#E91E63', '#FF5722', '#607D8B', '#795548', '#667EEA', '#00BCD4'];
+      const PALETTE = ['#9B59B6', '#3498DB', '#F39C12', '#2ECC71', '#27AE60', '#E74C3C', '#95A5A6', '#1ABC9C', '#E91E63', '#FF5722', '#607D8B', '#795548', '#002FA7', '#00BCD4'];
 
       // Count candidates per stage
       const candidateCount = (stageId) => candidates.filter(c => c.stage === stageId).length;
@@ -2790,7 +2874,7 @@
                   onDragOver={e => e.preventDefault()}
                   onClick={() => fileRef.current?.click()}
                 >
-                  <Icon name="upload" size={40} color="#667EEA" />
+                  <Icon name="upload" size={40} color="#002FA7" />
                   <p style={{ marginTop: 12 }}>Glissez votre fichier CSV ici ou cliquez pour sélectionner</p>
                   <p style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>Format CSV avec en-têtes (séparateur , ou ;)</p>
                   <input
@@ -2880,7 +2964,7 @@
     }
 
     // ============ RENDER ============
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    ReactDOM.createRoot(document.getElementById('root')).render(<AppWrapper />);
   </script>
 </body>
 </html>

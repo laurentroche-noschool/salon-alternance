@@ -112,16 +112,47 @@ async function sendWhatsApp(phone, message) {
 
 app.use(express.json({ limit: '10mb' }));
 // Only serve specific static assets, not the full public folder (to avoid conflicts with main server's index.html)
-app.use('/parcoursup/assets', express.static(path.join(__dirname, 'public', 'css')));
-app.use('/parcoursup/assets', express.static(path.join(__dirname, 'public', 'images')));
+app.use('/parcoursup/assets/css', express.static(path.join(__dirname, 'public', 'css')));
+app.use('/parcoursup/assets/images', express.static(path.join(__dirname, 'public', 'images')));
 
 // CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
+});
+
+// ============ PIN AUTH ============
+const PARCOURSUP_PIN = process.env.PARCOURSUP_PIN || 'NSWILL26';
+const activeSessions = new Map(); // token -> { createdAt }
+
+app.post('/parcoursup/api/auth', (req, res) => {
+  const { pin } = req.body;
+  if (pin === PARCOURSUP_PIN) {
+    const token = genId() + genId();
+    activeSessions.set(token, { createdAt: new Date() });
+    // Clean old sessions (>24h)
+    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    for (const [t, s] of activeSessions) {
+      if (new Date(s.createdAt).getTime() < dayAgo) activeSessions.delete(t);
+    }
+    return res.json({ success: true, token });
+  }
+  res.status(401).json({ success: false, error: 'Code PIN incorrect' });
+});
+
+function requireAuth(req, res, next) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (token && activeSessions.has(token)) return next();
+  res.status(401).json({ error: 'Non authentifié' });
+}
+
+// Apply auth to all API routes except /auth and /health
+app.use('/parcoursup/api', (req, res, next) => {
+  if (req.path === '/auth' || req.path === '/health') return next();
+  requireAuth(req, res, next);
 });
 
 // JSON helpers
@@ -150,9 +181,9 @@ function genId() {
 // ============ DEFAULT CONFIG (used when data file doesn't exist, e.g. fresh Render deploy) ============
 const DEFAULT_PARCOURSUP_CONFIG = {
   ecoles: {
-    "Noschool": { color: "#667EEA", formations: { "BTS Assurance": { conseiller: null }, "BTS COMMUNICATION": { conseiller: "Alexandra" }, "BTS CG": { conseiller: "Thomas" }, "BTS GPME": { conseiller: "Annick" }, "BTS MCO": { conseiller: "Alexandra" }, "BTS NDRC": { conseiller: "Alexandra" }, "BTS PIM": { conseiller: "Arnaud" }, "BTS SAM": { conseiller: "Annick" }, "BTS TOURISME": { conseiller: "Annick" } } },
+    "Noschool": { color: "#F1C40F", formations: { "BTS Assurance": { conseiller: null }, "BTS COMMUNICATION": { conseiller: "Alexandra" }, "BTS CG": { conseiller: "Thomas" }, "BTS GPME": { conseiller: "Annick" }, "BTS MCO": { conseiller: "Alexandra" }, "BTS NDRC": { conseiller: "Alexandra" }, "BTS PIM": { conseiller: "Arnaud" }, "BTS SAM": { conseiller: "Annick" }, "BTS TOURISME": { conseiller: "Annick" } } },
     "NS MDM": { color: "#E91E8C", formations: { "BTS COMMUNICATION": { conseiller: "Laurine" }, "BTS GPME": { conseiller: "Laurine" }, "BTS MCO": { conseiller: "Laurine" }, "BTS NDRC": { conseiller: "Laurine" } } },
-    "WILL.SCHOOL": { color: "#2ECC71", formations: { "BTS COMMUNICATION": { conseiller: "Maud" }, "BTS ESF": { conseiller: "Camille" }, "BTS GPME": { conseiller: "Camille" }, "BTS MCO": { conseiller: "Maud" }, "BTS NDRC": { conseiller: "Maud" }, "BTS SP3S": { conseiller: "Camille" } } }
+    "WILL.SCHOOL": { color: "#002FA7", formations: { "BTS COMMUNICATION": { conseiller: "Maud" }, "BTS ESF": { conseiller: "Camille" }, "BTS GPME": { conseiller: "Camille" }, "BTS MCO": { conseiller: "Maud" }, "BTS NDRC": { conseiller: "Maud" }, "BTS SP3S": { conseiller: "Camille" } } }
   },
   chargesAdmission: ["Cécilia", "Lisa", "Elio", "Peyo", "Lynn", "Kilian"],
   stages: [
@@ -168,7 +199,6 @@ const DEFAULT_PARCOURSUP_CONFIG = {
   relanceTypes: [
     { id: "telephone", label: "Téléphone", icon: "phone" },
     { id: "mail", label: "Mail", icon: "mail" },
-    { id: "sms", label: "SMS", icon: "message-square" },
     { id: "whatsapp", label: "WhatsApp", icon: "message-circle" },
     { id: "courrier", label: "Courrier", icon: "send" }
   ],
@@ -758,7 +788,7 @@ app.post('/parcoursup/api/queue', (req, res) => {
       candidateName: item.candidateName || '',
       candidateEmail: item.candidateEmail || '',
       candidatePhone: item.candidatePhone || '',
-      channel: item.channel || 'mail', // mail, whatsapp, sms
+      channel: item.channel || 'mail', // mail, whatsapp
       subject: item.subject || '',
       message: item.message || '',
       stageId: item.stageId || '',
@@ -1143,11 +1173,6 @@ async function processQueue() {
         errors++;
         console.error(`[Queue] Erreur WhatsApp ${item.candidatePhone}: ${e.message}`);
       }
-    } else if (item.channel === 'sms') {
-      // SMS: pas d'API gratuite, historisé seulement
-      item.status = 'sent';
-      item.sentAt = now.toISOString();
-      console.log(`[Queue] SMS pour ${item.candidateName} (${item.candidatePhone}) - historisé`);
     } else {
       item.status = 'sent';
       item.sentAt = now.toISOString();
