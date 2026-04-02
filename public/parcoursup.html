@@ -886,7 +886,10 @@
                         <Icon name="check" size={12} />
                       </div>
                     )}
-                    <div className="card-name">{c.prenom} {c.nom}</div>
+                    <div className="card-name">
+                      {c.prenom} {c.nom}
+                      {c.rating > 0 && <span style={{ marginLeft: 6, color: '#F1C40F', fontSize: 12, letterSpacing: -1 }}>{'★'.repeat(c.rating)}</span>}
+                    </div>
                     <div className="card-formation">{c.formation}</div>
                     <div className="card-meta">
                       <span className="card-badge" style={{ background: ecoleColor + '22', color: ecoleColor }}>{c.ecole}</span>
@@ -1499,6 +1502,24 @@
       );
     }
 
+    // ============ STAR RATING ============
+    function StarRating({ value = 0, onChange, size = 20, readOnly = false }) {
+      const [hover, setHover] = useState(0);
+      return (
+        <div style={{ display: 'inline-flex', gap: 2, cursor: readOnly ? 'default' : 'pointer' }}>
+          {[1, 2, 3, 4, 5].map(star => (
+            <span
+              key={star}
+              onClick={() => !readOnly && onChange && onChange(star === value ? 0 : star)}
+              onMouseEnter={() => !readOnly && setHover(star)}
+              onMouseLeave={() => !readOnly && setHover(0)}
+              style={{ fontSize: size, color: star <= (hover || value) ? '#F1C40F' : '#ddd', transition: 'color 0.15s', lineHeight: 1 }}
+            >&#9733;</span>
+          ))}
+        </div>
+      );
+    }
+
     // ============ CANDIDATE DRAWER ============
     function CandidateDrawer({ candidate, config, relances, onClose, onUpdate, onDelete, onAddRelance }) {
       const [form, setForm] = useState({ ...candidate });
@@ -1637,6 +1658,10 @@
               </div>
 
               <div className="drawer-section">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <h3>Scoring profil</h3>
+                  <StarRating value={form.rating || 0} onChange={v => handleChange('rating', v)} size={28} />
+                </div>
                 <h3>Notes</h3>
                 <div className="form-group">
                   <textarea

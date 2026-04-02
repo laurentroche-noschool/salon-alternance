@@ -293,6 +293,7 @@ app.post('/parcoursup/api/candidates', (req, res) => {
     stage: req.body.stage || 'voeu_recu',
     statutCRM: req.body.statutCRM || false,
     notes: req.body.notes || '',
+    rating: req.body.rating || 0,
     createdAt: now,
     updatedAt: now
   };
