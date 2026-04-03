@@ -256,6 +256,25 @@ const DEFAULT_PARCOURSUP_CONFIG = {
   }
 };
 
+// ============ TEMPLATE VARS HELPER ============
+function replaceTemplateVars(text, candidate, config) {
+  if (!text) return '';
+  const coordonnees = config?.coordonnees || {};
+  const chargeInfo = coordonnees[candidate.chargeAdmission] || {};
+  const conseillerInfo = coordonnees[candidate.conseillerFormation] || {};
+  return text
+    .replace(/\{\{prenom\}\}/g, candidate.prenom || '')
+    .replace(/\{\{nom\}\}/g, candidate.nom || '')
+    .replace(/\{\{formation\}\}/g, candidate.formation || '')
+    .replace(/\{\{ecole\}\}/g, candidate.ecole || '')
+    .replace(/\{\{email\}\}/g, candidate.email || '')
+    .replace(/\{\{telephone\}\}/g, candidate.telephone || '')
+    .replace(/\{\{chargeAdmission\}\}/g, candidate.chargeAdmission || '')
+    .replace(/\{\{conseillerFormation\}\}/g, candidate.conseillerFormation || '')
+    .replace(/\{\{telCharge\}\}/g, chargeInfo.telephone || '')
+    .replace(/\{\{telConseiller\}\}/g, conseillerInfo.telephone || '');
+}
+
 // ============ CONFIG ============
 app.get('/parcoursup/api/config', (req, res) => {
   const cfg = loadJSON('parcoursup-config.json');
@@ -382,13 +401,8 @@ function triggerAutomation(candidateId, stageId) {
       const delayMs = (action.delayMinutes || 0) * 60 * 1000;
       const scheduledAt = new Date(now.getTime() + delayMs);
 
-      let message = (action.message || '')
-        .replace(/\{\{prenom\}\}/g, candidate.prenom || '').replace(/\{\{nom\}\}/g, candidate.nom || '')
-        .replace(/\{\{formation\}\}/g, candidate.formation || '').replace(/\{\{ecole\}\}/g, candidate.ecole || '')
-        .replace(/\{\{email\}\}/g, candidate.email || '').replace(/\{\{telephone\}\}/g, candidate.telephone || '');
-      let subject = (action.subject || '')
-        .replace(/\{\{prenom\}\}/g, candidate.prenom || '').replace(/\{\{nom\}\}/g, candidate.nom || '')
-        .replace(/\{\{formation\}\}/g, candidate.formation || '').replace(/\{\{ecole\}\}/g, candidate.ecole || '');
+      let message = replaceTemplateVars(action.message, candidate, config);
+      let subject = replaceTemplateVars(action.subject, candidate, config);
 
       queue.push({
         id: genId(), candidateId: candidate.id,
@@ -887,19 +901,8 @@ app.post('/parcoursup/api/automations/trigger', (req, res) => {
     const scheduledAt = new Date(now.getTime() + delayMs);
 
     // Replace template variables
-    let message = (action.message || '')
-      .replace(/\{\{prenom\}\}/g, candidate.prenom || '')
-      .replace(/\{\{nom\}\}/g, candidate.nom || '')
-      .replace(/\{\{formation\}\}/g, candidate.formation || '')
-      .replace(/\{\{ecole\}\}/g, candidate.ecole || '')
-      .replace(/\{\{email\}\}/g, candidate.email || '')
-      .replace(/\{\{telephone\}\}/g, candidate.telephone || '');
-
-    let subject = (action.subject || '')
-      .replace(/\{\{prenom\}\}/g, candidate.prenom || '')
-      .replace(/\{\{nom\}\}/g, candidate.nom || '')
-      .replace(/\{\{formation\}\}/g, candidate.formation || '')
-      .replace(/\{\{ecole\}\}/g, candidate.ecole || '');
+    let message = replaceTemplateVars(action.message, candidate, config);
+    let subject = replaceTemplateVars(action.subject, candidate, config);
 
     queue.push({
       id: genId(),
@@ -959,14 +962,8 @@ app.post('/parcoursup/api/automations/trigger-all', (req, res) => {
       const delayMs = (action.delayMinutes || 0) * 60 * 1000;
       const scheduledAt = new Date(now.getTime() + delayMs);
 
-      let message = (action.message || '')
-        .replace(/\{\{prenom\}\}/g, candidate.prenom || '').replace(/\{\{nom\}\}/g, candidate.nom || '')
-        .replace(/\{\{formation\}\}/g, candidate.formation || '').replace(/\{\{ecole\}\}/g, candidate.ecole || '')
-        .replace(/\{\{email\}\}/g, candidate.email || '').replace(/\{\{telephone\}\}/g, candidate.telephone || '');
-
-      let subject = (action.subject || '')
-        .replace(/\{\{prenom\}\}/g, candidate.prenom || '').replace(/\{\{nom\}\}/g, candidate.nom || '')
-        .replace(/\{\{formation\}\}/g, candidate.formation || '').replace(/\{\{ecole\}\}/g, candidate.ecole || '');
+      let message = replaceTemplateVars(action.message, candidate, config);
+      let subject = replaceTemplateVars(action.subject, candidate, config);
 
       queue.push({
         id: genId(), candidateId: candidate.id,
@@ -1002,19 +999,8 @@ app.post('/parcoursup/api/queue/bulk-send', (req, res) => {
   const scheduledAt = new Date(now.getTime() + delayMs);
 
   stageCandidates.forEach(candidate => {
-    let msg = (message || '')
-      .replace(/\{\{prenom\}\}/g, candidate.prenom || '')
-      .replace(/\{\{nom\}\}/g, candidate.nom || '')
-      .replace(/\{\{formation\}\}/g, candidate.formation || '')
-      .replace(/\{\{ecole\}\}/g, candidate.ecole || '')
-      .replace(/\{\{email\}\}/g, candidate.email || '')
-      .replace(/\{\{telephone\}\}/g, candidate.telephone || '');
-
-    let subj = (subject || '')
-      .replace(/\{\{prenom\}\}/g, candidate.prenom || '')
-      .replace(/\{\{nom\}\}/g, candidate.nom || '')
-      .replace(/\{\{formation\}\}/g, candidate.formation || '')
-      .replace(/\{\{ecole\}\}/g, candidate.ecole || '');
+    let msg = replaceTemplateVars(message, candidate, config);
+    let subj = replaceTemplateVars(subject, candidate, config);
 
     queue.push({
       id: genId(),

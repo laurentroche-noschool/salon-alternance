@@ -685,6 +685,8 @@
               onSave={saveAutomations}
               onCancelQueue={cancelQueueItem}
               onRefreshQueue={loadQueue}
+              api={api}
+              onRefreshConfig={loadData}
             />
           )}
 
@@ -1992,7 +1994,7 @@
 
       const emailCount = candidates.filter(c => c.email).length;
       const phoneCount = candidates.filter(c => c.telephone).length;
-      const templateVars = ['{{prenom}}', '{{nom}}', '{{formation}}', '{{ecole}}', '{{email}}', '{{telephone}}'];
+      const templateVars = ['{{prenom}}', '{{nom}}', '{{formation}}', '{{ecole}}', '{{email}}', '{{telephone}}', '{{chargeAdmission}}', '{{conseillerFormation}}', '{{telCharge}}', '{{telConseiller}}'];
 
       const getDelayInMinutes = () => {
         const val = parseInt(delayMinutes) || 0;
@@ -2513,12 +2515,60 @@
       );
     }
 
-    function AutomationsView({ config, candidates, queue, onSave, onCancelQueue, onRefreshQueue }) {
+    function CoordonneeConfig({ config, onSave }) {
+      const [coordonnees, setCoordonnees] = useState(config.coordonnees || {});
+      const [saved, setSaved] = useState(false);
+
+      // Collect all unique names from charges + conseillers
+      const allNames = new Set();
+      (config.chargesAdmission || []).forEach(n => allNames.add(n));
+      Object.values(config.ecoles || {}).forEach(ecole => {
+        Object.values(ecole.formations || {}).forEach(f => { if (f.conseiller) allNames.add(f.conseiller); });
+      });
+      const names = [...allNames].sort();
+
+      const updatePhone = (name, phone) => {
+        setCoordonnees(prev => ({ ...prev, [name]: { ...prev[name], telephone: phone } }));
+        setSaved(false);
+      };
+
+      const handleSave = () => {
+        onSave(coordonnees);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      };
+
+      return (
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: 18, marginBottom: 12 }}>Annuaire des équipes</h2>
+          <div className="chart-container" style={{ borderLeft: '4px solid #002FA7' }}>
+            <p style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>
+              Renseignez les <strong>numéros de téléphone</strong> des chargé(e)s d'admission et conseillers pour les utiliser dans les templates d'email/WhatsApp via <code>{'{{telCharge}}'}</code> et <code>{'{{telConseiller}}'}</code>.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
+              {names.map(name => (
+                <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f8f9fa', padding: '8px 12px', borderRadius: 8 }}>
+                  <span style={{ fontWeight: 700, fontSize: 13, minWidth: 90 }}>{name}</span>
+                  <input value={(coordonnees[name] || {}).telephone || ''} onChange={e => updatePhone(name, e.target.value)}
+                    placeholder="06 XX XX XX XX" style={{ flex: 1, fontSize: 13, padding: '6px 10px' }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button className="btn btn-primary" onClick={handleSave}>Sauvegarder</button>
+              {saved && <span style={{ color: '#2ECC71', fontWeight: 600, fontSize: 13 }}>Sauvegardé !</span>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function AutomationsView({ config, candidates, queue, onSave, onCancelQueue, onRefreshQueue, api, onRefreshConfig }) {
       const [automations, setAutomations] = useState(config.automations || {});
       const [editingStage, setEditingStage] = useState(null);
       const [hasChanges, setHasChanges] = useState(false);
 
-      const templateVars = ['{{prenom}}', '{{nom}}', '{{formation}}', '{{ecole}}', '{{email}}', '{{telephone}}'];
+      const templateVars = ['{{prenom}}', '{{nom}}', '{{formation}}', '{{ecole}}', '{{email}}', '{{telephone}}', '{{chargeAdmission}}', '{{conseillerFormation}}', '{{telCharge}}', '{{telConseiller}}'];
       const pendingQueue = queue.filter(q => q.status === 'pending');
       const sentQueue = queue.filter(q => q.status === 'sent').slice(-50).reverse();
 
@@ -2557,6 +2607,10 @@
           {/* Connexions WhatsApp + SMTP en premier */}
           <WhatsAppConfig />
           <SmtpConfig />
+          <CoordonneeConfig config={config} onSave={async (coordonnees) => {
+            await api('/config', { method: 'POST', body: { ...config, coordonnees } });
+            onRefreshConfig && onRefreshConfig();
+          }} />
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <div>
