@@ -2313,22 +2313,23 @@
       const [status, setStatus] = useState({ status: 'disconnected' });
       const [loading, setLoading] = useState(false);
 
+      const authHeaders = { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' };
+
       const fetchStatus = () => {
-        fetch('/parcoursup/api/whatsapp/status').then(r => r.json()).then(setStatus).catch(() => {});
+        fetch('/parcoursup/api/whatsapp/status', { headers: authHeaders }).then(r => r.json()).then(d => { if (!d.error) setStatus(d); }).catch(() => {});
       };
 
       useEffect(() => {
         fetchStatus();
-        const interval = setInterval(fetchStatus, 3000); // Poll every 3s for QR updates
+        const interval = setInterval(fetchStatus, 3000);
         return () => clearInterval(interval);
       }, []);
 
       const handleReconnect = async () => {
         setLoading(true);
-        await fetch('/parcoursup/api/whatsapp/reconnect', { method: 'POST' });
-        // Poll rapidly until QR appears (WhatsApp init takes ~5-10s)
+        await fetch('/parcoursup/api/whatsapp/reconnect', { method: 'POST', headers: authHeaders });
         let attempts = 0;
-        const pollQR = setInterval(async () => {
+        const pollQR = setInterval(() => {
           fetchStatus();
           attempts++;
           if (attempts > 10) { clearInterval(pollQR); setLoading(false); }
@@ -2338,7 +2339,7 @@
 
       const handleLogout = async () => {
         if (!confirm('Déconnecter WhatsApp ?')) return;
-        await fetch('/parcoursup/api/whatsapp/logout', { method: 'POST' });
+        await fetch('/parcoursup/api/whatsapp/logout', { method: 'POST', headers: authHeaders });
         fetchStatus();
       };
 
