@@ -534,8 +534,8 @@
       };
 
       // Bulk send to a stage
-      const bulkSend = async (stageId, channel, subject, message, delayMinutes) => {
-        const result = await api('/queue/bulk-send', { method: 'POST', body: { stageId, channel, subject, message, delayMinutes } });
+      const bulkSend = async (stageId, channel, subject, message, delayMinutes, imageUrl) => {
+        const result = await api('/queue/bulk-send', { method: 'POST', body: { stageId, channel, subject, message, delayMinutes, imageUrl } });
         showToast(`${result.queued} message(s) programmé(s)`);
         loadQueue();
         // Process immediately if no delay
@@ -674,7 +674,7 @@
           )}
 
           {activeTab === 'dashboard' && stats && (
-            <DashboardView config={config} stats={stats} />
+            <DashboardView config={config} stats={stats} api={api} />
           )}
 
           {activeTab === 'automations' && (
@@ -731,8 +731,8 @@
               stageId={showBulkSend}
               candidates={candidates.filter(c => c.stage === showBulkSend)}
               onClose={() => setShowBulkSend(null)}
-              onSend={(channel, subject, message, delay) => {
-                bulkSend(showBulkSend, channel, subject, message, delay);
+              onSend={(channel, subject, message, delay, imgUrl) => {
+                bulkSend(showBulkSend, channel, subject, message, delay, imgUrl);
                 setShowBulkSend(null);
               }}
               onSaveAutomation={async (stageId, autoData) => {
@@ -1037,12 +1037,22 @@
     }
 
     // ============ DASHBOARD ============
-    function DashboardView({ config, stats }) {
+    function DashboardView({ config, stats: globalStats, api }) {
       const [selectedCharge, setSelectedCharge] = useState(null);
+      const [selectedEcole, setSelectedEcole] = useState(null);
+      const [filteredStats, setFilteredStats] = useState(null);
+
+      useEffect(() => {
+        if (!selectedEcole) { setFilteredStats(null); return; }
+        api('/stats?ecole=' + encodeURIComponent(selectedEcole)).then(s => setFilteredStats(s));
+      }, [selectedEcole]);
+
+      const stats = filteredStats || globalStats;
       const chargeDetails = stats.chargeDetails || {};
       const charges = Object.keys(chargeDetails);
       const chargeColors = ['#002FA7', '#E74C3C', '#2ECC71', '#F39C12', '#9B59B6', '#1ABC9C', '#E67E22', '#3498DB'];
       const maxPipeline = Math.max(...config.stages.map(s => stats.parStage[s.id] || 0), 1);
+      const ecoles = Object.keys(config.ecoles);
 
       const formatHours = (h) => {
         if (h === undefined || h === null) return '-';
@@ -1058,19 +1068,38 @@
       return (
         <div className="dashboard">
 
+          {/* ===== FILTRE ECOLE ===== */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button className={`btn btn-sm ${!selectedEcole ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => { setSelectedEcole(null); setSelectedCharge(null); }}
+              style={{ fontSize: 13, fontWeight: 700 }}>
+              Groupe ({globalStats.total})
+            </button>
+            {ecoles.map(ecole => (
+              <button key={ecole} className={`btn btn-sm ${selectedEcole === ecole ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => { setSelectedEcole(ecole); setSelectedCharge(null); }}
+                style={selectedEcole === ecole ? { fontSize: 13, fontWeight: 700, background: config.ecoles[ecole].color, borderColor: config.ecoles[ecole].color } : { fontSize: 13, fontWeight: 700, color: config.ecoles[ecole].color, borderColor: config.ecoles[ecole].color }}>
+                {ecole} ({globalStats.parEcole[ecole] || 0})
+              </button>
+            ))}
+          </div>
+
           {/* ===== SECTION 1 : VUE D'ENSEMBLE ===== */}
-          <div className="dashboard-section-title"><span className="icon">&#x1F4CA;</span> Vue d'ensemble</div>
+          <div className="dashboard-section-title"><span className="icon">&#x1F4CA;</span> {selectedEcole ? `${selectedEcole}` : "Vue d'ensemble"}</div>
           <div className="kpi-grid">
-            <div className="kpi-card" style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', color: 'white' }}>
-              <div className="label" style={{ color: 'rgba(255,255,255,0.7)' }}>Total Candidats</div>
+            <div className="kpi-card" style={selectedEcole
+              ? { background: `linear-gradient(135deg, ${config.ecoles[selectedEcole]?.color || '#1a1a2e'} 0%, ${config.ecoles[selectedEcole]?.color || '#1a1a2e'}CC 100%)`, color: 'white' }
+              : { background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', color: 'white' }}>
+              <div className="label" style={{ color: 'rgba(255,255,255,0.7)' }}>{selectedEcole || 'Total'} Candidats</div>
               <div className="value" style={{ color: 'white' }}>{stats.total}</div>
               <div className="kpi-icon" style={{ color: 'rgba(255,255,255,0.15)' }}>&#x1F465;</div>
             </div>
-            {Object.entries(config.ecoles).map(([name, ecole]) => (
-              <div key={name} className="kpi-card kpi-card-accent" style={{ borderLeftColor: ecole.color }}>
+            {!selectedEcole && Object.entries(config.ecoles).map(([name, ecole]) => (
+              <div key={name} className="kpi-card kpi-card-accent" style={{ borderLeftColor: ecole.color, cursor: 'pointer' }}
+                onClick={() => { setSelectedEcole(name); setSelectedCharge(null); }}>
                 <div className="label" style={{ color: ecole.color }}>{name}</div>
-                <div className="value" style={{ color: ecole.color }}>{stats.parEcole[name] || 0}</div>
-                <div className="sub">{stats.total > 0 ? Math.round(((stats.parEcole[name] || 0) / stats.total) * 100) : 0}% du total</div>
+                <div className="value" style={{ color: ecole.color }}>{globalStats.parEcole[name] || 0}</div>
+                <div className="sub">{globalStats.total > 0 ? Math.round(((globalStats.parEcole[name] || 0) / globalStats.total) * 100) : 0}% du total</div>
               </div>
             ))}
             <div className="kpi-card" style={{ background: 'linear-gradient(135deg, #d4efdf 0%, #eafaf1 100%)' }}>
@@ -1949,6 +1978,7 @@
       const [channel, setChannel] = useState('mail');
       const [subject, setSubject] = useState('');
       const [message, setMessage] = useState('');
+      const [imageUrl, setImageUrl] = useState('');
       const [delayMinutes, setDelayMinutes] = useState(0);
       const [delayUnit, setDelayUnit] = useState('minutes');
 
@@ -2115,6 +2145,20 @@
                         onClick={() => setMessage(m => m + v)}>{v}</code>
                     ))}
                   </div>
+
+                  {channel === 'mail' && (
+                    <div className="form-group" style={{ marginTop: 12 }}>
+                      <label>Image / GIF (URL)</label>
+                      <input value={imageUrl || ''} onChange={e => setImageUrl(e.target.value)}
+                        placeholder="https://media.giphy.com/... ou lien vers une image" />
+                      {imageUrl && (
+                        <div style={{ marginTop: 8, padding: 8, background: '#f8f9fa', borderRadius: 8, textAlign: 'center' }}>
+                          <img src={imageUrl} style={{ maxWidth: '100%', maxHeight: 150, borderRadius: 6 }} alt="Preview" onError={e => e.target.style.display = 'none'} />
+                          <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>Aperçu de l'image</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
 
@@ -2191,6 +2235,19 @@
                             onClick={() => updateAction(idx, 'message', (action.message || '') + v)}>{v}</code>
                         ))}
                       </div>
+
+                      {action.channel === 'mail' && (
+                        <div className="form-group" style={{ marginTop: 8 }}>
+                          <label>Image / GIF (URL)</label>
+                          <input value={action.imageUrl || ''} onChange={e => updateAction(idx, 'imageUrl', e.target.value)}
+                            placeholder="https://media.giphy.com/... ou lien image" />
+                          {action.imageUrl && (
+                            <div style={{ marginTop: 6, padding: 6, background: '#fff', borderRadius: 6, textAlign: 'center' }}>
+                              <img src={action.imageUrl} style={{ maxWidth: '100%', maxHeight: 120, borderRadius: 4 }} alt="Preview" onError={e => e.target.style.display = 'none'} />
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
 
@@ -2231,7 +2288,7 @@
               <button className="btn btn-outline" onClick={onClose}>Annuler</button>
               {mode === 'immediate' && (
                 <button className="btn btn-primary"
-                  onClick={() => onSend(channel, subject, message, getDelayInMinutes())}
+                  onClick={() => onSend(channel, subject, message, getDelayInMinutes(), imageUrl)}
                   disabled={!message.trim() || candidates.length === 0}>
                   <Icon name="send" size={14} />{' '}
                   {parseInt(delayMinutes) > 0 ? 'Programmer' : 'Envoyer'} à {candidates.length} candidat(s)

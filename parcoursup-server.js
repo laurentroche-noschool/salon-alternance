@@ -203,11 +203,11 @@ function genId() {
 // ============ DEFAULT CONFIG (used when data file doesn't exist, e.g. fresh Render deploy) ============
 const DEFAULT_PARCOURSUP_CONFIG = {
   ecoles: {
-    "Noschool": { color: "#F1C40F", formations: { "BTS Assurance": { conseiller: null }, "BTS COMMUNICATION": { conseiller: "Alexandra" }, "BTS CG": { conseiller: "Thomas" }, "BTS GPME": { conseiller: "Annick" }, "BTS MCO": { conseiller: "Alexandra" }, "BTS NDRC": { conseiller: "Alexandra" }, "BTS PIM": { conseiller: "Arnaud" }, "BTS SAM": { conseiller: "Annick" }, "BTS TOURISME": { conseiller: "Annick" } } },
-    "NS MDM": { color: "#E91E8C", formations: { "BTS COMMUNICATION": { conseiller: "Laurine" }, "BTS GPME": { conseiller: "Laurine" }, "BTS MCO": { conseiller: "Laurine" }, "BTS NDRC": { conseiller: "Laurine" } } },
+    "NOSCHOOL": { color: "#F1C40F", formations: { "BTS Assurance": { conseiller: null }, "BTS COMMUNICATION": { conseiller: "Alexandra" }, "BTS CG": { conseiller: "Thomas" }, "BTS GPME": { conseiller: "Annick" }, "BTS MCO": { conseiller: "Alexandra" }, "BTS NDRC": { conseiller: "Alexandra" }, "BTS PIM": { conseiller: "Arnaud" }, "BTS SAM": { conseiller: "Annick" }, "BTS TOURISME": { conseiller: "Annick" } } },
+    "NOSCHOOL MDM": { color: "#E91E8C", formations: { "BTS COMMUNICATION": { conseiller: "Laurine" }, "BTS GPME": { conseiller: "Laurine" }, "BTS MCO": { conseiller: "Laurine" }, "BTS NDRC": { conseiller: "Laurine" } } },
     "WILL.SCHOOL": { color: "#002FA7", formations: { "BTS COMMUNICATION": { conseiller: "Maud" }, "BTS ESF": { conseiller: "Camille" }, "BTS GPME": { conseiller: "Camille" }, "BTS MCO": { conseiller: "Maud" }, "BTS NDRC": { conseiller: "Maud" }, "BTS SP3S": { conseiller: "Camille" } } }
   },
-  chargesAdmission: ["Cécilia", "Lisa", "Elio", "Peyo", "Lynn", "Kilian"],
+  chargesAdmission: ["Cécilia", "Lisa", "Léo", "Peyo", "Lynn", "Kilian", "Mathis", "Giulia"],
   stages: [
     { id: "voeu_recu", label: "Voeu reçu", color: "#9B59B6", order: 0 },
     { id: "relance_mail_n1", label: "Relance mail N°1", color: "#3498DB", order: 1 },
@@ -395,6 +395,7 @@ function triggerAutomation(candidateId, stageId) {
         candidateName: `${candidate.prenom} ${candidate.nom}`,
         candidateEmail: candidate.email || '', candidatePhone: candidate.telephone || '',
         channel: action.channel || 'mail', subject, message, stageId,
+        imageUrl: action.imageUrl || '',
         stageLabel: stageInfo?.label || stageId,
         scheduledAt: scheduledAt.toISOString(), status: 'pending',
         createdAt: now.toISOString(), sentAt: null, error: null,
@@ -543,12 +544,16 @@ app.post('/parcoursup/api/duplicates/merge', (req, res) => {
 
 // ============ STATS ============
 app.get('/parcoursup/api/stats', (req, res) => {
-  const candidates = loadJSON('parcoursup-candidates.json');
-  const relances = loadJSON('parcoursup-relances.json');
+  const allCandidates = loadJSON('parcoursup-candidates.json');
+  const allRelances = loadJSON('parcoursup-relances.json');
+  const ecoleFilter = req.query.ecole || null;
+  const candidates = ecoleFilter ? allCandidates.filter(c => c.ecole === ecoleFilter) : allCandidates;
+  const candidateIds = new Set(candidates.map(c => c.id));
+  const relances = ecoleFilter ? allRelances.filter(r => candidateIds.has(r.candidateId)) : allRelances;
 
-  // Par ecole
+  // Par ecole (toujours toutes les ecoles pour le filtre)
   const parEcole = {};
-  candidates.forEach(c => {
+  allCandidates.forEach(c => {
     parEcole[c.ecole] = (parEcole[c.ecole] || 0) + 1;
   });
 
@@ -821,6 +826,7 @@ app.post('/parcoursup/api/queue', (req, res) => {
       channel: item.channel || 'mail', // mail, whatsapp
       subject: item.subject || '',
       message: item.message || '',
+      imageUrl: item.imageUrl || '',
       stageId: item.stageId || '',
       stageLabel: item.stageLabel || '',
       scheduledAt: item.scheduledAt || now.toISOString(),
@@ -904,6 +910,7 @@ app.post('/parcoursup/api/automations/trigger', (req, res) => {
       channel: action.channel || 'mail',
       subject,
       message,
+      imageUrl: action.imageUrl || '',
       stageId,
       stageLabel: stageInfo?.label || stageId,
       scheduledAt: scheduledAt.toISOString(),
@@ -966,6 +973,7 @@ app.post('/parcoursup/api/automations/trigger-all', (req, res) => {
         candidateName: `${candidate.prenom} ${candidate.nom}`,
         candidateEmail: candidate.email || '', candidatePhone: candidate.telephone || '',
         channel: action.channel || 'mail', subject, message, stageId,
+        imageUrl: action.imageUrl || '',
         stageLabel: stageInfo?.label || stageId,
         scheduledAt: scheduledAt.toISOString(), status: 'pending',
         createdAt: now.toISOString(), sentAt: null, error: null,
@@ -982,7 +990,7 @@ app.post('/parcoursup/api/automations/trigger-all', (req, res) => {
 
 // Bulk send to all candidates in a stage
 app.post('/parcoursup/api/queue/bulk-send', (req, res) => {
-  const { stageId, channel, subject, message, delayMinutes } = req.body;
+  const { stageId, channel, subject, message, delayMinutes, imageUrl } = req.body;
   const candidates = loadJSON('parcoursup-candidates.json');
   const config = loadJSON('parcoursup-config.json');
   const queue = loadJSON('parcoursup-queue.json');
@@ -1017,6 +1025,7 @@ app.post('/parcoursup/api/queue/bulk-send', (req, res) => {
       channel: channel || 'mail',
       subject: subj,
       message: msg,
+      imageUrl: imageUrl || '',
       stageId,
       stageLabel: stageInfo?.label || stageId,
       scheduledAt: scheduledAt.toISOString(),
@@ -1094,17 +1103,21 @@ app.post('/parcoursup/api/smtp-test', async (req, res) => {
 app.post('/parcoursup/api/send-email', async (req, res) => {
   const smtp = getSmtpConfig();
   if (!smtp || !smtp.host) return res.status(400).json({ error: 'SMTP non configuré' });
-  const { to, subject, body } = req.body;
+  const { to, subject, body, imageUrl } = req.body;
   if (!to || !subject || !body) return res.status(400).json({ error: 'Champs requis: to, subject, body' });
   try {
     const transporter = nodemailer.createTransport({
       host: smtp.host, port: smtp.port || 587, secure: smtp.port === 465,
       auth: { user: smtp.user, pass: smtp.pass },
     });
+    let htmlBody = body.replace(/\n/g, '<br>');
+    if (imageUrl) {
+      htmlBody += `<br><br><img src="${imageUrl}" alt="" style="max-width:100%;height:auto;border-radius:8px;" />`;
+    }
     const info = await transporter.sendMail({
       from: `"${smtp.fromName || 'CRM Parcoursup'}" <${smtp.user}>`,
       to, subject,
-      html: body.replace(/\n/g, '<br>'),
+      html: htmlBody,
     });
     res.json({ ok: true, messageId: info.messageId });
   } catch (e) {
@@ -1148,17 +1161,21 @@ app.post('/parcoursup/api/whatsapp/logout', async (req, res) => {
 
 // ============ QUEUE PROCESSOR (auto-run every 30s) ============
 
-async function sendEmail(to, subject, body) {
+async function sendEmail(to, subject, body, imageUrl) {
   const smtp = getSmtpConfig();
   if (!smtp || !smtp.host) throw new Error('SMTP non configuré');
   const transporter = nodemailer.createTransport({
     host: smtp.host, port: smtp.port || 587, secure: smtp.port === 465,
     auth: { user: smtp.user, pass: smtp.pass },
   });
+  let htmlBody = body.replace(/\n/g, '<br>');
+  if (imageUrl) {
+    htmlBody += `<br><br><img src="${imageUrl}" alt="" style="max-width:100%;height:auto;border-radius:8px;" />`;
+  }
   const info = await transporter.sendMail({
     from: `"${smtp.fromName || 'CRM Parcoursup'}" <${smtp.user}>`,
     to, subject: subject || '(sans objet)',
-    html: body.replace(/\n/g, '<br>'),
+    html: htmlBody,
   });
   return info.messageId;
 }
@@ -1178,7 +1195,7 @@ async function processQueue() {
     // Attempt real send for email channel
     if (item.channel === 'mail' && item.candidateEmail) {
       try {
-        const messageId = await sendEmail(item.candidateEmail, item.subject, item.message);
+        const messageId = await sendEmail(item.candidateEmail, item.subject, item.message, item.imageUrl);
         item.status = 'sent';
         item.sentAt = now.toISOString();
         item.messageId = messageId;
