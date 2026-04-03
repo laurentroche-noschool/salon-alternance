@@ -2551,8 +2551,8 @@
       const ecoleColors = {};
       Object.entries(config.ecoles || {}).forEach(([name, e]) => { ecoleColors[name] = e.color || '#666'; });
 
-      const updatePhone = (name, phone) => {
-        setCoordonnees(prev => ({ ...prev, [name]: { ...prev[name], telephone: phone } }));
+      const updateField = (name, field, value) => {
+        setCoordonnees(prev => ({ ...prev, [name]: { ...prev[name], [field]: value } }));
         setSaved(false);
       };
 
@@ -2562,12 +2562,16 @@
         setTimeout(() => setSaved(false), 2000);
       };
 
-      const PhoneRow = ({ name, badge }) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8f9fa', padding: '10px 16px', borderRadius: 8 }}>
+      const ContactRow = ({ name, badge }) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8f9fa', padding: '10px 16px', borderRadius: 8, flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 700, fontSize: 14, minWidth: 100 }}>{name}</span>
           {badge && <span style={{ fontSize: 11, padding: '2px 10px', borderRadius: 12, background: badge.bg || '#eee', color: badge.color || '#333', fontWeight: 600, whiteSpace: 'nowrap' }}>{badge.text}</span>}
-          <input value={(coordonnees[name] || {}).telephone || ''} onChange={e => updatePhone(name, e.target.value)}
-            placeholder="06 XX XX XX XX" style={{ width: 160, fontSize: 13, padding: '6px 10px', marginLeft: 'auto' }} />
+          <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
+            <input value={(coordonnees[name] || {}).telephone || ''} onChange={e => updateField(name, 'telephone', e.target.value)}
+              placeholder="06 XX XX XX XX" style={{ width: 140, fontSize: 13, padding: '6px 10px' }} />
+            <input value={(coordonnees[name] || {}).email || ''} onChange={e => updateField(name, 'email', e.target.value)}
+              placeholder="email@ecole.fr" style={{ width: 180, fontSize: 13, padding: '6px 10px' }} />
+          </div>
         </div>
       );
 
@@ -2576,7 +2580,7 @@
           <h2 style={{ fontSize: 18, marginBottom: 12 }}>Annuaire des équipes</h2>
           <div className="chart-container" style={{ borderLeft: '4px solid #002FA7' }}>
             <p style={{ fontSize: 13, color: '#666', marginBottom: 16 }}>
-              Renseignez les <strong>numéros de téléphone</strong> pour les utiliser dans les templates via <code>{'{{telCharge}}'}</code> et <code>{'{{telConseiller}}'}</code>.
+              Renseignez les <strong>téléphones</strong> et <strong>emails</strong> de l'équipe. Les téléphones sont utilisables via <code>{'{{telCharge}}'}</code> / <code>{'{{telConseiller}}'}</code>. L'email du chargé d'admission est utilisé comme <strong>Reply-To</strong> : les candidats répondront directement à leur chargé.
             </p>
 
             <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2588,7 +2592,7 @@
                   : ['Lynn','Peyo','Kilian'].includes(name) ? 'NOSCHOOL'
                   : ['Lisa','Léo','Cécilia'].includes(name) ? 'WILL.SCHOOL' : null;
                 const badgeColor = chargeEcole ? (ecoleColors[chargeEcole] || '#666') : null;
-                return <PhoneRow key={name} name={name}
+                return <ContactRow key={name} name={name}
                   badge={chargeEcole ? { text: chargeEcole, bg: badgeColor + '18', color: badgeColor } : null} />;
               })}
             </div>
@@ -2600,7 +2604,7 @@
               {conseillers.map(({ name, ecoles }) => {
                 const schoolNames = ecoles.split(' / ');
                 const mainColor = ecoleColors[schoolNames[0]] || '#666';
-                return <PhoneRow key={name} name={name} badge={{ text: ecoles, bg: mainColor + '18', color: mainColor }} />;
+                return <ContactRow key={name} name={name} badge={{ text: ecoles, bg: mainColor + '18', color: mainColor }} />;
               })}
             </div>
 

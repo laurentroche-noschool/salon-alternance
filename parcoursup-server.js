@@ -1089,7 +1089,7 @@ app.post('/parcoursup/api/smtp-test', async (req, res) => {
 app.post('/parcoursup/api/send-email', async (req, res) => {
   const smtp = getSmtpConfig();
   if (!smtp || !smtp.host) return res.status(400).json({ error: 'SMTP non configuré' });
-  const { to, subject, body, imageUrl } = req.body;
+  const { to, subject, body, imageUrl, replyTo } = req.body;
   if (!to || !subject || !body) return res.status(400).json({ error: 'Champs requis: to, subject, body' });
   try {
     const transporter = nodemailer.createTransport({
@@ -1100,11 +1100,13 @@ app.post('/parcoursup/api/send-email', async (req, res) => {
     if (imageUrl) {
       htmlBody += `<br><br><img src="${imageUrl}" alt="" style="max-width:100%;height:auto;border-radius:8px;" />`;
     }
-    const info = await transporter.sendMail({
+    const mailOptions = {
       from: `"${smtp.fromName || 'CRM Parcoursup'}" <${smtp.user}>`,
       to, subject,
       html: htmlBody,
-    });
+    };
+    if (replyTo) mailOptions.replyTo = replyTo;
+    const info = await transporter.sendMail(mailOptions);
     res.json({ ok: true, messageId: info.messageId });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -1147,7 +1149,7 @@ app.post('/parcoursup/api/whatsapp/logout', async (req, res) => {
 
 // ============ QUEUE PROCESSOR (auto-run every 30s) ============
 
-async function sendEmail(to, subject, body, imageUrl) {
+async function sendEmail(to, subject, body, imageUrl, replyTo) {
   const smtp = getSmtpConfig();
   if (!smtp || !smtp.host) throw new Error('SMTP non configuré');
   const transporter = nodemailer.createTransport({
@@ -1158,17 +1160,22 @@ async function sendEmail(to, subject, body, imageUrl) {
   if (imageUrl) {
     htmlBody += `<br><br><img src="${imageUrl}" alt="" style="max-width:100%;height:auto;border-radius:8px;" />`;
   }
-  const info = await transporter.sendMail({
+  const mailOptions = {
     from: `"${smtp.fromName || 'CRM Parcoursup'}" <${smtp.user}>`,
     to, subject: subject || '(sans objet)',
     html: htmlBody,
-  });
+  };
+  if (replyTo) mailOptions.replyTo = replyTo;
+  const info = await transporter.sendMail(mailOptions);
   return info.messageId;
 }
 
 async function processQueue() {
   const queue = loadJSON('parcoursup-queue.json');
   const relances = loadJSON('parcoursup-relances.json');
+  const candidates = loadJSON('parcoursup-candidates.json');
+  const config = loadJSON('parcoursup-config.json');
+  const coordonnees = config.coordonnees || {};
   const now = new Date();
   let processed = 0;
   let errors = 0;
@@ -1178,10 +1185,14 @@ async function processQueue() {
     const scheduledTime = new Date(item.scheduledAt);
     if (scheduledTime > now) continue;
 
+    // Resolve Reply-To from candidate's chargé d'admission
+    const candidate = candidates.find(c => c.id === item.candidateId);
+    const chargeEmail = candidate?.chargeAdmission ? (coordonnees[candidate.chargeAdmission] || {}).email : null;
+
     // Attempt real send for email channel
     if (item.channel === 'mail' && item.candidateEmail) {
       try {
-        const messageId = await sendEmail(item.candidateEmail, item.subject, item.message, item.imageUrl);
+        const messageId = await sendEmail(item.candidateEmail, item.subject, item.message, item.imageUrl, chargeEmail || null);
         item.status = 'sent';
         item.sentAt = now.toISOString();
         item.messageId = messageId;
