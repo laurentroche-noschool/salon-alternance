@@ -2326,7 +2326,14 @@
       const handleReconnect = async () => {
         setLoading(true);
         await fetch('/parcoursup/api/whatsapp/reconnect', { method: 'POST' });
-        setTimeout(() => { setLoading(false); fetchStatus(); }, 2000);
+        // Poll rapidly until QR appears (WhatsApp init takes ~5-10s)
+        let attempts = 0;
+        const pollQR = setInterval(async () => {
+          fetchStatus();
+          attempts++;
+          if (attempts > 10) { clearInterval(pollQR); setLoading(false); }
+        }, 2000);
+        setTimeout(() => { setLoading(false); clearInterval(pollQR); fetchStatus(); }, 15000);
       };
 
       const handleLogout = async () => {
@@ -2338,8 +2345,9 @@
       const statusColor = status.status === 'connected' ? '#2ECC71' : status.status === 'qr_pending' ? '#F39C12' : '#E74C3C';
       const statusLabel = {
         connected: 'Connecté',
-        qr_pending: 'En attente du QR Code',
+        qr_pending: 'En attente du scan QR',
         disconnected: 'Déconnecté',
+        unavailable: 'Indisponible (Chromium manquant)',
         error: 'Erreur'
       }[status.status] || 'Inconnu';
 
