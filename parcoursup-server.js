@@ -340,6 +340,8 @@ app.post('/parcoursup/api/candidates', (req, res) => {
   };
   candidates.push(candidate);
   saveJSON('parcoursup-candidates.json', candidates);
+  // Trigger automation for initial stage (e.g. voeu_recu)
+  triggerAutomation(candidate.id, candidate.stage);
   broadcast('candidates');
   res.json(candidate);
 });
@@ -458,6 +460,8 @@ app.post('/parcoursup/api/candidates/bulk', (req, res) => {
   }));
   const all = [...existing, ...newCandidates];
   saveJSON('parcoursup-candidates.json', all);
+  // Trigger automations for each imported candidate
+  newCandidates.forEach(c => triggerAutomation(c.id, c.stage));
   broadcast('candidates');
   res.json({ imported: newCandidates.length, total: all.length });
 });
