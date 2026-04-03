@@ -2600,7 +2600,7 @@
               {charges.map(name => {
                 const chargeEcole = ['Giulia','Mathis'].includes(name) ? 'NOSCHOOL MDM'
                   : ['Lynn','Peyo','Kilian'].includes(name) ? 'NOSCHOOL'
-                  : ['Lisa','Léo','Cécilia'].includes(name) ? 'WILL.SCHOOL' : null;
+                  : ['Lisa','Léo','Cécilia','Julian'].includes(name) ? 'WILL.SCHOOL' : null;
                 const badgeColor = chargeEcole ? (ecoleColors[chargeEcole] || '#666') : null;
                 return <ContactRow key={name} name={name} coordonnees={coordonnees} onUpdateField={updateField}
                   badge={chargeEcole ? { text: chargeEcole, bg: badgeColor + '18', color: badgeColor } : null} />;

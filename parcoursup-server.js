@@ -207,7 +207,7 @@ const DEFAULT_PARCOURSUP_CONFIG = {
     "NOSCHOOL MDM": { color: "#E91E8C", formations: { "BTS COMMUNICATION": { conseiller: "Laurine" }, "BTS GPME": { conseiller: "Laurine" }, "BTS MCO": { conseiller: "Laurine" }, "BTS NDRC": { conseiller: "Laurine" } } },
     "WILL.SCHOOL": { color: "#002FA7", formations: { "BTS COMMUNICATION": { conseiller: "Maud" }, "BTS ESF": { conseiller: "Camille", conseiller2: "Hugo" }, "BTS GPME": { conseiller: "Camille", conseiller2: "Hugo" }, "BTS MCO": { conseiller: "Maud" }, "BTS NDRC": { conseiller: "Maud" }, "BTS SP3S": { conseiller: "Camille", conseiller2: "Hugo" } } }
   },
-  chargesAdmission: ["Cécilia", "Lisa", "Léo", "Peyo", "Lynn", "Kilian", "Mathis", "Giulia"],
+  chargesAdmission: ["Cécilia", "Lisa", "Léo", "Peyo", "Lynn", "Kilian", "Mathis", "Giulia", "Julian"],
   stages: [
     { id: "voeu_recu", label: "Voeu reçu", color: "#9B59B6", order: 0 },
     { id: "relance_mail_n1", label: "Relance mail N°1", color: "#3498DB", order: 1 },
