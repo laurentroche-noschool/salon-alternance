@@ -444,17 +444,25 @@
       useEffect(() => { if (activeTab === 'dashboard' || activeTab === 'doublons') loadStats(); }, [activeTab]);
       useEffect(() => { if (activeTab === 'automations') loadQueue(); }, [activeTab]);
 
-      // Real-time sync via SSE
+      // Real-time sync via SSE with auto-reconnect
       useEffect(() => {
-        const es = new EventSource(API + '/events');
-        es.onmessage = (e) => {
-          if (e.data === 'connected') return;
-          loadData();
-          if (activeTab === 'dashboard' || activeTab === 'doublons') loadStats();
-          if (activeTab === 'automations') loadQueue();
+        let es;
+        let reconnectTimer;
+        const connect = () => {
+          es = new EventSource(API + '/events');
+          es.onmessage = (e) => {
+            if (e.data === 'connected') return;
+            loadData();
+            if (activeTab === 'dashboard' || activeTab === 'doublons') loadStats();
+            if (activeTab === 'automations') loadQueue();
+          };
+          es.onerror = () => {
+            es.close();
+            reconnectTimer = setTimeout(connect, 3000);
+          };
         };
-        es.onerror = () => { es.close(); setTimeout(() => { /* reconnect handled by browser */ }, 5000); };
-        return () => es.close();
+        connect();
+        return () => { if (es) es.close(); clearTimeout(reconnectTimer); };
       }, [activeTab, loadData, loadStats, loadQueue]);
 
       // Filter candidates
