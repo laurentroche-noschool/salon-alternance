@@ -205,7 +205,7 @@ const DEFAULT_PARCOURSUP_CONFIG = {
   ecoles: {
     "NOSCHOOL": { color: "#F1C40F", formations: { "BTS Assurance": { conseiller: null }, "BTS COMMUNICATION": { conseiller: "Alexandra" }, "BTS CG": { conseiller: "Thomas" }, "BTS GPME": { conseiller: "Annick" }, "BTS MCO": { conseiller: "Alexandra" }, "BTS NDRC": { conseiller: "Alexandra" }, "BTS PIM": { conseiller: "Arnaud" }, "BTS SAM": { conseiller: "Annick" }, "BTS TOURISME": { conseiller: "Annick" } } },
     "NOSCHOOL MDM": { color: "#E91E8C", formations: { "BTS COMMUNICATION": { conseiller: "Laurine" }, "BTS GPME": { conseiller: "Laurine" }, "BTS MCO": { conseiller: "Laurine" }, "BTS NDRC": { conseiller: "Laurine" } } },
-    "WILL.SCHOOL": { color: "#002FA7", formations: { "BTS COMMUNICATION": { conseiller: "Maud" }, "BTS ESF": { conseiller: "Camille" }, "BTS GPME": { conseiller: "Camille" }, "BTS MCO": { conseiller: "Maud" }, "BTS NDRC": { conseiller: "Maud" }, "BTS SP3S": { conseiller: "Camille" } } }
+    "WILL.SCHOOL": { color: "#002FA7", formations: { "BTS COMMUNICATION": { conseiller: "Maud" }, "BTS ESF": { conseiller: "Camille", conseiller2: "Hugo" }, "BTS GPME": { conseiller: "Camille", conseiller2: "Hugo" }, "BTS MCO": { conseiller: "Maud" }, "BTS NDRC": { conseiller: "Maud" }, "BTS SP3S": { conseiller: "Camille", conseiller2: "Hugo" } } }
   },
   chargesAdmission: ["Cécilia", "Lisa", "Léo", "Peyo", "Lynn", "Kilian", "Mathis", "Giulia"],
   stages: [

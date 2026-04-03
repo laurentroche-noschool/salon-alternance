@@ -493,7 +493,7 @@
         if (!config) return [];
         const all = new Set();
         Object.values(config.ecoles || {}).forEach(e =>
-          Object.values(e.formations).forEach(f => { if (f.conseiller) all.add(f.conseiller); })
+          Object.values(e.formations).forEach(f => { if (f.conseiller) all.add(f.conseiller); if (f.conseiller2) all.add(f.conseiller2); })
         );
         return [...all].sort();
       }, [config]);
@@ -2519,13 +2519,28 @@
       const [coordonnees, setCoordonnees] = useState(config.coordonnees || {});
       const [saved, setSaved] = useState(false);
 
-      // Collect all unique names from charges + conseillers
-      const allNames = new Set();
-      (config.chargesAdmission || []).forEach(n => allNames.add(n));
-      Object.values(config.ecoles || {}).forEach(ecole => {
-        Object.values(ecole.formations || {}).forEach(f => { if (f.conseiller) allNames.add(f.conseiller); });
+      // Build conseillers map: name → Set of schools
+      const conseillerSchools = {};
+      Object.entries(config.ecoles || {}).forEach(([ecoleName, ecole]) => {
+        Object.entries(ecole.formations || {}).forEach(([formName, f]) => {
+          [f.conseiller, f.conseiller2].filter(Boolean).forEach(name => {
+            if (!conseillerSchools[name]) conseillerSchools[name] = new Set();
+            conseillerSchools[name].add(ecoleName);
+          });
+        });
       });
-      const names = [...allNames].sort();
+
+      // Chargé(e)s d'admission sorted alphabetically
+      const charges = [...(config.chargesAdmission || [])].sort((a, b) => a.localeCompare(b, 'fr'));
+
+      // Conseillers sorted alphabetically
+      const conseillers = Object.entries(conseillerSchools)
+        .map(([name, ecoles]) => ({ name, ecoles: [...ecoles].sort().join(' / ') }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+
+      // School color mapping
+      const ecoleColors = {};
+      Object.entries(config.ecoles || {}).forEach(([name, e]) => { ecoleColors[name] = e.color || '#666'; });
 
       const updatePhone = (name, phone) => {
         setCoordonnees(prev => ({ ...prev, [name]: { ...prev[name], telephone: phone } }));
@@ -2538,23 +2553,49 @@
         setTimeout(() => setSaved(false), 2000);
       };
 
+      const PhoneRow = ({ name, badge }) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f8f9fa', padding: '8px 12px', borderRadius: 8 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, minWidth: 90 }}>{name}</span>
+          {badge && <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: badge.bg || '#eee', color: badge.color || '#333', fontWeight: 600, whiteSpace: 'nowrap' }}>{badge.text}</span>}
+          <input value={(coordonnees[name] || {}).telephone || ''} onChange={e => updatePhone(name, e.target.value)}
+            placeholder="06 XX XX XX XX" style={{ flex: 1, fontSize: 13, padding: '6px 10px', marginLeft: 'auto', maxWidth: 180 }} />
+        </div>
+      );
+
       return (
         <div style={{ marginBottom: 32 }}>
           <h2 style={{ fontSize: 18, marginBottom: 12 }}>Annuaire des équipes</h2>
           <div className="chart-container" style={{ borderLeft: '4px solid #002FA7' }}>
-            <p style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>
-              Renseignez les <strong>numéros de téléphone</strong> des chargé(e)s d'admission et conseillers pour les utiliser dans les templates d'email/WhatsApp via <code>{'{{telCharge}}'}</code> et <code>{'{{telConseiller}}'}</code>.
+            <p style={{ fontSize: 13, color: '#666', marginBottom: 16 }}>
+              Renseignez les <strong>numéros de téléphone</strong> pour les utiliser dans les templates via <code>{'{{telCharge}}'}</code> et <code>{'{{telConseiller}}'}</code>.
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
-              {names.map(name => (
-                <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f8f9fa', padding: '8px 12px', borderRadius: 8 }}>
-                  <span style={{ fontWeight: 700, fontSize: 13, minWidth: 90 }}>{name}</span>
-                  <input value={(coordonnees[name] || {}).telephone || ''} onChange={e => updatePhone(name, e.target.value)}
-                    placeholder="06 XX XX XX XX" style={{ flex: 1, fontSize: 13, padding: '6px 10px' }} />
-                </div>
-              ))}
+
+            <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <i className="fas fa-headset" style={{ color: '#3498DB' }}></i> Chargé(e)s d'admission
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 8, marginBottom: 20 }}>
+              {charges.map(name => {
+                const chargeEcole = ['Giulia','Mathis'].includes(name) ? 'NOSCHOOL MDM'
+                  : ['Lynn','Peyo','Kilian'].includes(name) ? 'NOSCHOOL'
+                  : ['Lisa','Léo','Cécilia'].includes(name) ? 'WILL.SCHOOL' : null;
+                const badgeColor = chargeEcole ? (ecoleColors[chargeEcole] || '#666') : null;
+                return <PhoneRow key={name} name={name}
+                  badge={chargeEcole ? { text: chargeEcole, bg: badgeColor + '18', color: badgeColor } : null} />;
+              })}
             </div>
-            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+
+            <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <i className="fas fa-chalkboard-teacher" style={{ color: '#27AE60' }}></i> Conseillers en formation
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 8, marginBottom: 16 }}>
+              {conseillers.map(({ name, ecoles }) => {
+                const schoolNames = ecoles.split(' / ');
+                const mainColor = ecoleColors[schoolNames[0]] || '#666';
+                return <PhoneRow key={name} name={name} badge={{ text: ecoles, bg: mainColor + '18', color: mainColor }} />;
+              })}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <button className="btn btn-primary" onClick={handleSave}>Sauvegarder</button>
               {saved && <span style={{ color: '#2ECC71', fontWeight: 600, fontSize: 13 }}>Sauvegardé !</span>}
             </div>
