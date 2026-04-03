@@ -139,15 +139,38 @@
     .quick-action.whatsapp { background: #25D366; }
 
     /* Dashboard */
-    .dashboard { padding: 24px; }
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .kpi-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .kpi-card .label { font-size: 12px; color: #888; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
-    .kpi-card .value { font-size: 32px; font-weight: 800; margin: 8px 0 4px; }
-    .kpi-card .sub { font-size: 12px; color: #888; }
-    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
-    .chart-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .chart-container h3 { font-size: 15px; margin-bottom: 16px; color: #333; }
+    .dashboard { padding: 20px 24px; }
+    .dashboard-section-title { font-size: 17px; font-weight: 800; color: #1a1a2e; margin: 28px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #e8eeff; display: flex; align-items: center; gap: 10px; }
+    .dashboard-section-title .icon { font-size: 20px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .kpi-card { background: white; border-radius: 14px; padding: 18px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); position: relative; overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .kpi-card .label { font-size: 11px; color: #888; text-transform: uppercase; font-weight: 700; letter-spacing: 0.8px; }
+    .kpi-card .value { font-size: 30px; font-weight: 800; margin: 6px 0 2px; line-height: 1.1; }
+    .kpi-card .sub { font-size: 11px; color: #999; font-weight: 500; }
+    .kpi-card .kpi-icon { position: absolute; top: 14px; right: 16px; font-size: 28px; opacity: 0.12; }
+    .kpi-card-accent { border-left: 4px solid; }
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 18px; margin-bottom: 18px; }
+    .chart-container { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); transition: box-shadow 0.15s; }
+    .chart-container:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .chart-container h3 { font-size: 14px; font-weight: 700; margin-bottom: 14px; color: #444; display: flex; align-items: center; gap: 8px; }
+    .chart-container h3 .chart-icon { color: #002FA7; font-size: 16px; }
+    .perf-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+    .perf-table thead th { text-align: center; padding: 10px 8px; font-weight: 700; color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e0e5f0; position: sticky; top: 0; background: white; }
+    .perf-table thead th:first-child { text-align: left; padding-left: 16px; }
+    .perf-table tbody tr { transition: background 0.12s; cursor: pointer; }
+    .perf-table tbody tr:hover { background: #f0f4ff; }
+    .perf-table tbody td { text-align: center; padding: 10px 8px; border-bottom: 1px solid #f0f2f5; }
+    .perf-table tbody td:first-child { text-align: left; padding-left: 16px; font-weight: 700; }
+    .perf-table tfoot td { text-align: center; padding: 12px 8px; font-weight: 800; background: #f8f9fc; border-top: 2px solid #1a1a2e; }
+    .perf-table tfoot td:first-child { text-align: left; padding-left: 16px; }
+    .badge-pill { display: inline-block; padding: 3px 10px; border-radius: 10px; font-weight: 700; font-size: 12px; min-width: 32px; text-align: center; }
+    .funnel-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .funnel-bar .funnel-label { width: 110px; font-size: 12px; font-weight: 600; color: #555; text-align: right; flex-shrink: 0; }
+    .funnel-bar .funnel-track { flex: 1; background: #f0f2f5; border-radius: 8px; height: 28px; position: relative; overflow: hidden; }
+    .funnel-bar .funnel-fill { height: 100%; border-radius: 8px; transition: width 0.6s ease; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; min-width: 28px; }
+    .funnel-bar .funnel-fill span { font-size: 11px; font-weight: 800; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+    .funnel-bar .funnel-count { width: 40px; font-size: 14px; font-weight: 800; color: #333; text-align: right; }
 
     /* Table (List view) */
     .list-view { padding: 16px 24px; }
@@ -1016,13 +1039,10 @@
     // ============ DASHBOARD ============
     function DashboardView({ config, stats }) {
       const [selectedCharge, setSelectedCharge] = useState(null);
-      const stageColors = {};
-      config.stages.forEach(s => stageColors[s.id] = s.color);
-      const stageLabels = {};
-      config.stages.forEach(s => stageLabels[s.id] = s.label);
       const chargeDetails = stats.chargeDetails || {};
       const charges = Object.keys(chargeDetails);
       const chargeColors = ['#002FA7', '#E74C3C', '#2ECC71', '#F39C12', '#9B59B6', '#1ABC9C', '#E67E22', '#3498DB'];
+      const maxPipeline = Math.max(...config.stages.map(s => stats.parStage[s.id] || 0), 1);
 
       const formatHours = (h) => {
         if (h === undefined || h === null) return '-';
@@ -1031,99 +1051,204 @@
         return `${Math.round(h / 24)}j`;
       };
 
+      const Pill = ({ value, bg, color, bold }) => (
+        <span className="badge-pill" style={{ background: bg, color, fontWeight: bold ? 800 : 700 }}>{value}</span>
+      );
+
       return (
         <div className="dashboard">
-          {/* ===== KPI GLOBAUX ===== */}
+
+          {/* ===== SECTION 1 : VUE D'ENSEMBLE ===== */}
+          <div className="dashboard-section-title"><span className="icon">&#x1F4CA;</span> Vue d'ensemble</div>
           <div className="kpi-grid">
-            <div className="kpi-card">
-              <div className="label">Total Candidats</div>
-              <div className="value">{stats.total}</div>
+            <div className="kpi-card" style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', color: 'white' }}>
+              <div className="label" style={{ color: 'rgba(255,255,255,0.7)' }}>Total Candidats</div>
+              <div className="value" style={{ color: 'white' }}>{stats.total}</div>
+              <div className="kpi-icon" style={{ color: 'rgba(255,255,255,0.15)' }}>&#x1F465;</div>
             </div>
             {Object.entries(config.ecoles).map(([name, ecole]) => (
-              <div key={name} className="kpi-card">
+              <div key={name} className="kpi-card kpi-card-accent" style={{ borderLeftColor: ecole.color }}>
                 <div className="label" style={{ color: ecole.color }}>{name}</div>
                 <div className="value" style={{ color: ecole.color }}>{stats.parEcole[name] || 0}</div>
+                <div className="sub">{stats.total > 0 ? Math.round(((stats.parEcole[name] || 0) / stats.total) * 100) : 0}% du total</div>
               </div>
             ))}
-            <div className="kpi-card">
-              <div className="label">Taux conversion</div>
-              <div className="value" style={{ color: '#2ECC71' }}>{stats.conversion}%</div>
-              <div className="sub">Voeu → Inscrit</div>
+            <div className="kpi-card" style={{ background: 'linear-gradient(135deg, #d4efdf 0%, #eafaf1 100%)' }}>
+              <div className="label" style={{ color: '#1e8449' }}>Taux conversion</div>
+              <div className="value" style={{ color: '#27ae60' }}>{stats.conversion}%</div>
+              <div className="sub" style={{ color: '#1e8449' }}>Voeu &rarr; Inscrit</div>
             </div>
-            <div className="kpi-card">
-              <div className="label">Basculés CRM</div>
-              <div className="value" style={{ color: '#002FA7' }}>{stats.totalCRM || 0} <span style={{ fontSize: 16, color: '#888' }}>/ {stats.total}</span></div>
-              <div className="sub" style={{ color: (stats.tauxCRMGlobal || 0) >= 50 ? '#2ECC71' : '#E74C3C' }}>{stats.tauxCRMGlobal || 0}% dans le CRM</div>
+            <div className="kpi-card kpi-card-accent" style={{ borderLeftColor: '#002FA7' }}>
+              <div className="label">Dans le CRM</div>
+              <div className="value" style={{ color: '#002FA7' }}>{stats.totalCRM || 0}</div>
+              <div className="sub" style={{ color: (stats.tauxCRMGlobal || 0) >= 50 ? '#27ae60' : '#E74C3C' }}>{stats.tauxCRMGlobal || 0}% des candidats</div>
             </div>
-            <div className="kpi-card">
-              <div className="label">Relances effectuées</div>
+            <div className="kpi-card kpi-card-accent" style={{ borderLeftColor: '#3498DB' }}>
+              <div className="label">Relances</div>
               <div className="value" style={{ color: '#3498DB' }}>{stats.relancesTotal}</div>
+              <div className="kpi-icon" style={{ color: '#3498DB' }}>&#x1F4E8;</div>
             </div>
-            <div className="kpi-card">
+            <div className="kpi-card kpi-card-accent" style={{ borderLeftColor: stats.doublons > 0 ? '#F39C12' : '#2ECC71' }}>
               <div className="label">Doublons</div>
               <div className="value" style={{ color: stats.doublons > 0 ? '#F39C12' : '#2ECC71' }}>{stats.doublons}</div>
             </div>
           </div>
 
-          {/* ===== CLASSEMENT HEBDO + PIPELINE ===== */}
+          {/* ===== SECTION 2 : FUNNEL PIPELINE (barres visuelles) ===== */}
           <div className="charts-grid">
             <div className="chart-container">
-              <h3>Pipeline des candidats</h3>
+              <h3><span className="chart-icon">&#x25B6;</span> Pipeline des candidats</h3>
+              <div style={{ padding: '4px 0' }}>
+                {config.stages.map(s => {
+                  const count = stats.parStage[s.id] || 0;
+                  const pct = maxPipeline > 0 ? (count / maxPipeline) * 100 : 0;
+                  return (
+                    <div key={s.id} className="funnel-bar">
+                      <div className="funnel-label">{s.label}</div>
+                      <div className="funnel-track">
+                        <div className="funnel-fill" style={{ width: `${Math.max(pct, count > 0 ? 8 : 0)}%`, background: s.color }}>
+                          {count > 0 && <span>{count}</span>}
+                        </div>
+                      </div>
+                      <div className="funnel-count">{count}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="chart-container">
+              <h3><span className="chart-icon">&#x1F4C8;</span> Répartition par école</h3>
               <ChartComponent
-                type="bar"
+                type="doughnut"
                 height={280}
                 data={{
-                  labels: config.stages.map(s => s.label),
+                  labels: Object.keys(config.ecoles),
                   datasets: [{
-                    data: config.stages.map(s => stats.parStage[s.id] || 0),
-                    backgroundColor: config.stages.map(s => s.color),
-                    borderRadius: 6, borderSkipped: false,
+                    data: Object.keys(config.ecoles).map(e => stats.parEcole[e] || 0),
+                    backgroundColor: Object.values(config.ecoles).map(e => e.color),
+                    borderWidth: 3, borderColor: '#fff',
+                    hoverBorderWidth: 0,
                   }]
                 }}
                 options={{
-                  indexAxis: 'y',
-                  plugins: { legend: { display: false } },
-                  scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                  cutout: '55%',
+                  plugins: {
+                    legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle', font: { size: 13, weight: '600' } } },
+                    tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${ctx.raw} (${stats.total > 0 ? Math.round(ctx.raw / stats.total * 100) : 0}%)` } }
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          {/* ===== SECTION 3 : GRAPHIQUES D'ACTIVITE ===== */}
+          <div className="dashboard-section-title"><span className="icon">&#x1F4C5;</span> Activité</div>
+          <div className="charts-grid">
+            <div className="chart-container">
+              <h3><span className="chart-icon">&#x1F4DE;</span> Relances par canal</h3>
+              <ChartComponent
+                type="doughnut"
+                height={280}
+                data={{
+                  labels: config.relanceTypes.map(t => t.label),
+                  datasets: [{
+                    data: config.relanceTypes.map(t => stats.relancesParType[t.id] || 0),
+                    backgroundColor: ['#3498DB', '#E74C3C', '#25D366', '#9B59B6', '#F39C12'],
+                    borderWidth: 3, borderColor: '#fff', hoverBorderWidth: 0,
+                  }]
+                }}
+                options={{
+                  cutout: '55%',
+                  plugins: {
+                    legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle', font: { size: 13, weight: '600' } } }
+                  }
                 }}
               />
             </div>
 
             <div className="chart-container">
-              <h3>Temps moyen de traitement par colonne</h3>
-              {Object.keys(stats.tempsGlobalParStage || {}).length > 0 ? (
+              <h3><span className="chart-icon">&#x1F3EB;</span> Ecole &times; Etape</h3>
+              <ChartComponent
+                type="bar"
+                height={280}
+                data={{
+                  labels: Object.keys(config.ecoles),
+                  datasets: config.stages.filter(s => !['refuse', 'abandonne'].includes(s.id)).map(stage => ({
+                    label: stage.label,
+                    data: Object.keys(config.ecoles).map(ecole => (stats.parEcoleStage[ecole] || {})[stage.id] || 0),
+                    backgroundColor: stage.color + 'DD', borderRadius: 3,
+                  }))
+                }}
+                options={{
+                  plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 } } } },
+                  scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f2f5' } } }
+                }}
+              />
+            </div>
+
+            {Object.keys(stats.relancesParJour).length > 0 && (
+              <div className="chart-container" style={{ gridColumn: '1 / -1' }}>
+                <h3><span className="chart-icon">&#x1F4C8;</span> Courbe d'activité (30 derniers jours)</h3>
                 <ChartComponent
-                  type="bar"
-                  height={280}
+                  type="line"
+                  height={200}
                   data={{
-                    labels: config.stages.filter(s => stats.tempsGlobalParStage[s.id] !== undefined).map(s => s.label),
+                    labels: Object.keys(stats.relancesParJour).sort().map(k => {
+                      const d = new Date(k); return d.getDate() + '/' + (d.getMonth()+1);
+                    }),
                     datasets: [{
-                      label: 'Heures',
-                      data: config.stages.filter(s => stats.tempsGlobalParStage[s.id] !== undefined).map(s => stats.tempsGlobalParStage[s.id]),
-                      backgroundColor: config.stages.filter(s => stats.tempsGlobalParStage[s.id] !== undefined).map(s => s.color + 'CC'),
-                      borderRadius: 6, borderSkipped: false,
+                      label: 'Relances',
+                      data: Object.keys(stats.relancesParJour).sort().map(k => stats.relancesParJour[k]),
+                      borderColor: '#002FA7', backgroundColor: 'rgba(0,47,167,0.08)',
+                      fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#002FA7',
+                      pointHoverRadius: 6, borderWidth: 2.5,
                     }]
                   }}
                   options={{
-                    indexAxis: 'y',
-                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => formatHours(ctx.raw) } } },
-                    scales: { x: { beginAtZero: true, title: { display: true, text: 'Heures' } } }
+                    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a1a2e', titleFont: { size: 13 }, bodyFont: { size: 14, weight: '700' }, padding: 10, cornerRadius: 8 } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f2f5' } }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } }
                   }}
                 />
-              ) : (
-                <div style={{ padding: 40, textAlign: 'center', color: '#aaa', fontSize: 13 }}>Pas encore assez de données</div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {Object.keys(stats.tempsGlobalParStage || {}).length > 0 && (
+              <div className="chart-container" style={{ gridColumn: '1 / -1' }}>
+                <h3><span className="chart-icon">&#x23F1;</span> Temps moyen de traitement par étape</h3>
+                <div style={{ padding: '4px 0' }}>
+                  {config.stages.filter(s => stats.tempsGlobalParStage[s.id] !== undefined).map(s => {
+                    const h = stats.tempsGlobalParStage[s.id];
+                    const maxH = Math.max(...Object.values(stats.tempsGlobalParStage), 1);
+                    const pct = (h / maxH) * 100;
+                    return (
+                      <div key={s.id} className="funnel-bar">
+                        <div className="funnel-label">{s.label}</div>
+                        <div className="funnel-track">
+                          <div className="funnel-fill" style={{ width: `${Math.max(pct, 8)}%`, background: s.color + 'CC' }}>
+                            <span>{formatHours(h)}</span>
+                          </div>
+                        </div>
+                        <div className="funnel-count" style={{ fontSize: 12 }}>{formatHours(h)}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* ===== SECTION PERFORMANCE INDIVIDUELLE ===== */}
-          <div style={{ margin: '24px 0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2e' }}>Performance par chargé(e) d'admission</h2>
-            <div style={{ display: 'flex', gap: 8 }}>
+          {/* ===== SECTION 4 : PERFORMANCE EQUIPE ===== */}
+          <div className="dashboard-section-title" style={{ justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span className="icon">&#x1F3C6;</span> Performance équipe
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <button className={`btn btn-sm ${selectedCharge === null ? 'btn-primary' : 'btn-outline'}`}
-                onClick={() => setSelectedCharge(null)}>Vue globale</button>
+                onClick={() => setSelectedCharge(null)} style={{ fontSize: 12 }}>Tous</button>
               {charges.map((ch, i) => (
                 <button key={ch} className={`btn btn-sm ${selectedCharge === ch ? 'btn-primary' : 'btn-outline'}`}
-                  style={selectedCharge === ch ? { background: chargeColors[i % chargeColors.length] } : {}}
+                  style={selectedCharge === ch ? { background: chargeColors[i % chargeColors.length], fontSize: 12 } : { fontSize: 12 }}
                   onClick={() => setSelectedCharge(ch)}>{ch}</button>
               ))}
             </div>
@@ -1132,185 +1257,108 @@
           {/* === VUE GLOBALE : Tableau comparatif === */}
           {selectedCharge === null && (
             <>
-              {/* Tableau comparatif */}
-              <div className="chart-container" style={{ marginBottom: 20, overflowX: 'auto' }}>
-                <h3>Tableau de bord comparatif</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 12 }}>
+              <div className="chart-container" style={{ marginBottom: 18, overflowX: 'auto' }}>
+                <table className="perf-table">
                   <thead>
-                    <tr style={{ borderBottom: '2px solid #e0e0e0' }}>
-                      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 700, color: '#555' }}>Chargé(e)</th>
-                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#555' }}>Candidats</th>
-                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#555' }}>Aujourd'hui</th>
-                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#555' }}>Semaine</th>
-                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#555' }}>Mois</th>
-                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#555' }}>Total</th>
-                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#555' }}>Sans relance</th>
-                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#2ECC71' }}>CRM</th>
-                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#002FA7' }}>Taux CRM</th>
-                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#2ECC71' }}>Inscrits</th>
-                      <th style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 700, color: '#2ECC71' }}>Taux inscrit</th>
+                    <tr>
+                      <th>Chargé(e)</th>
+                      <th>Candidats</th>
+                      <th>Aujourd'hui</th>
+                      <th>Semaine</th>
+                      <th>Mois</th>
+                      <th>Total</th>
+                      <th>Sans relance</th>
+                      <th style={{ color: '#002FA7' }}>CRM</th>
+                      <th style={{ color: '#002FA7' }}>% CRM</th>
+                      <th style={{ color: '#27ae60' }}>Inscrits</th>
+                      <th style={{ color: '#27ae60' }}>% Inscrit</th>
                     </tr>
                   </thead>
                   <tbody>
                     {charges.map((ch, i) => {
                       const d = chargeDetails[ch];
                       return (
-                        <tr key={ch} style={{ borderBottom: '1px solid #f0f0f0', cursor: 'pointer', transition: 'background 0.15s' }}
-                          onClick={() => setSelectedCharge(ch)}
-                          onMouseEnter={e => e.currentTarget.style.background = '#f8f9ff'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                          <td style={{ padding: '10px 12px', fontWeight: 700 }}>
-                            <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: chargeColors[i % chargeColors.length], marginRight: 8 }} />
+                        <tr key={ch} onClick={() => setSelectedCharge(ch)}>
+                          <td>
+                            <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: chargeColors[i % chargeColors.length], marginRight: 8, verticalAlign: 'middle' }} />
                             {ch}
                           </td>
-                          <td style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 600 }}>{d.totalCandidats}</td>
-                          <td style={{ textAlign: 'center', padding: '10px 8px' }}>
-                            <span style={{ background: d.relancesToday > 0 ? '#2ECC7122' : '#f5f5f5', color: d.relancesToday > 0 ? '#2ECC71' : '#ccc', padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.relancesToday}</span>
-                          </td>
-                          <td style={{ textAlign: 'center', padding: '10px 8px' }}>
-                            <span style={{ background: '#002FA722', color: '#002FA7', padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.relancesWeek}</span>
-                          </td>
-                          <td style={{ textAlign: 'center', padding: '10px 8px' }}>
-                            <span style={{ background: '#3498DB22', color: '#3498DB', padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.relancesMonth}</span>
-                          </td>
-                          <td style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 600 }}>{d.relancesTotal}</td>
-                          <td style={{ textAlign: 'center', padding: '10px 8px' }}>
-                            <span style={{ background: d.sansRelance > 0 ? '#E74C3C22' : '#2ECC7122', color: d.sansRelance > 0 ? '#E74C3C' : '#2ECC71', padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.sansRelance}</span>
-                          </td>
-                          <td style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 600 }}>{d.crmCount}</td>
-                          <td style={{ textAlign: 'center', padding: '10px 8px' }}>
-                            <span style={{ background: d.tauxCRM >= 50 ? '#2ECC7133' : d.tauxCRM >= 25 ? '#F39C1233' : '#E74C3C22',
-                              color: d.tauxCRM >= 50 ? '#27ae60' : d.tauxCRM >= 25 ? '#e67e22' : '#E74C3C',
-                              padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.tauxCRM}%</span>
-                          </td>
-                          <td style={{ textAlign: 'center', padding: '10px 8px', fontWeight: 600 }}>{d.inscritCount}</td>
-                          <td style={{ textAlign: 'center', padding: '10px 8px' }}>
-                            <span style={{ background: d.tauxInscrit >= 30 ? '#2ECC7133' : '#F39C1233',
-                              color: d.tauxInscrit >= 30 ? '#27ae60' : '#e67e22',
-                              padding: '3px 10px', borderRadius: 8, fontWeight: 700 }}>{d.tauxInscrit}%</span>
-                          </td>
+                          <td style={{ fontWeight: 700 }}>{d.totalCandidats}</td>
+                          <td><Pill value={d.relancesToday} bg={d.relancesToday > 0 ? '#d5f5e3' : '#f5f5f5'} color={d.relancesToday > 0 ? '#1e8449' : '#ccc'} /></td>
+                          <td><Pill value={d.relancesWeek} bg="#dbeafe" color="#002FA7" /></td>
+                          <td><Pill value={d.relancesMonth} bg="#e8f4fd" color="#2980b9" /></td>
+                          <td style={{ fontWeight: 700 }}>{d.relancesTotal}</td>
+                          <td><Pill value={d.sansRelance} bg={d.sansRelance > 0 ? '#fdedec' : '#d5f5e3'} color={d.sansRelance > 0 ? '#c0392b' : '#1e8449'} bold={d.sansRelance > 0} /></td>
+                          <td style={{ fontWeight: 700 }}>{d.crmCount}</td>
+                          <td><Pill value={`${d.tauxCRM}%`}
+                            bg={d.tauxCRM >= 50 ? '#d5f5e3' : d.tauxCRM >= 25 ? '#fef9e7' : '#fdedec'}
+                            color={d.tauxCRM >= 50 ? '#1e8449' : d.tauxCRM >= 25 ? '#b7950b' : '#c0392b'} /></td>
+                          <td style={{ fontWeight: 700, color: '#27ae60' }}>{d.inscritCount}</td>
+                          <td><Pill value={`${d.tauxInscrit}%`}
+                            bg={d.tauxInscrit >= 30 ? '#d5f5e3' : '#fef9e7'}
+                            color={d.tauxInscrit >= 30 ? '#1e8449' : '#b7950b'} /></td>
                         </tr>
                       );
                     })}
-                    {/* Ligne total */}
-                    <tr style={{ borderTop: '2px solid #1a1a2e', background: '#f8f9fa', fontWeight: 700 }}>
-                      <td style={{ padding: '10px 12px' }}>TOTAL</td>
-                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{stats.total}</td>
-                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{charges.reduce((s, c) => s + chargeDetails[c].relancesToday, 0)}</td>
-                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{charges.reduce((s, c) => s + chargeDetails[c].relancesWeek, 0)}</td>
-                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{charges.reduce((s, c) => s + chargeDetails[c].relancesMonth, 0)}</td>
-                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{stats.relancesTotal}</td>
-                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{charges.reduce((s, c) => s + chargeDetails[c].sansRelance, 0)}</td>
-                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{stats.totalCRM || 0}</td>
-                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{stats.tauxCRMGlobal || 0}%</td>
-                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{stats.inscrits}</td>
-                      <td style={{ textAlign: 'center', padding: '10px 8px' }}>{stats.conversion}%</td>
-                    </tr>
                   </tbody>
+                  <tfoot>
+                    <tr>
+                      <td>TOTAL</td>
+                      <td>{stats.total}</td>
+                      <td>{charges.reduce((s, c) => s + chargeDetails[c].relancesToday, 0)}</td>
+                      <td>{charges.reduce((s, c) => s + chargeDetails[c].relancesWeek, 0)}</td>
+                      <td>{charges.reduce((s, c) => s + chargeDetails[c].relancesMonth, 0)}</td>
+                      <td>{stats.relancesTotal}</td>
+                      <td>{charges.reduce((s, c) => s + chargeDetails[c].sansRelance, 0)}</td>
+                      <td>{stats.totalCRM || 0}</td>
+                      <td>{stats.tauxCRMGlobal || 0}%</td>
+                      <td>{stats.inscrits}</td>
+                      <td>{stats.conversion}%</td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
 
-              {/* Graphiques comparatifs */}
               <div className="charts-grid">
                 <div className="chart-container">
-                  <h3>Actions par chargé(e) : Jour / Semaine / Mois</h3>
+                  <h3><span className="chart-icon">&#x1F4CA;</span> Actions : Jour / Semaine / Mois</h3>
                   <ChartComponent
                     type="bar"
-                    height={300}
+                    height={280}
                     data={{
                       labels: charges,
                       datasets: [
-                        { label: "Aujourd'hui", data: charges.map(c => chargeDetails[c].relancesToday), backgroundColor: '#2ECC71', borderRadius: 4 },
-                        { label: 'Semaine', data: charges.map(c => chargeDetails[c].relancesWeek), backgroundColor: '#002FA7', borderRadius: 4 },
-                        { label: 'Mois', data: charges.map(c => chargeDetails[c].relancesMonth), backgroundColor: '#3498DB', borderRadius: 4 },
+                        { label: "Aujourd'hui", data: charges.map(c => chargeDetails[c].relancesToday), backgroundColor: '#2ECC71', borderRadius: 4, barPercentage: 0.7 },
+                        { label: 'Semaine', data: charges.map(c => chargeDetails[c].relancesWeek), backgroundColor: '#002FA7', borderRadius: 4, barPercentage: 0.7 },
+                        { label: 'Mois', data: charges.map(c => chargeDetails[c].relancesMonth), backgroundColor: '#85C1E9', borderRadius: 4, barPercentage: 0.7 },
                       ]
                     }}
                     options={{
-                      plugins: { legend: { position: 'bottom' } },
-                      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 12, weight: '600' } } } },
+                      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f2f5' } }, x: { grid: { display: false } } }
                     }}
                   />
                 </div>
 
                 <div className="chart-container">
-                  <h3>Transformation CRM par chargé(e)</h3>
+                  <h3><span className="chart-icon">&#x1F504;</span> Transformation CRM</h3>
                   <ChartComponent
                     type="bar"
-                    height={300}
+                    height={280}
                     data={{
                       labels: charges,
                       datasets: [
-                        { label: 'Total candidats', data: charges.map(c => chargeDetails[c].totalCandidats), backgroundColor: '#ddd', borderRadius: 4 },
-                        { label: 'Basculés CRM', data: charges.map(c => chargeDetails[c].crmCount), backgroundColor: '#002FA7', borderRadius: 4 },
-                        { label: 'Inscrits', data: charges.map(c => chargeDetails[c].inscritCount), backgroundColor: '#2ECC71', borderRadius: 4 },
+                        { label: 'Total', data: charges.map(c => chargeDetails[c].totalCandidats), backgroundColor: '#e0e5ec', borderRadius: 4, barPercentage: 0.7 },
+                        { label: 'CRM', data: charges.map(c => chargeDetails[c].crmCount), backgroundColor: '#002FA7', borderRadius: 4, barPercentage: 0.7 },
+                        { label: 'Inscrits', data: charges.map(c => chargeDetails[c].inscritCount), backgroundColor: '#2ECC71', borderRadius: 4, barPercentage: 0.7 },
                       ]
                     }}
                     options={{
-                      plugins: { legend: { position: 'bottom' } },
-                      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 12, weight: '600' } } } },
+                      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f2f5' } }, x: { grid: { display: false } } }
                     }}
                   />
                 </div>
-
-                <div className="chart-container">
-                  <h3>Relances par type</h3>
-                  <ChartComponent
-                    type="doughnut"
-                    height={300}
-                    data={{
-                      labels: config.relanceTypes.map(t => t.label),
-                      datasets: [{
-                        data: config.relanceTypes.map(t => stats.relancesParType[t.id] || 0),
-                        backgroundColor: ['#3498DB', '#E74C3C', '#F39C12', '#25D366', '#9B59B6'],
-                        borderWidth: 0,
-                      }]
-                    }}
-                    options={{ plugins: { legend: { position: 'bottom' } } }}
-                  />
-                </div>
-
-                <div className="chart-container">
-                  <h3>Répartition école / stage</h3>
-                  <ChartComponent
-                    type="bar"
-                    height={300}
-                    data={{
-                      labels: Object.keys(config.ecoles),
-                      datasets: config.stages.filter(s => !['refuse', 'abandonne'].includes(s.id)).map(stage => ({
-                        label: stage.label,
-                        data: Object.keys(config.ecoles).map(ecole => (stats.parEcoleStage[ecole] || {})[stage.id] || 0),
-                        backgroundColor: stage.color, borderRadius: 4,
-                      }))
-                    }}
-                    options={{
-                      plugins: { legend: { position: 'bottom' } },
-                      scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } } }
-                    }}
-                  />
-                </div>
-
-                {Object.keys(stats.relancesParJour).length > 0 && (
-                  <div className="chart-container" style={{ gridColumn: '1 / -1' }}>
-                    <h3>Activité relances (30 derniers jours)</h3>
-                    <ChartComponent
-                      type="line"
-                      height={220}
-                      data={{
-                        labels: Object.keys(stats.relancesParJour).sort(),
-                        datasets: [{
-                          label: 'Relances',
-                          data: Object.keys(stats.relancesParJour).sort().map(k => stats.relancesParJour[k]),
-                          borderColor: '#002FA7', backgroundColor: 'rgba(102,126,234,0.1)',
-                          fill: true, tension: 0.3, pointRadius: 4,
-                        }]
-                      }}
-                      options={{
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                      }}
-                    />
-                  </div>
-                )}
               </div>
             </>
           )}
@@ -1320,52 +1368,51 @@
             const d = chargeDetails[selectedCharge];
             const ci = charges.indexOf(selectedCharge);
             const color = chargeColors[ci % chargeColors.length];
+            const maxIndivPipeline = Math.max(...config.stages.map(s => d.pipeline[s.id] || 0), 1);
             return (
               <>
-                {/* KPIs individuels */}
                 <div className="kpi-grid">
-                  <div className="kpi-card" style={{ borderLeft: `4px solid ${color}` }}>
-                    <div className="label">Candidats assignés</div>
-                    <div className="value">{d.totalCandidats}</div>
+                  <div className="kpi-card" style={{ background: `linear-gradient(135deg, ${color} 0%, ${color}CC 100%)`, color: 'white' }}>
+                    <div className="label" style={{ color: 'rgba(255,255,255,0.8)' }}>Candidats</div>
+                    <div className="value" style={{ color: 'white' }}>{d.totalCandidats}</div>
                   </div>
-                  <div className="kpi-card" style={{ borderLeft: '4px solid #2ECC71' }}>
-                    <div className="label">Actions aujourd'hui</div>
-                    <div className="value" style={{ color: d.relancesToday > 0 ? '#2ECC71' : '#E74C3C' }}>{d.relancesToday}</div>
+                  <div className="kpi-card kpi-card-accent" style={{ borderLeftColor: '#2ECC71' }}>
+                    <div className="label">Aujourd'hui</div>
+                    <div className="value" style={{ color: d.relancesToday > 0 ? '#27ae60' : '#E74C3C' }}>{d.relancesToday}</div>
                   </div>
-                  <div className="kpi-card" style={{ borderLeft: '4px solid #002FA7' }}>
-                    <div className="label">Actions semaine</div>
+                  <div className="kpi-card kpi-card-accent" style={{ borderLeftColor: '#002FA7' }}>
+                    <div className="label">Semaine</div>
                     <div className="value" style={{ color: '#002FA7' }}>{d.relancesWeek}</div>
                   </div>
-                  <div className="kpi-card" style={{ borderLeft: '4px solid #3498DB' }}>
-                    <div className="label">Actions mois</div>
+                  <div className="kpi-card kpi-card-accent" style={{ borderLeftColor: '#3498DB' }}>
+                    <div className="label">Mois</div>
                     <div className="value" style={{ color: '#3498DB' }}>{d.relancesMonth}</div>
                   </div>
-                  <div className="kpi-card" style={{ borderLeft: '4px solid #F39C12' }}>
+                  <div className="kpi-card kpi-card-accent" style={{ borderLeftColor: '#F39C12' }}>
                     <div className="label">Total relances</div>
                     <div className="value">{d.relancesTotal}</div>
                   </div>
-                  <div className="kpi-card" style={{ borderLeft: '4px solid #E74C3C' }}>
+                  <div className="kpi-card kpi-card-accent" style={{ borderLeftColor: '#E74C3C' }}>
                     <div className="label">Sans relance</div>
                     <div className="value" style={{ color: d.sansRelance > 0 ? '#E74C3C' : '#2ECC71' }}>{d.sansRelance}</div>
                     <div className="sub">{d.totalCandidats > 0 ? Math.round((d.sansRelance / d.totalCandidats) * 100) : 0}% non traités</div>
                   </div>
-                  <div className="kpi-card" style={{ borderLeft: '4px solid #9B59B6' }}>
-                    <div className="label">Basculés CRM</div>
-                    <div className="value" style={{ color: '#9B59B6' }}>{d.crmCount} <span style={{ fontSize: 14, color: '#aaa' }}>({d.tauxCRM}%)</span></div>
+                  <div className="kpi-card kpi-card-accent" style={{ borderLeftColor: '#9B59B6' }}>
+                    <div className="label">CRM</div>
+                    <div className="value" style={{ color: '#9B59B6' }}>{d.crmCount} <span style={{ fontSize: 13, color: '#aaa' }}>({d.tauxCRM}%)</span></div>
                   </div>
-                  <div className="kpi-card" style={{ borderLeft: '4px solid #2ECC71' }}>
-                    <div className="label">Inscrits</div>
-                    <div className="value" style={{ color: '#2ECC71' }}>{d.inscritCount} <span style={{ fontSize: 14, color: '#aaa' }}>({d.tauxInscrit}%)</span></div>
+                  <div className="kpi-card" style={{ background: 'linear-gradient(135deg, #d5f5e3 0%, #eafaf1 100%)' }}>
+                    <div className="label" style={{ color: '#1e8449' }}>Inscrits</div>
+                    <div className="value" style={{ color: '#27ae60' }}>{d.inscritCount} <span style={{ fontSize: 13, color: '#1e8449' }}>({d.tauxInscrit}%)</span></div>
                   </div>
                 </div>
 
                 <div className="charts-grid">
-                  {/* Activité 7 derniers jours */}
                   <div className="chart-container">
-                    <h3>Activité des 7 derniers jours</h3>
+                    <h3><span className="chart-icon">&#x1F4C5;</span> 7 derniers jours</h3>
                     <ChartComponent
                       type="bar"
-                      height={260}
+                      height={250}
                       data={{
                         labels: Object.keys(d.last7Days).map(k => {
                           const dt = new Date(k);
@@ -1375,76 +1422,72 @@
                         datasets: [{
                           label: 'Actions',
                           data: Object.values(d.last7Days),
-                          backgroundColor: Object.values(d.last7Days).map(v => v > 0 ? color : '#eee'),
-                          borderRadius: 6, borderSkipped: false,
+                          backgroundColor: Object.values(d.last7Days).map(v => v > 0 ? color : '#eef0f4'),
+                          borderRadius: 8, borderSkipped: false, barPercentage: 0.6,
                         }]
                       }}
                       options={{
                         plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f2f5' } }, x: { grid: { display: false } } }
                       }}
                     />
                   </div>
 
-                  {/* Répartition types d'actions */}
                   <div className="chart-container">
-                    <h3>Types d'actions</h3>
+                    <h3><span className="chart-icon">&#x1F4DE;</span> Canaux utilisés</h3>
                     <ChartComponent
                       type="doughnut"
-                      height={260}
+                      height={250}
                       data={{
                         labels: config.relanceTypes.map(t => t.label),
                         datasets: [{
                           data: config.relanceTypes.map(t => d.actionsByType[t.id] || 0),
-                          backgroundColor: ['#3498DB', '#E74C3C', '#F39C12', '#25D366', '#9B59B6'],
-                          borderWidth: 0,
+                          backgroundColor: ['#3498DB', '#E74C3C', '#25D366', '#9B59B6', '#F39C12'],
+                          borderWidth: 3, borderColor: '#fff', hoverBorderWidth: 0,
                         }]
                       }}
-                      options={{ plugins: { legend: { position: 'bottom' } } }}
+                      options={{ cutout: '55%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 12, weight: '600' } } } } }}
                     />
                   </div>
 
-                  {/* Pipeline individuel */}
                   <div className="chart-container">
-                    <h3>Pipeline de {selectedCharge}</h3>
-                    <ChartComponent
-                      type="bar"
-                      height={260}
-                      data={{
-                        labels: config.stages.map(s => s.label),
-                        datasets: [{
-                          data: config.stages.map(s => d.pipeline[s.id] || 0),
-                          backgroundColor: config.stages.map(s => s.color),
-                          borderRadius: 6, borderSkipped: false,
-                        }]
-                      }}
-                      options={{
-                        indexAxis: 'y',
-                        plugins: { legend: { display: false } },
-                        scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                      }}
-                    />
+                    <h3><span className="chart-icon">&#x25B6;</span> Pipeline de {selectedCharge}</h3>
+                    <div style={{ padding: '4px 0' }}>
+                      {config.stages.map(s => {
+                        const count = d.pipeline[s.id] || 0;
+                        const pct = maxIndivPipeline > 0 ? (count / maxIndivPipeline) * 100 : 0;
+                        return (
+                          <div key={s.id} className="funnel-bar">
+                            <div className="funnel-label">{s.label}</div>
+                            <div className="funnel-track">
+                              <div className="funnel-fill" style={{ width: `${Math.max(pct, count > 0 ? 10 : 0)}%`, background: s.color }}>
+                                {count > 0 && <span>{count}</span>}
+                              </div>
+                            </div>
+                            <div className="funnel-count">{count}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  {/* Temps de traitement par stage */}
                   <div className="chart-container">
-                    <h3>Temps moyen de 1ère relance par colonne</h3>
+                    <h3><span className="chart-icon">&#x23F1;</span> Temps moyen 1ère relance</h3>
                     {Object.keys(d.tempsTraitement).length > 0 ? (
-                      <div style={{ padding: '8px 0' }}>
-                        {config.stages.map(s => {
+                      <div style={{ padding: '4px 0' }}>
+                        {config.stages.filter(s => d.tempsTraitement[s.id] !== undefined).map(s => {
                           const t = d.tempsTraitement[s.id];
                           const max = Math.max(...Object.values(d.tempsTraitement), 1);
+                          const pct = (t / max) * 100;
                           return (
-                            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                              <div style={{ width: 120, fontSize: 12, fontWeight: 600, color: '#555', textAlign: 'right', flexShrink: 0 }}>{s.label}</div>
-                              <div style={{ flex: 1, background: '#f0f0f0', borderRadius: 6, height: 22, position: 'relative', overflow: 'hidden' }}>
-                                {t !== undefined && (
-                                  <div style={{ width: `${Math.min((t / max) * 100, 100)}%`, height: '100%', background: s.color, borderRadius: 6, transition: 'width 0.5s', minWidth: 2 }} />
-                                )}
+                            <div key={s.id} className="funnel-bar">
+                              <div className="funnel-label">{s.label}</div>
+                              <div className="funnel-track">
+                                <div className="funnel-fill" style={{ width: `${Math.max(pct, 10)}%`, background: s.color + 'CC' }}>
+                                  <span>{formatHours(t)}</span>
+                                </div>
                               </div>
-                              <div style={{ width: 50, fontSize: 13, fontWeight: 700, color: t !== undefined ? '#333' : '#ccc', textAlign: 'right' }}>
-                                {formatHours(t)}
-                              </div>
+                              <div className="funnel-count" style={{ fontSize: 12 }}>{formatHours(t)}</div>
                             </div>
                           );
                         })}

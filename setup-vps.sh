@@ -1,12 +1,20 @@
 #!/bin/bash
 # ============================================================
 # Script d'installation VPS - CRM Parcoursup
-# Pour Ubuntu 22.04 (OVH VPS Starter)
+# Pour Ubuntu 24.04+ (OVH VPS Starter)
 # ============================================================
-# Usage: ssh root@IP_DU_VPS puis copier-coller ce script
+# Usage: ssh ubuntu@IP_DU_VPS puis:
+#   sudo bash setup-vps.sh
 # ============================================================
 
 set -e
+
+# Verifier qu'on est root (ou sudo)
+if [ "$EUID" -ne 0 ]; then
+  echo "Ce script doit etre lance avec sudo:"
+  echo "  sudo bash setup-vps.sh"
+  exit 1
+fi
 
 echo "=========================================="
 echo "  Installation CRM Parcoursup"
@@ -23,8 +31,9 @@ apt install -y nodejs
 
 # 3. Installer Chromium (pour WhatsApp)
 echo "[3/7] Installation de Chromium..."
-apt install -y chromium-browser || apt install -y chromium
-echo "Chromium installe: $(which chromium-browser || which chromium)"
+apt install -y chromium || apt install -y chromium-browser
+CHROMIUM_PATH=$(which chromium 2>/dev/null || which chromium-browser 2>/dev/null || echo "/usr/bin/chromium")
+echo "Chromium installe: $CHROMIUM_PATH"
 
 # 4. Installer Git
 echo "[4/7] Installation de Git..."
@@ -72,8 +81,11 @@ echo ">> Fichier .env.parcoursup cree. Modifie-le si besoin :"
 echo "   nano /opt/salon-alternance/.env.parcoursup"
 echo ""
 
+# Detecter le chemin Chromium pour systemd
+CHROMIUM_BIN=$(which chromium 2>/dev/null || which chromium-browser 2>/dev/null || echo "/usr/bin/chromium")
+
 # Creer le service systemd (demarrage automatique)
-cat > /etc/systemd/system/parcoursup.service <<'SVCEOF'
+cat > /etc/systemd/system/parcoursup.service <<SVCEOF
 [Unit]
 Description=CRM Parcoursup
 After=network.target
@@ -89,7 +101,7 @@ StandardOutput=journal
 StandardError=journal
 
 # Chromium/Puppeteer needs these
-Environment=PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+Environment=PUPPETEER_EXECUTABLE_PATH=${CHROMIUM_BIN}
 Environment=NODE_ENV=production
 
 [Install]
