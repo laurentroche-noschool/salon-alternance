@@ -323,6 +323,9 @@ app.post('/parcoursup/api/candidates', (req, res) => {
   const now = new Date().toISOString();
   const candidate = {
     id: genId(),
+    numeroDossier: req.body.numeroDossier || '',
+    genre: req.body.genre || '',
+    dateNaissance: req.body.dateNaissance || '',
     nom: req.body.nom || '',
     prenom: req.body.prenom || '',
     telephone: req.body.telephone || '',
@@ -444,6 +447,9 @@ app.post('/parcoursup/api/candidates/bulk', (req, res) => {
   const now = new Date().toISOString();
   const newCandidates = (req.body.candidates || []).map(c => ({
     id: genId(),
+    numeroDossier: c.numeroDossier || '',
+    genre: c.genre || '',
+    dateNaissance: c.dateNaissance || '',
     nom: c.nom || '',
     prenom: c.prenom || '',
     telephone: c.telephone || '',
