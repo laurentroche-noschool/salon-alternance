@@ -399,6 +399,7 @@
         'arrow-up': <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>,
         'arrow-down': <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>,
         'grip-vertical': <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>,
+        download: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
       };
       return icons[name] || null;
     }
@@ -747,6 +748,7 @@
               availableConseillers={availableConseillers}
               count={filteredCandidates.length}
               total={candidates.length}
+              filteredCandidates={filteredCandidates}
             />
           )}
 
@@ -868,8 +870,29 @@
       );
     }
 
+    // ============ EXPORT EXCEL ============
+    function exportToExcel(candidates, config) {
+      const stageLabel = (id) => { const s = (config.stages || []).find(s => s.id === id); return s ? s.label : id; };
+      const headers = ['Nom', 'Prénom', 'N° Candidat', 'Genre', 'Date de naissance', 'Téléphone', 'Email', 'École', 'Formation', 'Conseiller Formation', 'Chargé Admission', 'Étape', 'Notes', 'Créé le'];
+      const rows = candidates.map(c => [
+        c.nom || '', c.prenom || '', c.numeroDossier || '', c.genre === 'F' ? 'Fille' : c.genre === 'G' ? 'Garçon' : '',
+        c.dateNaissance || '', c.telephone || '', c.email || '', c.ecole || '', c.formation || '',
+        c.conseillerFormation || '', c.chargeAdmission || '', stageLabel(c.stage),
+        (c.notes || '').replace(/[\r\n]+/g, ' '), c.createdAt ? new Date(c.createdAt).toLocaleDateString('fr-FR') : ''
+      ]);
+      const escape = (v) => { const s = String(v); return s.includes(';') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; };
+      const csv = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.map(escape).join(';'))].join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'parcoursup-export-' + new Date().toISOString().slice(0, 10) + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
     // ============ FILTER BAR ============
-    function FilterBar({ config, filters, setFilters, availableFormations, availableConseillers, count, total }) {
+    function FilterBar({ config, filters, setFilters, availableFormations, availableConseillers, count, total, filteredCandidates }) {
       return (
         <div className="filter-bar">
           <Icon name="filter" size={16} color="#888" />
@@ -905,6 +928,9 @@
             </button>
           )}
           <span className="filter-count">{count} / {total} candidats</span>
+          <button className="btn btn-sm" style={{ background: '#16a34a', color: 'white', border: 'none', marginLeft: 'auto' }} onClick={() => exportToExcel(filteredCandidates, config)}>
+            <Icon name="download" size={14} /> Export Excel
+          </button>
         </div>
       );
     }
