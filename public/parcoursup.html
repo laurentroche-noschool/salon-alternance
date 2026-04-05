@@ -762,6 +762,7 @@
               <KanbanView
                 config={config}
                 candidates={filteredCandidates}
+                allCandidates={candidates}
                 relances={relances}
                 onCardClick={setSelectedCandidate}
                 onMove={moveCandidate}
@@ -936,12 +937,37 @@
     }
 
     // ============ KANBAN VIEW ============
-    function KanbanView({ config, candidates, relances, onCardClick, onMove, onBulkSend }) {
+    function KanbanView({ config, candidates, allCandidates, relances, onCardClick, onMove, onBulkSend }) {
       const [dragOverCol, setDragOverCol] = useState(null);
       const dragItemRef = useRef(null);
 
       // Toutes les colonnes dans l'ordre du config
       const allStages = config.stages;
+
+      // Détecte les candidats présents dans plusieurs écoles/formations
+      const duplicateInfo = useMemo(() => {
+        const map = {};
+        (allCandidates || candidates).forEach(c => {
+          const key = (c.nom || '').trim().toLowerCase() + '|' + (c.prenom || '').trim().toLowerCase();
+          if (!key || key === '|') return;
+          if (!map[key]) map[key] = [];
+          map[key].push({ id: c.id, ecole: c.ecole, formation: c.formation });
+        });
+        const info = {};
+        Object.values(map).forEach(group => {
+          if (group.length > 1) {
+            group.forEach(item => {
+              const others = group.filter(g => g.id !== item.id);
+              const otherEcoles = [...new Set(others.map(o => o.ecole).filter(e => e && e !== item.ecole))];
+              const otherFormations = [...new Set(others.map(o => o.formation).filter(f => f && f !== item.formation))];
+              if (otherEcoles.length > 0 || otherFormations.length > 0) {
+                info[item.id] = { otherEcoles, otherFormations };
+              }
+            });
+          }
+        });
+        return info;
+      }, [allCandidates, candidates]);
 
       // Vérifie si une automatisation est active sur un stage
       const hasAutoForStage = (stageId) => {
@@ -1072,6 +1098,14 @@
                     </div>
                     <div className="card-meta">
                       <span className="card-badge" style={{ background: ecoleColor + '22', color: ecoleColor }}>{c.ecole}</span>
+                      {duplicateInfo[c.id] && (
+                        <span className="card-badge" title={
+                          (duplicateInfo[c.id].otherEcoles.length > 0 ? 'Aussi dans : ' + duplicateInfo[c.id].otherEcoles.join(', ') : '') +
+                          (duplicateInfo[c.id].otherFormations.length > 0 ? (duplicateInfo[c.id].otherEcoles.length > 0 ? ' | ' : '') + 'Autres formations : ' + duplicateInfo[c.id].otherFormations.join(', ') : '')
+                        } style={{ background: '#F39C12', color: 'white', fontWeight: 700, fontSize: 9 }}>
+                          {duplicateInfo[c.id].otherEcoles.length > 0 ? '🔀 Multi-école' : '🔀 Multi-formation'}
+                        </span>
+                      )}
                       {c.chargeAdmission && (
                         <span className="card-badge" style={{ background: '#f0f0f0', color: '#555' }}>{c.chargeAdmission}</span>
                       )}
