@@ -3297,28 +3297,30 @@
             </div>
             <div className="modal-body">
               {step === 1 && (
-                <div
-                  className="dropzone"
-                  onDrop={handleDrop}
-                  onDragOver={e => e.preventDefault()}
-                  onClick={() => fileRef.current?.click()}
-                >
-                  <Icon name="upload" size={40} color="#002FA7" />
-                  <p style={{ marginTop: 12 }}>Glissez votre fichier CSV ici ou cliquez pour sélectionner</p>
-                  <p style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>Format CSV avec en-têtes (séparateur , ou ;)</p>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept=".csv,.txt"
-                    style={{ display: 'none' }}
-                    onChange={e => { if (e.target.files[0]) handleFile(e.target.files[0]); }}
-                  />
-                </div>
-                <div style={{ textAlign: 'center', marginTop: 12 }}>
-                  <a href="/parcoursup/assets/modele-import-parcoursup.csv" download style={{ fontSize: 13, color: '#002FA7', textDecoration: 'underline', cursor: 'pointer' }}>
-                    <Icon name="download" size={13} /> Télécharger la maquette CSV
-                  </a>
-                </div>
+                <>
+                  <div
+                    className="dropzone"
+                    onDrop={handleDrop}
+                    onDragOver={e => e.preventDefault()}
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    <Icon name="upload" size={40} color="#002FA7" />
+                    <p style={{ marginTop: 12 }}>Glissez votre fichier CSV ici ou cliquez pour sélectionner</p>
+                    <p style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>Format CSV avec en-têtes (séparateur , ou ;)</p>
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept=".csv,.txt"
+                      style={{ display: 'none' }}
+                      onChange={e => { if (e.target.files[0]) handleFile(e.target.files[0]); }}
+                    />
+                  </div>
+                  <div style={{ textAlign: 'center', marginTop: 12 }}>
+                    <a href="/parcoursup/assets/modele-import-parcoursup.csv" download style={{ fontSize: 13, color: '#002FA7', textDecoration: 'underline', cursor: 'pointer' }}>
+                      <Icon name="download" size={13} /> Télécharger la maquette CSV
+                    </a>
+                  </div>
+                </>
               )}
 
               {step === 2 && (
