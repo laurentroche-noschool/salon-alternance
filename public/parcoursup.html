@@ -1098,12 +1098,14 @@
                     </div>
                     <div className="card-meta">
                       <span className="card-badge" style={{ background: ecoleColor + '22', color: ecoleColor }}>{c.ecole}</span>
-                      {duplicateInfo[c.id] && (
-                        <span className="card-badge" title={
-                          (duplicateInfo[c.id].otherEcoles.length > 0 ? 'Aussi dans : ' + duplicateInfo[c.id].otherEcoles.join(', ') : '') +
-                          (duplicateInfo[c.id].otherFormations.length > 0 ? (duplicateInfo[c.id].otherEcoles.length > 0 ? ' | ' : '') + 'Autres formations : ' + duplicateInfo[c.id].otherFormations.join(', ') : '')
-                        } style={{ background: '#F39C12', color: 'white', fontWeight: 700, fontSize: 9 }}>
-                          {duplicateInfo[c.id].otherEcoles.length > 0 ? '🔀 Multi-école' : '🔀 Multi-formation'}
+                      {duplicateInfo[c.id] && duplicateInfo[c.id].otherEcoles.length > 0 && (
+                        <span className="card-badge" title={'Aussi dans : ' + duplicateInfo[c.id].otherEcoles.join(', ')} style={{ background: '#E74C3C', color: 'white', fontWeight: 700, fontSize: 9 }}>
+                          🔀 Multi-école
+                        </span>
+                      )}
+                      {duplicateInfo[c.id] && duplicateInfo[c.id].otherFormations.length > 0 && (
+                        <span className="card-badge" title={'Autres formations : ' + duplicateInfo[c.id].otherFormations.join(', ')} style={{ background: '#F39C12', color: 'white', fontWeight: 700, fontSize: 9 }}>
+                          🔀 Multi-formation
                         </span>
                       )}
                       {c.chargeAdmission && (
