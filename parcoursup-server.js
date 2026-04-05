@@ -114,6 +114,11 @@ app.use(express.json({ limit: '10mb' }));
 // Only serve specific static assets, not the full public folder (to avoid conflicts with main server's index.html)
 app.use('/parcoursup/assets/css', express.static(path.join(__dirname, 'public', 'css')));
 app.use('/parcoursup/assets/images', express.static(path.join(__dirname, 'public', 'images')));
+app.get('/parcoursup/assets/modele-import-parcoursup.csv', (req, res) => {
+  res.set('Content-Type', 'text/csv; charset=utf-8');
+  res.set('Content-Disposition', 'attachment; filename="modele-import-parcoursup.csv"');
+  res.sendFile(path.join(__dirname, 'public', 'modele-import-parcoursup.csv'));
+});
 
 // CORS
 app.use((req, res, next) => {

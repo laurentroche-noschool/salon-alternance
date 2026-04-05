@@ -3233,6 +3233,9 @@
       const targetFields = [
         { key: 'nom', label: 'Nom' },
         { key: 'prenom', label: 'Prénom' },
+        { key: 'numeroDossier', label: 'N° Candidat' },
+        { key: 'genre', label: 'Genre' },
+        { key: 'dateNaissance', label: 'Date de naissance' },
         { key: 'telephone', label: 'Téléphone' },
         { key: 'email', label: 'Email' },
         { key: 'ecole', label: 'École' },
@@ -3310,6 +3313,11 @@
                     style={{ display: 'none' }}
                     onChange={e => { if (e.target.files[0]) handleFile(e.target.files[0]); }}
                   />
+                </div>
+                <div style={{ textAlign: 'center', marginTop: 12 }}>
+                  <a href="/parcoursup/assets/modele-import-parcoursup.csv" download style={{ fontSize: 13, color: '#002FA7', textDecoration: 'underline', cursor: 'pointer' }}>
+                    <Icon name="download" size={13} /> Télécharger la maquette CSV
+                  </a>
                 </div>
               )}
 
