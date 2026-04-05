@@ -3241,6 +3241,7 @@
         { key: 'ecole', label: 'École' },
         { key: 'formation', label: 'Formation' },
         { key: 'chargeAdmission', label: 'Chargé admission' },
+        { key: 'conseillerFormation', label: 'Conseiller formation' },
       ];
 
       const handleFile = (file) => {
@@ -3278,8 +3279,7 @@
           targetFields.forEach(tf => {
             candidate[tf.key] = mapping[tf.key] ? (row[mapping[tf.key]] || '').trim() : '';
           });
-          candidate.conseillerFormation = '';
-          if (candidate.ecole && candidate.formation && config.ecoles[candidate.ecole]?.formations[candidate.formation]) {
+          if (!candidate.conseillerFormation && candidate.ecole && candidate.formation && config.ecoles[candidate.ecole]?.formations[candidate.formation]) {
             candidate.conseillerFormation = config.ecoles[candidate.ecole].formations[candidate.formation].conseiller || '';
           }
           return candidate;
