@@ -120,6 +120,103 @@ app.get('/parcoursup/assets/modele-import-parcoursup.csv', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'modele-import-parcoursup.csv'));
 });
 
+// ============ CRM EXTERNE - VERIFICATION ============
+const http = require('http');
+
+// Cache des candidats CRM externe (rafraîchi toutes les 10 min)
+let crmExterneCache = { noschool: [], will: [], lastFetch: 0 };
+
+async function fetchCrmExterneLists() {
+  const now = Date.now();
+  // Cache 10 minutes
+  if (now - crmExterneCache.lastFetch < 10 * 60 * 1000 && (crmExterneCache.noschool.length > 0 || crmExterneCache.will.length > 0)) {
+    return crmExterneCache;
+  }
+
+  const fetchSchool = (school) => new Promise((resolve) => {
+    const req = http.get(`http://localhost:3001/admission/api/all/${school}`, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          const all = [];
+          (json.views || []).forEach(v => {
+            (v.candidates || []).forEach(c => all.push(c));
+          });
+          resolve(all);
+        } catch (e) { resolve([]); }
+      });
+    });
+    req.on('error', () => resolve([]));
+    req.setTimeout(15000, () => { req.destroy(); resolve([]); });
+  });
+
+  try {
+    const [noschool, will] = await Promise.all([fetchSchool('noschool'), fetchSchool('will')]);
+    crmExterneCache = { noschool, will, lastFetch: now };
+    console.log(`[CRM Check] Cache rafraîchi: ${noschool.length} Noschool, ${will.length} Will.School`);
+  } catch (e) {
+    console.log('[CRM Check] Erreur fetch CRM externe:', e.message);
+  }
+  return crmExterneCache;
+}
+
+function normalize(str) {
+  return (str || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+async function checkCandidateInCRM(candidate) {
+  const cache = await fetchCrmExterneLists();
+  const allCrmCandidates = [...cache.noschool, ...cache.will];
+
+  if (allCrmCandidates.length === 0) return false;
+
+  const email = normalize(candidate.email);
+  const nom = normalize(candidate.nom);
+  const prenom = normalize(candidate.prenom);
+
+  // 1ère couche : matching par email
+  if (email) {
+    const found = allCrmCandidates.find(c => normalize(c.email) === email);
+    if (found) return true;
+  }
+
+  // 2ème couche : matching par nom + prénom
+  if (nom && prenom) {
+    const found = allCrmCandidates.find(c =>
+      normalize(c.nom) === nom && normalize(c.prenom) === prenom
+    );
+    if (found) return true;
+  }
+
+  return false;
+}
+
+// Vérifie un candidat et le bascule si trouvé dans le CRM
+async function autoCheckAndMoveToCRM(candidateId) {
+  try {
+    const candidates = loadJSON('parcoursup-candidates.json');
+    const idx = candidates.findIndex(c => c.id === candidateId);
+    if (idx === -1) return;
+
+    const candidate = candidates[idx];
+    if (candidate.statutCRM) return; // Déjà marqué
+
+    const inCRM = await checkCandidateInCRM(candidate);
+    if (inCRM) {
+      candidates[idx].statutCRM = true;
+      candidates[idx].stage = 'candidature_crm';
+      candidates[idx].updatedAt = new Date().toISOString();
+      saveJSON('parcoursup-candidates.json', candidates);
+      broadcast('candidates');
+      console.log(`[CRM Check] ${candidate.prenom} ${candidate.nom} trouvé dans CRM → Candidature CRM`);
+    }
+  } catch (e) {
+    console.log('[CRM Check] Erreur vérification:', e.message);
+  }
+}
+
 // CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -352,6 +449,8 @@ app.post('/parcoursup/api/candidates', (req, res) => {
   triggerAutomation(candidate.id, candidate.stage);
   broadcast('candidates');
   res.json(candidate);
+  // Vérification CRM externe en arrière-plan
+  autoCheckAndMoveToCRM(candidate.id);
 });
 
 app.put('/parcoursup/api/candidates/:id', (req, res) => {
@@ -475,6 +574,50 @@ app.post('/parcoursup/api/candidates/bulk', (req, res) => {
   newCandidates.forEach(c => triggerAutomation(c.id, c.stage));
   broadcast('candidates');
   res.json({ imported: newCandidates.length, total: all.length });
+  // Vérification CRM externe en arrière-plan pour chaque candidat importé
+  newCandidates.forEach(c => autoCheckAndMoveToCRM(c.id));
+});
+
+// ============ CRM CHECK ENDPOINT ============
+// Vérifie tous les candidats non-CRM contre le CRM externe
+app.post('/parcoursup/api/crm-check', async (req, res) => {
+  try {
+    // Force refresh du cache
+    crmExterneCache.lastFetch = 0;
+    const cache = await fetchCrmExterneLists();
+    const totalCRM = cache.noschool.length + cache.will.length;
+
+    if (totalCRM === 0) {
+      return res.json({ ok: false, error: 'CRM externe non accessible. Vérifiez la connexion sur le Hub Admission (port 3001).' });
+    }
+
+    const candidates = loadJSON('parcoursup-candidates.json');
+    const toCheck = candidates.filter(c => !c.statutCRM);
+    let moved = 0;
+
+    for (const candidate of toCheck) {
+      const inCRM = await checkCandidateInCRM(candidate);
+      if (inCRM) {
+        const idx = candidates.findIndex(c => c.id === candidate.id);
+        if (idx !== -1) {
+          candidates[idx].statutCRM = true;
+          candidates[idx].stage = 'candidature_crm';
+          candidates[idx].updatedAt = new Date().toISOString();
+          moved++;
+          console.log(`[CRM Check] ${candidate.prenom} ${candidate.nom} → Candidature CRM`);
+        }
+      }
+    }
+
+    if (moved > 0) {
+      saveJSON('parcoursup-candidates.json', candidates);
+      broadcast('candidates');
+    }
+
+    res.json({ ok: true, checked: toCheck.length, moved, crmTotal: totalCRM });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
 });
 
 // ============ RELANCES ============

@@ -680,6 +680,24 @@
         showToast('Colonnes Kanban mises à jour');
       };
 
+      // Vérifier CRM externe
+      const [crmChecking, setCrmChecking] = useState(false);
+      const checkCRM = async () => {
+        setCrmChecking(true);
+        try {
+          const result = await api('/crm-check', { method: 'POST' });
+          if (result.ok) {
+            await loadData();
+            showToast(`CRM vérifié : ${result.moved} candidat(s) détecté(s) sur ${result.checked} vérifiés (${result.crmTotal} fiches CRM)`);
+          } else {
+            showToast(result.error || 'Erreur vérification CRM', 'error');
+          }
+        } catch (e) {
+          showToast('Erreur connexion CRM externe', 'error');
+        }
+        setCrmChecking(false);
+      };
+
       // Import CSV
       const importCandidates = async (newCandidates) => {
         const result = await api('/candidates/bulk', { method: 'POST', body: { candidates: newCandidates } });
@@ -754,7 +772,10 @@
 
           {activeTab === 'kanban' && (
             <>
-              <div style={{ padding: '8px 24px 0', display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{ padding: '8px 24px 0', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                <button className="btn btn-sm" style={{ background: '#1ABC9C', color: 'white', border: 'none' }} onClick={checkCRM} disabled={crmChecking}>
+                  {crmChecking ? '⏳ Vérification...' : '🔍 Vérifier CRM'}
+                </button>
                 <button className="btn btn-sm btn-outline" onClick={() => setShowStageManager(true)}>
                   <Icon name="settings" size={14} /> Gérer les colonnes
                 </button>
