@@ -217,6 +217,54 @@ async function autoCheckAndMoveToCRM(candidateId) {
   }
 }
 
+// ============ VERIFICATION CRM PERIODIQUE (toutes les 30 min) ============
+const CRM_CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutes
+
+async function periodicCRMCheck() {
+  try {
+    // Forcer le refresh du cache CRM
+    crmExterneCache.lastFetch = 0;
+    const cache = await fetchCrmExterneLists();
+    const totalCRM = cache.noschool.length + cache.will.length;
+    if (totalCRM === 0) {
+      console.log('[CRM Periodic] CRM externe non accessible, skip');
+      return;
+    }
+
+    const candidates = loadJSON('parcoursup-candidates.json');
+    const toCheck = candidates.filter(c => !c.statutCRM);
+    let moved = 0;
+
+    for (const candidate of toCheck) {
+      const inCRM = await checkCandidateInCRM(candidate);
+      if (inCRM) {
+        const idx = candidates.findIndex(c => c.id === candidate.id);
+        if (idx !== -1) {
+          candidates[idx].statutCRM = true;
+          candidates[idx].stage = 'candidature_crm';
+          candidates[idx].updatedAt = new Date().toISOString();
+          moved++;
+          console.log(`[CRM Periodic] ${candidate.prenom} ${candidate.nom} → Candidature CRM`);
+        }
+      }
+    }
+
+    if (moved > 0) {
+      saveJSON('parcoursup-candidates.json', candidates);
+      broadcast('candidates');
+    }
+    console.log(`[CRM Periodic] Vérification terminée : ${toCheck.length} vérifiés, ${moved} déplacés (${totalCRM} fiches CRM)`);
+  } catch (e) {
+    console.log('[CRM Periodic] Erreur:', e.message);
+  }
+}
+
+// Lancer la vérification périodique après le démarrage
+setTimeout(() => {
+  periodicCRMCheck(); // Premier check 1 min après le démarrage
+  setInterval(periodicCRMCheck, CRM_CHECK_INTERVAL); // Puis toutes les 30 min
+}, 60 * 1000);
+
 // CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
