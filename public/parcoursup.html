@@ -2280,7 +2280,7 @@
 
       const emailCount = candidates.filter(c => c.email).length;
       const phoneCount = candidates.filter(c => c.telephone).length;
-      const templateVars = ['{{prenom}}', '{{nom}}', '{{formation}}', '{{ecole}}', '{{email}}', '{{telephone}}', '{{chargeAdmission}}', '{{conseillerFormation}}', '{{telCharge}}', '{{telConseiller}}'];
+      const templateVars = ['{{prenom}}', '{{nom}}', '{{genre_civilite}}', '{{formation}}', '{{ecole}}', '{{email}}', '{{telephone}}', '{{adresse}}', '{{codePostal}}', '{{ville}}', '{{chargeAdmission}}', '{{conseillerFormation}}', '{{telCharge}}', '{{telConseiller}}', '{{adresseEcole}}', '{{cpEcole}}', '{{villeEcole}}', '{{dateJour}}'];
 
       const getDelayInMinutes = () => {
         const val = parseInt(delayMinutes) || 0;
@@ -2910,7 +2910,7 @@
       const [editingStage, setEditingStage] = useState(null);
       const [hasChanges, setHasChanges] = useState(false);
 
-      const templateVars = ['{{prenom}}', '{{nom}}', '{{formation}}', '{{ecole}}', '{{email}}', '{{telephone}}', '{{chargeAdmission}}', '{{conseillerFormation}}', '{{telCharge}}', '{{telConseiller}}'];
+      const templateVars = ['{{prenom}}', '{{nom}}', '{{genre_civilite}}', '{{formation}}', '{{ecole}}', '{{email}}', '{{telephone}}', '{{adresse}}', '{{codePostal}}', '{{ville}}', '{{chargeAdmission}}', '{{conseillerFormation}}', '{{telCharge}}', '{{telConseiller}}', '{{adresseEcole}}', '{{cpEcole}}', '{{villeEcole}}', '{{dateJour}}'];
       const pendingQueue = queue.filter(q => q.status === 'pending');
       const sentQueue = queue.filter(q => q.status === 'sent').slice(-50).reverse();
 
