@@ -407,11 +407,19 @@ const DEFAULT_PARCOURSUP_CONFIG = {
 };
 
 // ============ TEMPLATE VARS HELPER ============
+// Adresses des écoles
+const ECOLES_ADRESSES = {
+  'NOSCHOOL': { adresse: '95 quai de Bacalan', codePostal: '33300', ville: 'Bordeaux' },
+  'WILL.SCHOOL': { adresse: '11-15 cours Edouard Vaillant', codePostal: '33300', ville: 'Bordeaux' },
+  'NOSCHOOL MDM': { adresse: '4 rue des Remparts', codePostal: '40000', ville: 'Mont de Marsan' }
+};
+
 function replaceTemplateVars(text, candidate, config) {
   if (!text) return '';
   const coordonnees = config?.coordonnees || {};
   const chargeInfo = coordonnees[candidate.chargeAdmission] || {};
   const conseillerInfo = coordonnees[candidate.conseillerFormation] || {};
+  const ecoleAddr = ECOLES_ADRESSES[candidate.ecole] || {};
   return text
     .replace(/\{\{prenom\}\}/g, candidate.prenom || '')
     .replace(/\{\{nom\}\}/g, candidate.nom || '')
@@ -422,7 +430,15 @@ function replaceTemplateVars(text, candidate, config) {
     .replace(/\{\{chargeAdmission\}\}/g, candidate.chargeAdmission || '')
     .replace(/\{\{conseillerFormation\}\}/g, candidate.conseillerFormation || '')
     .replace(/\{\{telCharge\}\}/g, chargeInfo.telephone || '')
-    .replace(/\{\{telConseiller\}\}/g, conseillerInfo.telephone || '');
+    .replace(/\{\{telConseiller\}\}/g, conseillerInfo.telephone || '')
+    .replace(/\{\{adresse\}\}/g, candidate.adresse || '')
+    .replace(/\{\{codePostal\}\}/g, candidate.codePostal || '')
+    .replace(/\{\{ville\}\}/g, candidate.ville || '')
+    .replace(/\{\{adresseEcole\}\}/g, ecoleAddr.adresse || '')
+    .replace(/\{\{cpEcole\}\}/g, ecoleAddr.codePostal || '')
+    .replace(/\{\{villeEcole\}\}/g, ecoleAddr.ville || '')
+    .replace(/\{\{dateJour\}\}/g, new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }))
+    .replace(/\{\{genre_civilite\}\}/g, candidate.genre === 'F' ? 'Madame' : candidate.genre === 'G' ? 'Monsieur' : 'Madame, Monsieur');
 }
 
 // ============ CONFIG ============
@@ -480,6 +496,9 @@ app.post('/parcoursup/api/candidates', (req, res) => {
     prenom: req.body.prenom || '',
     telephone: req.body.telephone || '',
     email: req.body.email || '',
+    adresse: req.body.adresse || '',
+    codePostal: req.body.codePostal || '',
+    ville: req.body.ville || '',
     ecole: req.body.ecole || '',
     formation: req.body.formation || '',
     conseillerFormation: req.body.conseillerFormation || '',
@@ -606,6 +625,9 @@ app.post('/parcoursup/api/candidates/bulk', (req, res) => {
     prenom: c.prenom || '',
     telephone: c.telephone || '',
     email: c.email || '',
+    adresse: c.adresse || '',
+    codePostal: c.codePostal || '',
+    ville: c.ville || '',
     ecole: c.ecole || '',
     formation: c.formation || '',
     conseillerFormation: c.conseillerFormation || '',
@@ -665,6 +687,78 @@ app.post('/parcoursup/api/crm-check', async (req, res) => {
     res.json({ ok: true, checked: toCheck.length, moved, crmTotal: totalCRM });
   } catch (e) {
     res.json({ ok: false, error: e.message });
+  }
+});
+
+// ============ ADRESSES ECOLES ============
+app.get('/parcoursup/api/ecoles-adresses', (req, res) => {
+  res.json(ECOLES_ADRESSES);
+});
+
+// ============ GENERATION PDF COURRIER ============
+app.post('/parcoursup/api/courrier/pdf', (req, res) => {
+  try {
+    const { candidateId, content, type } = req.body;
+    const candidates = loadJSON('parcoursup-candidates.json');
+    const candidate = candidates.find(c => c.id === candidateId);
+    if (!candidate) return res.status(404).json({ error: 'Candidat non trouvé' });
+
+    const config = loadJSON('parcoursup-config.json');
+    const ecoleAddr = ECOLES_ADRESSES[candidate.ecole] || {};
+    const finalContent = replaceTemplateVars(content, candidate, config);
+    const dateJour = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    // Historiser l'action comme relance
+    const relances = loadJSON('parcoursup-relances.json');
+    relances.push({
+      id: genId(),
+      candidateId,
+      type: 'courrier',
+      date: new Date().toISOString(),
+      notes: `[COURRIER] ${type || 'Courrier'} généré en PDF`,
+      result: 'envoye',
+      createdBy: req.body.createdBy || ''
+    });
+    saveJSON('parcoursup-relances.json', relances);
+    broadcast('relances');
+
+    // Générer le HTML du PDF
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 25mm 20mm 25mm 20mm; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 12pt; line-height: 1.6; color: #333; }
+  .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+  .expediteur { font-size: 11pt; line-height: 1.5; }
+  .expediteur strong { font-size: 13pt; color: #222; }
+  .destinataire { text-align: right; margin-top: 10px; font-size: 11pt; line-height: 1.5; }
+  .destinataire strong { font-size: 12pt; }
+  .date { text-align: right; margin: 20px 0 30px; font-size: 11pt; color: #555; }
+  .objet { font-weight: bold; margin-bottom: 20px; font-size: 12pt; border-bottom: 2px solid #333; padding-bottom: 5px; }
+  .content { white-space: pre-wrap; margin-top: 15px; text-align: justify; }
+  .signature { margin-top: 40px; }
+  @media print { body { -webkit-print-color-adjust: exact; } }
+</style>
+</head><body>
+<div class="header">
+  <div class="expediteur">
+    <strong>${candidate.ecole || ''}</strong><br>
+    ${ecoleAddr.adresse || ''}<br>
+    ${ecoleAddr.codePostal || ''} ${ecoleAddr.ville || ''}
+  </div>
+</div>
+<div class="destinataire">
+  <strong>${candidate.genre === 'F' ? 'Mme' : candidate.genre === 'G' ? 'M.' : ''} ${candidate.prenom || ''} ${candidate.nom || ''}</strong><br>
+  ${candidate.adresse || ''}<br>
+  ${candidate.codePostal || ''} ${candidate.ville || ''}
+</div>
+<div class="date">${ecoleAddr.ville || 'Bordeaux'}, le ${dateJour}</div>
+<div class="content">${finalContent}</div>
+</body></html>`;
+
+    res.json({ ok: true, html, candidateName: `${candidate.prenom} ${candidate.nom}` });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
