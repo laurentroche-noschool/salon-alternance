@@ -406,6 +406,67 @@ const DEFAULT_PARCOURSUP_CONFIG = {
   }
 };
 
+// ============ LOGOS ECOLES (base64 pour courrier PDF) ============
+const LOGOS_BASE64 = {};
+try {
+  const logoNoschool = fs.readFileSync(path.join(__dirname, 'public/images/logo-noschool-courrier.png'));
+  LOGOS_BASE64['NOSCHOOL'] = 'data:image/png;base64,' + logoNoschool.toString('base64');
+  LOGOS_BASE64['NOSCHOOL MDM'] = LOGOS_BASE64['NOSCHOOL'];
+  const logoWill = fs.readFileSync(path.join(__dirname, 'public/images/logo-willschool-courrier.png'));
+  LOGOS_BASE64['WILL.SCHOOL'] = 'data:image/png;base64,' + logoWill.toString('base64');
+  console.log('[Courrier] Logos courrier chargés en base64');
+} catch(e) {
+  console.log('[Courrier] Logos non trouvés:', e.message);
+}
+
+// ============ MODELES COURRIER PAR DEFAUT ============
+const DEFAULT_COURRIER_TEMPLATES = {
+  'courrier_multi_voeux': {
+    label: 'Courrier Multi Voeux',
+    builtIn: true,
+    content: `Objet : Votre candidature en {{formation}} - {{ecole}}
+
+{{genre_civilite}} {{prenom}} {{nom}},
+
+Nous avons bien pris note de votre candidature pour intégrer la formation {{formation}} au sein de notre établissement {{ecole}}.
+
+Nous avons remarqué que vous avez émis plusieurs vœux sur Parcoursup. Nous souhaitions vous informer que notre équipe pédagogique reste à votre entière disposition pour échanger sur votre projet de formation et vous accompagner dans votre choix.
+
+N'hésitez pas à nous contacter au {{telCharge}} ou par email pour convenir d'un rendez-vous.
+
+Dans l'attente de votre réponse, nous vous prions d'agréer, {{genre_civilite}} {{prenom}} {{nom}}, l'expression de nos salutations distinguées.
+
+{{chargeAdmission}}
+Service Admissions
+{{ecole}}
+{{adresseEcole}}
+{{cpEcole}} {{villeEcole}}`
+  },
+  'courrier_admission_voeu_unique': {
+    label: 'Courrier Admission Voeu Unique',
+    builtIn: true,
+    content: `Objet : Confirmation de votre candidature en {{formation}} - {{ecole}}
+
+{{genre_civilite}} {{prenom}} {{nom}},
+
+Nous avons le plaisir de vous confirmer la bonne réception de votre candidature pour la formation {{formation}} au sein de {{ecole}}.
+
+Votre dossier est actuellement en cours d'examen par notre commission pédagogique. Nous tenons à vous remercier pour l'intérêt que vous portez à notre établissement.
+
+Afin de finaliser votre dossier, nous vous invitons à prendre contact avec votre conseiller en formation {{conseillerFormation}} pour planifier un entretien d'admission.
+
+Vous pouvez nous joindre au {{telCharge}} ou vous rendre directement dans nos locaux situés au {{adresseEcole}}, {{cpEcole}} {{villeEcole}}.
+
+Dans l'attente de vous rencontrer, nous vous prions d'agréer, {{genre_civilite}} {{prenom}} {{nom}}, l'expression de nos salutations les meilleures.
+
+{{chargeAdmission}}
+Service Admissions
+{{ecole}}
+{{adresseEcole}}
+{{cpEcole}} {{villeEcole}}`
+  }
+};
+
 // ============ TEMPLATE VARS HELPER ============
 // Adresses des écoles
 const ECOLES_ADRESSES = {
@@ -430,7 +491,9 @@ function replaceTemplateVars(text, candidate, config) {
     .replace(/\{\{chargeAdmission\}\}/g, candidate.chargeAdmission || '')
     .replace(/\{\{conseillerFormation\}\}/g, candidate.conseillerFormation || '')
     .replace(/\{\{telCharge\}\}/g, chargeInfo.telephone || '')
+    .replace(/\{\{mailCharge\}\}/g, chargeInfo.email || '')
     .replace(/\{\{telConseiller\}\}/g, conseillerInfo.telephone || '')
+    .replace(/\{\{mailConseiller\}\}/g, conseillerInfo.email || '')
     .replace(/\{\{adresse\}\}/g, candidate.adresse || '')
     .replace(/\{\{codePostal\}\}/g, candidate.codePostal || '')
     .replace(/\{\{ville\}\}/g, candidate.ville || '')
@@ -503,7 +566,7 @@ app.post('/parcoursup/api/candidates', (req, res) => {
     formation: req.body.formation || '',
     conseillerFormation: req.body.conseillerFormation || '',
     chargeAdmission: req.body.chargeAdmission || '',
-    stage: req.body.stage || 'voeu_recu',
+    stage: req.body.stage || 'sas_entree',
     statutCRM: req.body.statutCRM || false,
     notes: req.body.notes || '',
     rating: req.body.rating || 0,
@@ -512,7 +575,7 @@ app.post('/parcoursup/api/candidates', (req, res) => {
   };
   candidates.push(candidate);
   saveJSON('parcoursup-candidates.json', candidates);
-  // Trigger automation for initial stage (e.g. voeu_recu)
+  // Trigger automation for initial stage (e.g. sas_entree)
   triggerAutomation(candidate.id, candidate.stage);
   broadcast('candidates');
   res.json(candidate);
@@ -632,7 +695,7 @@ app.post('/parcoursup/api/candidates/bulk', (req, res) => {
     formation: c.formation || '',
     conseillerFormation: c.conseillerFormation || '',
     chargeAdmission: c.chargeAdmission || '',
-    stage: c.stage || 'voeu_recu',
+    stage: c.stage || 'sas_entree',
     statutCRM: c.statutCRM || false,
     notes: c.notes || '',
     createdAt: now,
@@ -695,6 +758,32 @@ app.get('/parcoursup/api/ecoles-adresses', (req, res) => {
   res.json(ECOLES_ADRESSES);
 });
 
+// ============ MODELES COURRIER (API) ============
+app.get('/parcoursup/api/courrier/templates', requireAuth, (req, res) => {
+  const config = loadJSON('parcoursup-config.json');
+  // Fusionner les modèles par défaut avec ceux sauvegardés
+  const saved = config.courrierTemplates || {};
+  const templates = { ...DEFAULT_COURRIER_TEMPLATES };
+  // Écraser les modèles par défaut si modifiés, ajouter les customs
+  Object.entries(saved).forEach(([key, tmpl]) => {
+    templates[key] = { ...templates[key], ...tmpl };
+  });
+  res.json(templates);
+});
+
+app.post('/parcoursup/api/courrier/templates', requireAuth, (req, res) => {
+  try {
+    const { templates } = req.body;
+    if (!templates) return res.status(400).json({ error: 'Templates manquants' });
+    const config = loadJSON('parcoursup-config.json');
+    config.courrierTemplates = templates;
+    saveJSON('parcoursup-config.json', config);
+    res.json({ ok: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ============ GENERATION PDF COURRIER ============
 app.post('/parcoursup/api/courrier/pdf', (req, res) => {
   try {
@@ -707,6 +796,7 @@ app.post('/parcoursup/api/courrier/pdf', (req, res) => {
     const ecoleAddr = ECOLES_ADRESSES[candidate.ecole] || {};
     const finalContent = replaceTemplateVars(content, candidate, config);
     const dateJour = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const logoSrc = LOGOS_BASE64[candidate.ecole] || '';
 
     // Historiser l'action comme relance
     const relances = loadJSON('parcoursup-relances.json');
@@ -722,24 +812,40 @@ app.post('/parcoursup/api/courrier/pdf', (req, res) => {
     saveJSON('parcoursup-relances.json', relances);
     broadcast('relances');
 
-    // Générer le HTML du PDF
+    // Générer le HTML du PDF avec logo + boutons impression
     const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
+<title>Courrier - ${candidate.prenom || ''} ${candidate.nom || ''}</title>
 <style>
-  @page { size: A4; margin: 25mm 20mm 25mm 20mm; }
-  body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 12pt; line-height: 1.6; color: #333; }
+  @page { size: A4; margin: 20mm 20mm 20mm 20mm; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 12pt; line-height: 1.6; color: #333; margin: 0; padding: 20px 30px; }
+  .print-toolbar { display: flex; justify-content: flex-end; gap: 10px; padding: 10px 0; margin-bottom: 10px; border-bottom: 1px solid #eee; }
+  .print-toolbar button { padding: 8px 20px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-print { background: #9B59B6; color: white; }
+  .btn-print:hover { background: #8E44AD; }
+  .btn-close { background: #95A5A6; color: white; }
+  .btn-close:hover { background: #7F8C8D; }
+  .logo-container { text-align: center; margin-bottom: 20px; }
+  .logo-container img { max-height: 70px; max-width: 250px; }
   .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
   .expediteur { font-size: 11pt; line-height: 1.5; }
   .expediteur strong { font-size: 13pt; color: #222; }
   .destinataire { text-align: right; margin-top: 10px; font-size: 11pt; line-height: 1.5; }
   .destinataire strong { font-size: 12pt; }
   .date { text-align: right; margin: 20px 0 30px; font-size: 11pt; color: #555; }
-  .objet { font-weight: bold; margin-bottom: 20px; font-size: 12pt; border-bottom: 2px solid #333; padding-bottom: 5px; }
   .content { white-space: pre-wrap; margin-top: 15px; text-align: justify; }
   .signature { margin-top: 40px; }
-  @media print { body { -webkit-print-color-adjust: exact; } }
+  @media print {
+    .print-toolbar { display: none !important; }
+    body { padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
 </style>
 </head><body>
+<div class="print-toolbar">
+  <button class="btn-print" onclick="window.print()">Imprimer / PDF</button>
+  <button class="btn-close" onclick="window.close()">Fermer</button>
+</div>
+${logoSrc ? `<div class="logo-container"><img src="${logoSrc}" alt="Logo ${candidate.ecole || ''}"></div>` : ''}
 <div class="header">
   <div class="expediteur">
     <strong>${candidate.ecole || ''}</strong><br>
@@ -757,6 +863,103 @@ app.post('/parcoursup/api/courrier/pdf', (req, res) => {
 </body></html>`;
 
     res.json({ ok: true, html, candidateName: `${candidate.prenom} ${candidate.nom}` });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ============ GENERATION PDF COURRIER MULTI-FICHES ============
+app.post('/parcoursup/api/courrier/pdf-multi', (req, res) => {
+  try {
+    const { candidateIds, content, type } = req.body;
+    if (!candidateIds || !Array.isArray(candidateIds) || candidateIds.length === 0) {
+      return res.status(400).json({ error: 'candidateIds requis' });
+    }
+    const candidates = loadJSON('parcoursup-candidates.json');
+    const config = loadJSON('parcoursup-config.json');
+    const relances = loadJSON('parcoursup-relances.json');
+    const pages = [];
+
+    candidateIds.forEach(cid => {
+      const candidate = candidates.find(c => c.id === cid);
+      if (!candidate) return;
+      const ecoleAddr = ECOLES_ADRESSES[candidate.ecole] || {};
+      const finalContent = replaceTemplateVars(content, candidate, config);
+      const dateJour = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+      const logoSrc = LOGOS_BASE64[candidate.ecole] || '';
+
+      // Historiser chaque courrier
+      relances.push({
+        id: genId(),
+        candidateId: cid,
+        type: 'courrier',
+        date: new Date().toISOString(),
+        notes: `[COURRIER] ${type || 'Courrier'} généré en PDF`,
+        result: 'envoye',
+        createdBy: req.body.createdBy || ''
+      });
+
+      pages.push(`
+        <div class="page">
+          ${logoSrc ? `<div class="logo-container"><img src="${logoSrc}" alt="Logo ${candidate.ecole || ''}"></div>` : ''}
+          <div class="header">
+            <div class="expediteur">
+              <strong>${candidate.ecole || ''}</strong><br>
+              ${ecoleAddr.adresse || ''}<br>
+              ${ecoleAddr.codePostal || ''} ${ecoleAddr.ville || ''}
+            </div>
+          </div>
+          <div class="destinataire">
+            <strong>${candidate.genre === 'F' ? 'Mme' : candidate.genre === 'G' ? 'M.' : ''} ${candidate.prenom || ''} ${candidate.nom || ''}</strong><br>
+            ${candidate.adresse || ''}<br>
+            ${candidate.codePostal || ''} ${candidate.ville || ''}
+          </div>
+          <div class="date">${ecoleAddr.ville || 'Bordeaux'}, le ${dateJour}</div>
+          <div class="content">${finalContent}</div>
+        </div>
+      `);
+    });
+
+    saveJSON('parcoursup-relances.json', relances);
+    broadcast('relances');
+
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>Courriers - ${candidateIds.length} fiche(s)</title>
+<style>
+  @page { size: A4; margin: 20mm; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 12pt; line-height: 1.6; color: #333; margin: 0; padding: 20px 30px; }
+  .print-toolbar { display: flex; justify-content: flex-end; gap: 10px; padding: 10px 0; margin-bottom: 10px; border-bottom: 1px solid #eee; }
+  .print-toolbar button { padding: 8px 20px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-print { background: #9B59B6; color: white; }
+  .btn-print:hover { background: #8E44AD; }
+  .btn-close { background: #95A5A6; color: white; }
+  .btn-close:hover { background: #7F8C8D; }
+  .logo-container { text-align: center; margin-bottom: 20px; }
+  .logo-container img { max-height: 70px; max-width: 250px; }
+  .page { page-break-after: always; padding-top: 10px; }
+  .page:last-child { page-break-after: avoid; }
+  .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+  .expediteur { font-size: 11pt; line-height: 1.5; }
+  .expediteur strong { font-size: 13pt; color: #222; }
+  .destinataire { text-align: right; margin-top: 10px; font-size: 11pt; line-height: 1.5; }
+  .destinataire strong { font-size: 12pt; }
+  .date { text-align: right; margin: 20px 0 30px; font-size: 11pt; color: #555; }
+  .content { white-space: pre-wrap; margin-top: 15px; text-align: justify; }
+  @media print {
+    .print-toolbar { display: none !important; }
+    body { padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head><body>
+<div class="print-toolbar">
+  <button class="btn-print" onclick="window.print()">Imprimer / PDF (${candidateIds.length} page${candidateIds.length > 1 ? 's' : ''})</button>
+  <button class="btn-close" onclick="window.close()">Fermer</button>
+</div>
+${pages.join('\n')}
+</body></html>`;
+
+    res.json({ ok: true, html, count: pages.length });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

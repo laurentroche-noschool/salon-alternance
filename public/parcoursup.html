@@ -837,6 +837,7 @@
             <CandidateDrawer
               candidate={selectedCandidate}
               config={config}
+              candidates={candidates}
               relances={relances.filter(r => r.candidateId === selectedCandidate.id)}
               onClose={() => setSelectedCandidate(null)}
               onUpdate={updateCandidate}
@@ -1808,7 +1809,7 @@
     }
 
     // ============ CANDIDATE DRAWER ============
-    function CandidateDrawer({ candidate, config, relances, onClose, onUpdate, onDelete, onAddRelance, onReloadRelances }) {
+    function CandidateDrawer({ candidate, config, candidates, relances, onClose, onUpdate, onDelete, onAddRelance, onReloadRelances }) {
       const [form, setForm] = useState({ ...candidate });
       const [relanceForm, setRelanceForm] = useState({ type: 'telephone', notes: '', result: 'autre', createdBy: '' });
       const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -2033,6 +2034,7 @@
                 <CourrierModal
                   candidate={candidate}
                   config={config}
+                  candidates={candidates || []}
                   onClose={() => setShowCourrier(false)}
                   onAddRelance={() => { if (onReloadRelances) onReloadRelances(); }}
                 />
@@ -2118,7 +2120,7 @@
         nom: '', prenom: '', telephone: '', email: '',
         adresse: '', codePostal: '', ville: '',
         ecole: '', formation: '', chargeAdmission: '', conseillerFormation: '',
-        stage: 'voeu_recu', statutCRM: false, notes: ''
+        stage: 'sas_entree', statutCRM: false, notes: ''
       });
 
       const handleChange = (field, value) => {
@@ -2280,7 +2282,7 @@
 
       const emailCount = candidates.filter(c => c.email).length;
       const phoneCount = candidates.filter(c => c.telephone).length;
-      const templateVars = ['{{prenom}}', '{{nom}}', '{{genre_civilite}}', '{{formation}}', '{{ecole}}', '{{email}}', '{{telephone}}', '{{adresse}}', '{{codePostal}}', '{{ville}}', '{{chargeAdmission}}', '{{conseillerFormation}}', '{{telCharge}}', '{{telConseiller}}', '{{adresseEcole}}', '{{cpEcole}}', '{{villeEcole}}', '{{dateJour}}'];
+      const templateVars = ['{{prenom}}', '{{nom}}', '{{genre_civilite}}', '{{formation}}', '{{ecole}}', '{{email}}', '{{telephone}}', '{{adresse}}', '{{codePostal}}', '{{ville}}', '{{chargeAdmission}}', '{{conseillerFormation}}', '{{telCharge}}', '{{mailCharge}}', '{{telConseiller}}', '{{mailConseiller}}', '{{adresseEcole}}', '{{cpEcole}}', '{{villeEcole}}', '{{dateJour}}'];
 
       const getDelayInMinutes = () => {
         const val = parseInt(delayMinutes) || 0;
@@ -2868,7 +2870,7 @@
           <h2 style={{ fontSize: 18, marginBottom: 12 }}>Annuaire des équipes</h2>
           <div className="chart-container" style={{ borderLeft: '4px solid #002FA7' }}>
             <p style={{ fontSize: 13, color: '#666', marginBottom: 16 }}>
-              Renseignez les <strong>téléphones</strong> et <strong>emails</strong> de l'équipe. Les téléphones sont utilisables via <code>{'{{telCharge}}'}</code> / <code>{'{{telConseiller}}'}</code>. L'email du chargé d'admission est utilisé comme <strong>Reply-To</strong> : les candidats répondront directement à leur chargé.
+              Renseignez les <strong>téléphones</strong> et <strong>emails</strong> de l'équipe. Utilisables via <code>{'{{telCharge}}'}</code> / <code>{'{{mailCharge}}'}</code> / <code>{'{{telConseiller}}'}</code> / <code>{'{{mailConseiller}}'}</code>. L'email du chargé est aussi utilisé comme <strong>Reply-To</strong> des emails envoyés.
             </p>
 
             <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2910,7 +2912,7 @@
       const [editingStage, setEditingStage] = useState(null);
       const [hasChanges, setHasChanges] = useState(false);
 
-      const templateVars = ['{{prenom}}', '{{nom}}', '{{genre_civilite}}', '{{formation}}', '{{ecole}}', '{{email}}', '{{telephone}}', '{{adresse}}', '{{codePostal}}', '{{ville}}', '{{chargeAdmission}}', '{{conseillerFormation}}', '{{telCharge}}', '{{telConseiller}}', '{{adresseEcole}}', '{{cpEcole}}', '{{villeEcole}}', '{{dateJour}}'];
+      const templateVars = ['{{prenom}}', '{{nom}}', '{{genre_civilite}}', '{{formation}}', '{{ecole}}', '{{email}}', '{{telephone}}', '{{adresse}}', '{{codePostal}}', '{{ville}}', '{{chargeAdmission}}', '{{conseillerFormation}}', '{{telCharge}}', '{{mailCharge}}', '{{telConseiller}}', '{{mailConseiller}}', '{{adresseEcole}}', '{{cpEcole}}', '{{villeEcole}}', '{{dateJour}}'];
       const pendingQueue = queue.filter(q => q.status === 'pending');
       const sentQueue = queue.filter(q => q.status === 'sent').slice(-50).reverse();
 
@@ -3157,110 +3159,111 @@
       );
     }
 
-    // ============ COURRIER MODAL (Éditeur + PDF) ============
+    // ============ COURRIER MODAL (Éditeur + PDF + Modèles + Multi-fiches) ============
     const ECOLES_ADRESSES = {
       'NOSCHOOL': { adresse: '95 quai de Bacalan', codePostal: '33300', ville: 'Bordeaux' },
       'WILL.SCHOOL': { adresse: '11-15 cours Edouard Vaillant', codePostal: '33300', ville: 'Bordeaux' },
       'NOSCHOOL MDM': { adresse: '4 rue des Remparts', codePostal: '40000', ville: 'Mont de Marsan' }
     };
 
-    const COURRIER_TEMPLATES = {
-      'courrier_multi_voeux': {
-        label: 'Courrier Multi Voeux',
-        default: `Objet : Votre candidature en {{formation}} - {{ecole}}
-
-{{genre_civilite}} {{prenom}} {{nom}},
-
-Nous avons bien pris note de votre candidature pour intégrer la formation {{formation}} au sein de notre établissement {{ecole}}.
-
-Nous avons remarqué que vous avez émis plusieurs vœux sur Parcoursup. Nous souhaitions vous informer que notre équipe pédagogique reste à votre entière disposition pour échanger sur votre projet de formation et vous accompagner dans votre choix.
-
-N'hésitez pas à nous contacter au {{telCharge}} ou par email pour convenir d'un rendez-vous.
-
-Dans l'attente de votre réponse, nous vous prions d'agréer, {{genre_civilite}} {{prenom}} {{nom}}, l'expression de nos salutations distinguées.
-
-{{chargeAdmission}}
-Service Admissions
-{{ecole}}
-{{adresseEcole}}
-{{cpEcole}} {{villeEcole}}`
-      },
-      'courrier_admission_voeu_unique': {
-        label: 'Courrier Admission Voeu Unique',
-        default: `Objet : Confirmation de votre candidature en {{formation}} - {{ecole}}
-
-{{genre_civilite}} {{prenom}} {{nom}},
-
-Nous avons le plaisir de vous confirmer la bonne réception de votre candidature pour la formation {{formation}} au sein de {{ecole}}.
-
-Votre dossier est actuellement en cours d'examen par notre commission pédagogique. Nous tenons à vous remercier pour l'intérêt que vous portez à notre établissement.
-
-Afin de finaliser votre dossier, nous vous invitons à prendre contact avec votre conseiller en formation {{conseillerFormation}} pour planifier un entretien d'admission.
-
-Vous pouvez nous joindre au {{telCharge}} ou vous rendre directement dans nos locaux situés au {{adresseEcole}}, {{cpEcole}} {{villeEcole}}.
-
-Dans l'attente de vous rencontrer, nous vous prions d'agréer, {{genre_civilite}} {{prenom}} {{nom}}, l'expression de nos salutations les meilleures.
-
-{{chargeAdmission}}
-Service Admissions
-{{ecole}}
-{{adresseEcole}}
-{{cpEcole}} {{villeEcole}}`
-      }
+    const ECOLES_LOGOS = {
+      'NOSCHOOL': '/parcoursup/assets/images/logo-noschool-courrier.png',
+      'NOSCHOOL MDM': '/parcoursup/assets/images/logo-noschool-courrier.png',
+      'WILL.SCHOOL': '/parcoursup/assets/images/logo-willschool-courrier.png'
     };
 
     const MERGE_FIELDS = [
-      { key: '{{prenom}}', label: 'Prénom' },
+      { key: '{{prenom}}', label: 'Prenom' },
       { key: '{{nom}}', label: 'Nom' },
-      { key: '{{genre_civilite}}', label: 'Civilité (Mme/M.)' },
+      { key: '{{genre_civilite}}', label: 'Civilite (Mme/M.)' },
       { key: '{{formation}}', label: 'Formation' },
-      { key: '{{ecole}}', label: 'École' },
+      { key: '{{ecole}}', label: 'Ecole' },
       { key: '{{email}}', label: 'Email' },
-      { key: '{{telephone}}', label: 'Téléphone' },
+      { key: '{{telephone}}', label: 'Telephone' },
       { key: '{{adresse}}', label: 'Adresse candidat' },
       { key: '{{codePostal}}', label: 'CP candidat' },
       { key: '{{ville}}', label: 'Ville candidat' },
-      { key: '{{chargeAdmission}}', label: 'Chargé admission' },
+      { key: '{{chargeAdmission}}', label: 'Charge admission' },
       { key: '{{conseillerFormation}}', label: 'Conseiller formation' },
-      { key: '{{telCharge}}', label: 'Tél. chargé' },
-      { key: '{{telConseiller}}', label: 'Tél. conseiller' },
-      { key: '{{adresseEcole}}', label: 'Adresse école' },
-      { key: '{{cpEcole}}', label: 'CP école' },
-      { key: '{{villeEcole}}', label: 'Ville école' },
+      { key: '{{telCharge}}', label: 'Tel. charge' },
+      { key: '{{mailCharge}}', label: 'Mail charge' },
+      { key: '{{telConseiller}}', label: 'Tel. conseiller' },
+      { key: '{{mailConseiller}}', label: 'Mail conseiller' },
+      { key: '{{adresseEcole}}', label: 'Adresse ecole' },
+      { key: '{{cpEcole}}', label: 'CP ecole' },
+      { key: '{{villeEcole}}', label: 'Ville ecole' },
       { key: '{{dateJour}}', label: 'Date du jour' },
     ];
 
-    function CourrierModal({ candidate, config, onClose, onAddRelance }) {
-      const [templateType, setTemplateType] = useState('courrier_multi_voeux');
-      const [content, setContent] = useState(COURRIER_TEMPLATES['courrier_multi_voeux'].default);
+    function CourrierModal({ candidate, config, candidates, onClose, onAddRelance }) {
+      const [templates, setTemplates] = useState({});
+      const [templateType, setTemplateType] = useState('');
+      const [content, setContent] = useState('');
       const [generating, setGenerating] = useState(false);
-      const [preview, setPreview] = useState(null);
+      const [saving, setSaving] = useState(false);
+      const [showNewTemplate, setShowNewTemplate] = useState(false);
+      const [newTemplateName, setNewTemplateName] = useState('');
+      const [selectedFiches, setSelectedFiches] = useState([candidate.id]);
       const textareaRef = useRef(null);
+
+      // Detecter les autres fiches du meme candidat
+      const otherFiches = useMemo(() => {
+        if (!candidates || candidates.length === 0) return [];
+        const key = (candidate.nom || '').trim().toLowerCase() + '|' + (candidate.prenom || '').trim().toLowerCase();
+        if (!key || key === '|') return [];
+        return candidates.filter(c => {
+          const k = (c.nom || '').trim().toLowerCase() + '|' + (c.prenom || '').trim().toLowerCase();
+          return k === key && c.id !== candidate.id;
+        });
+      }, [candidates, candidate]);
+
+      const allFiches = useMemo(() => [candidate, ...otherFiches], [candidate, otherFiches]);
+
+      // Charger les modeles depuis l'API
+      useEffect(() => {
+        (async () => {
+          try {
+            const data = await api('/courrier/templates');
+            setTemplates(data);
+            const firstKey = Object.keys(data)[0] || '';
+            setTemplateType(firstKey);
+            setContent(data[firstKey]?.content || data[firstKey]?.default || '');
+          } catch(e) {
+            console.error('Erreur chargement modeles:', e);
+          }
+        })();
+      }, []);
 
       const ecoleAddr = ECOLES_ADRESSES[candidate.ecole] || {};
       const coordonnees = config?.coordonnees || {};
       const chargeInfo = coordonnees[candidate.chargeAdmission] || {};
       const conseillerInfo = coordonnees[candidate.conseillerFormation] || {};
 
-      const replaceVarsLocal = (text) => {
+      const replaceVarsLocal = (text, cand) => {
+        const c = cand || candidate;
+        const ea = ECOLES_ADRESSES[c.ecole] || {};
+        const ci = (config?.coordonnees || {})[c.chargeAdmission] || {};
+        const coi = (config?.coordonnees || {})[c.conseillerFormation] || {};
         return text
-          .replace(/\{\{prenom\}\}/g, candidate.prenom || '')
-          .replace(/\{\{nom\}\}/g, candidate.nom || '')
-          .replace(/\{\{genre_civilite\}\}/g, candidate.genre === 'F' ? 'Madame' : candidate.genre === 'G' ? 'Monsieur' : 'Madame, Monsieur')
-          .replace(/\{\{formation\}\}/g, candidate.formation || '')
-          .replace(/\{\{ecole\}\}/g, candidate.ecole || '')
-          .replace(/\{\{email\}\}/g, candidate.email || '')
-          .replace(/\{\{telephone\}\}/g, candidate.telephone || '')
-          .replace(/\{\{adresse\}\}/g, candidate.adresse || '')
-          .replace(/\{\{codePostal\}\}/g, candidate.codePostal || '')
-          .replace(/\{\{ville\}\}/g, candidate.ville || '')
-          .replace(/\{\{chargeAdmission\}\}/g, candidate.chargeAdmission || '')
-          .replace(/\{\{conseillerFormation\}\}/g, candidate.conseillerFormation || '')
-          .replace(/\{\{telCharge\}\}/g, chargeInfo.telephone || '')
-          .replace(/\{\{telConseiller\}\}/g, conseillerInfo.telephone || '')
-          .replace(/\{\{adresseEcole\}\}/g, ecoleAddr.adresse || '')
-          .replace(/\{\{cpEcole\}\}/g, ecoleAddr.codePostal || '')
-          .replace(/\{\{villeEcole\}\}/g, ecoleAddr.ville || '')
+          .replace(/\{\{prenom\}\}/g, c.prenom || '')
+          .replace(/\{\{nom\}\}/g, c.nom || '')
+          .replace(/\{\{genre_civilite\}\}/g, c.genre === 'F' ? 'Madame' : c.genre === 'G' ? 'Monsieur' : 'Madame, Monsieur')
+          .replace(/\{\{formation\}\}/g, c.formation || '')
+          .replace(/\{\{ecole\}\}/g, c.ecole || '')
+          .replace(/\{\{email\}\}/g, c.email || '')
+          .replace(/\{\{telephone\}\}/g, c.telephone || '')
+          .replace(/\{\{adresse\}\}/g, c.adresse || '')
+          .replace(/\{\{codePostal\}\}/g, c.codePostal || '')
+          .replace(/\{\{ville\}\}/g, c.ville || '')
+          .replace(/\{\{chargeAdmission\}\}/g, c.chargeAdmission || '')
+          .replace(/\{\{conseillerFormation\}\}/g, c.conseillerFormation || '')
+          .replace(/\{\{telCharge\}\}/g, ci.telephone || '')
+          .replace(/\{\{mailCharge\}\}/g, ci.email || '')
+          .replace(/\{\{telConseiller\}\}/g, coi.telephone || '')
+          .replace(/\{\{mailConseiller\}\}/g, coi.email || '')
+          .replace(/\{\{adresseEcole\}\}/g, ea.adresse || '')
+          .replace(/\{\{cpEcole\}\}/g, ea.codePostal || '')
+          .replace(/\{\{villeEcole\}\}/g, ea.ville || '')
           .replace(/\{\{dateJour\}\}/g, new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }));
       };
 
@@ -3276,27 +3279,103 @@ Service Admissions
 
       const handleTemplateChange = (type) => {
         setTemplateType(type);
-        setContent(COURRIER_TEMPLATES[type]?.default || '');
-        setPreview(null);
+        const tmpl = templates[type];
+        setContent(tmpl?.content || tmpl?.default || '');
       };
 
+      // Sauvegarder le modele courant
+      const saveTemplate = async () => {
+        if (!templateType) return;
+        setSaving(true);
+        try {
+          const updated = { ...templates };
+          updated[templateType] = { ...updated[templateType], content };
+          await api('/courrier/templates', { method: 'POST', body: { templates: updated } });
+          setTemplates(updated);
+          showToastLocal('Modele sauvegarde');
+        } catch(e) {
+          alert('Erreur sauvegarde: ' + e.message);
+        }
+        setSaving(false);
+      };
+
+      // Creer un nouveau modele
+      const createTemplate = async () => {
+        const name = newTemplateName.trim();
+        if (!name) return;
+        const key = 'custom_' + name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_');
+        setSaving(true);
+        try {
+          const updated = { ...templates };
+          updated[key] = { label: name, content: content, builtIn: false };
+          await api('/courrier/templates', { method: 'POST', body: { templates: updated } });
+          setTemplates(updated);
+          setTemplateType(key);
+          setShowNewTemplate(false);
+          setNewTemplateName('');
+          showToastLocal('Nouveau modele cree');
+        } catch(e) {
+          alert('Erreur creation: ' + e.message);
+        }
+        setSaving(false);
+      };
+
+      // Supprimer un modele custom
+      const deleteTemplate = async (key) => {
+        if (templates[key]?.builtIn) return;
+        if (!confirm('Supprimer ce modele ?')) return;
+        const updated = { ...templates };
+        delete updated[key];
+        try {
+          await api('/courrier/templates', { method: 'POST', body: { templates: updated } });
+          setTemplates(updated);
+          const firstKey = Object.keys(updated)[0] || '';
+          setTemplateType(firstKey);
+          setContent(updated[firstKey]?.content || updated[firstKey]?.default || '');
+        } catch(e) {
+          alert('Erreur suppression: ' + e.message);
+        }
+      };
+
+      // Toast local simple
+      const [toastMsg, setToastMsg] = useState('');
+      const showToastLocal = (msg) => { setToastMsg(msg); setTimeout(() => setToastMsg(''), 2500); };
+
+      // Generer PDF (1 fiche ou multi-fiches)
       const generatePDF = async () => {
         setGenerating(true);
         try {
-          const result = await api('/courrier/pdf', {
-            method: 'POST',
-            body: { candidateId: candidate.id, content, type: COURRIER_TEMPLATES[templateType]?.label || 'Courrier', createdBy: '' }
-          });
-          if (result.ok) {
-            // Ouvrir la fenêtre d'impression avec le HTML du courrier
-            const printWindow = window.open('', '_blank', 'width=794,height=1123');
-            printWindow.document.write(result.html);
-            printWindow.document.close();
-            // Relancer le chargement des relances
-            if (onAddRelance) onAddRelance();
-            setPreview(replaceVarsLocal(content));
+          const ids = selectedFiches;
+          const templateLabel = templates[templateType]?.label || 'Courrier';
+
+          if (ids.length === 1) {
+            // Generation simple
+            const result = await api('/courrier/pdf', {
+              method: 'POST',
+              body: { candidateId: ids[0], content, type: templateLabel, createdBy: '' }
+            });
+            if (result.ok) {
+              const printWindow = window.open('', '_blank', 'width=794,height=1123');
+              printWindow.document.write(result.html);
+              printWindow.document.close();
+              if (onAddRelance) onAddRelance();
+            } else {
+              alert(result.error || 'Erreur generation');
+            }
           } else {
-            alert(result.error || 'Erreur génération');
+            // Generation multi-fiches
+            const result = await api('/courrier/pdf-multi', {
+              method: 'POST',
+              body: { candidateIds: ids, content, type: templateLabel, createdBy: '' }
+            });
+            if (result.ok) {
+              const printWindow = window.open('', '_blank', 'width=794,height=1123');
+              printWindow.document.write(result.html);
+              printWindow.document.close();
+              if (onAddRelance) onAddRelance();
+            } else {
+              alert(result.error || 'Erreur generation');
+            }
           }
         } catch (e) {
           alert('Erreur: ' + e.message);
@@ -3304,39 +3383,107 @@ Service Admissions
         setGenerating(false);
       };
 
+      const toggleFiche = (id) => {
+        setSelectedFiches(prev =>
+          prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+      };
+
       const previewText = replaceVarsLocal(content);
       const missingFields = [];
       if (!candidate.adresse) missingFields.push('Adresse');
       if (!candidate.codePostal) missingFields.push('Code postal');
       if (!candidate.ville) missingFields.push('Ville');
+      const logoUrl = ECOLES_LOGOS[candidate.ecole] || '';
 
       return (
         <div className="modal-overlay" onClick={onClose}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 900, width: '95%' }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 950, width: '95%' }}>
             <div className="modal-header">
-              <h2>Éditer un courrier</h2>
+              <h2>Editer un courrier</h2>
               <button className="btn btn-icon btn-outline" onClick={onClose}><Icon name="x" size={18} /></button>
             </div>
-            <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            <div className="modal-body" style={{ maxHeight: '72vh', overflowY: 'auto' }}>
+
+              {/* Alerte champs manquants */}
               {missingFields.length > 0 && (
                 <div style={{ background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: 8, padding: '10px 14px', marginBottom: 12, fontSize: 13 }}>
-                  ⚠️ <strong>Champs manquants :</strong> {missingFields.join(', ')} — Pensez à compléter la fiche candidat pour un courrier complet.
+                  <strong>Champs manquants :</strong> {missingFields.join(', ')} - Pensez a completer la fiche candidat pour un courrier complet.
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                <label style={{ fontWeight: 600, fontSize: 13, alignSelf: 'center' }}>Modèle :</label>
-                {Object.entries(COURRIER_TEMPLATES).map(([key, t]) => (
-                  <button key={key}
-                    className={`btn btn-sm ${templateType === key ? 'btn-primary' : 'btn-outline'}`}
-                    onClick={() => handleTemplateChange(key)}>
-                    {t.label}
-                  </button>
+              {/* Multi-fiches : selection des fiches du meme candidat */}
+              {otherFiches.length > 0 && (
+                <div style={{ background: '#EBF5FB', border: '1px solid #3498DB', borderRadius: 8, padding: '10px 14px', marginBottom: 12, fontSize: 13 }}>
+                  <strong>Ce candidat a {allFiches.length} fiches :</strong>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
+                    {allFiches.map(f => {
+                      const ecoleColor = (config.ecoles && config.ecoles[f.ecole]?.color) || '#666';
+                      return (
+                        <label key={f.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px',
+                          background: selectedFiches.includes(f.id) ? ecoleColor + '22' : '#f8f9fa',
+                          border: `2px solid ${selectedFiches.includes(f.id) ? ecoleColor : '#ddd'}`,
+                          borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: selectedFiches.includes(f.id) ? 600 : 400
+                        }}>
+                          <input type="checkbox" checked={selectedFiches.includes(f.id)} onChange={() => toggleFiche(f.id)} />
+                          <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: ecoleColor }}></span>
+                          {f.ecole} - {f.formation}
+                          {f.id === candidate.id && <span style={{ color: '#999', marginLeft: 4 }}>(fiche active)</span>}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Selection du modele */}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                <label style={{ fontWeight: 600, fontSize: 13 }}>Modele :</label>
+                {Object.entries(templates).map(([key, t]) => (
+                  <div key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                    <button
+                      className={`btn btn-sm ${templateType === key ? 'btn-primary' : 'btn-outline'}`}
+                      onClick={() => handleTemplateChange(key)}
+                      style={{ fontSize: 12 }}>
+                      {t.label}
+                    </button>
+                    {!t.builtIn && (
+                      <button className="btn btn-sm btn-outline" onClick={() => deleteTemplate(key)}
+                        style={{ padding: '2px 5px', fontSize: 10, color: '#E74C3C', borderColor: '#E74C3C' }}
+                        title="Supprimer ce modele">
+                        <Icon name="trash-2" size={12} />
+                      </button>
+                    )}
+                  </div>
                 ))}
+                <button className="btn btn-sm btn-outline" onClick={() => setShowNewTemplate(true)}
+                  style={{ fontSize: 11, color: '#27AE60', borderColor: '#27AE60' }}>
+                  + Nouveau modele
+                </button>
               </div>
 
+              {/* Formulaire nouveau modele */}
+              {showNewTemplate && (
+                <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', background: '#F0FFF4', padding: '8px 12px', borderRadius: 8, border: '1px solid #27AE60' }}>
+                  <input type="text" placeholder="Nom du modele..." value={newTemplateName}
+                    onChange={e => setNewTemplateName(e.target.value)}
+                    style={{ flex: 1, padding: '6px 10px', borderRadius: 6, border: '1px solid #ccc', fontSize: 13 }}
+                    onKeyDown={e => e.key === 'Enter' && createTemplate()} />
+                  <button className="btn btn-sm btn-primary" onClick={createTemplate} disabled={saving || !newTemplateName.trim()}
+                    style={{ background: '#27AE60', fontSize: 12 }}>
+                    Creer
+                  </button>
+                  <button className="btn btn-sm btn-outline" onClick={() => { setShowNewTemplate(false); setNewTemplateName(''); }}
+                    style={{ fontSize: 12 }}>
+                    Annuler
+                  </button>
+                </div>
+              )}
+
+              {/* Champs de fusion */}
               <div style={{ marginBottom: 8 }}>
-                <label style={{ fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 4 }}>Insérer un champ de fusion :</label>
+                <label style={{ fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 4 }}>Inserer un champ de fusion :</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   {MERGE_FIELDS.map(f => (
                     <button key={f.key} className="btn btn-sm btn-outline"
@@ -3349,9 +3496,10 @@ Service Admissions
                 </div>
               </div>
 
+              {/* Editeur + Preview */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
-                  <label style={{ fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 4 }}>Éditeur</label>
+                  <label style={{ fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 4 }}>Editeur</label>
                   <textarea
                     ref={textareaRef}
                     value={content}
@@ -3361,13 +3509,19 @@ Service Admissions
                   />
                 </div>
                 <div>
-                  <label style={{ fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 4 }}>Prévisualisation</label>
+                  <label style={{ fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 4 }}>Previsualisation</label>
                   <div style={{
                     background: 'white', border: '1px solid #ddd', borderRadius: 6, padding: 16,
                     minHeight: 400, maxHeight: 500, overflowY: 'auto', fontSize: 12, lineHeight: 1.6,
                     fontFamily: "'Helvetica Neue', Arial, sans-serif", whiteSpace: 'pre-wrap',
                     boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.08)'
                   }}>
+                    {/* Logo ecole */}
+                    {logoUrl && (
+                      <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                        <img src={logoUrl} alt={candidate.ecole} style={{ maxHeight: 60, maxWidth: 200 }} />
+                      </div>
+                    )}
                     <div style={{ marginBottom: 16 }}>
                       <strong style={{ fontSize: 14 }}>{candidate.ecole}</strong><br/>
                       {ecoleAddr.adresse}<br/>
@@ -3385,12 +3539,25 @@ Service Admissions
                   </div>
                 </div>
               </div>
+
+              {/* Toast */}
+              {toastMsg && (
+                <div style={{ position: 'fixed', bottom: 30, left: '50%', transform: 'translateX(-50%)', background: '#27AE60', color: 'white', padding: '10px 24px', borderRadius: 8, fontSize: 14, fontWeight: 600, zIndex: 10000, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                  {toastMsg}
+                </div>
+              )}
             </div>
-            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <button className="btn btn-outline" onClick={onClose}>Fermer</button>
-              <button className="btn btn-primary" onClick={generatePDF} disabled={generating}
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn btn-outline" onClick={onClose}>Fermer</button>
+                <button className="btn btn-outline" onClick={saveTemplate} disabled={saving || !templateType}
+                  style={{ color: '#27AE60', borderColor: '#27AE60' }}>
+                  {saving ? 'Sauvegarde...' : 'Sauvegarder le modele'}
+                </button>
+              </div>
+              <button className="btn btn-primary" onClick={generatePDF} disabled={generating || selectedFiches.length === 0}
                 style={{ background: '#9B59B6' }}>
-                {generating ? '⏳ Génération...' : '🖨️ Générer PDF & Imprimer'}
+                {generating ? 'Generation...' : selectedFiches.length > 1 ? `Generer ${selectedFiches.length} courriers & Imprimer` : 'Generer PDF & Imprimer'}
               </button>
             </div>
           </div>
