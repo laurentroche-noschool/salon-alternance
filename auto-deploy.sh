@@ -33,18 +33,21 @@ fi
 
 echo "$LOG_PREFIX Nouveau commit detecte : $LOCAL -> $REMOTE"
 
-# Backup data
+# Backup data ET fichiers env (ne jamais perdre .env.parcoursup)
+cp .env.parcoursup /tmp/envp.bak 2>/dev/null || true
 cp data/parcoursup-candidates.json /tmp/cand.bak 2>/dev/null || true
 cp data/parcoursup-config.json /tmp/cfg.bak 2>/dev/null || true
 cp data/parcoursup-relances.json /tmp/rel.bak 2>/dev/null || true
 cp data/parcoursup-queue.json /tmp/queue.bak 2>/dev/null || true
 
 # Reset dur sur la branche distante
-git stash -u 2>/dev/null || true
+# IMPORTANT: git stash (sans -u) pour ne PAS stasher les fichiers non-trackes (.env.parcoursup)
+git stash 2>/dev/null || true
 git checkout "$BRANCH" 2>/dev/null || git checkout -b "$BRANCH" "origin/$BRANCH"
 git reset --hard "origin/$BRANCH"
 
-# Restore data
+# Restore data ET env
+cp /tmp/envp.bak .env.parcoursup 2>/dev/null || true
 cp /tmp/cand.bak data/parcoursup-candidates.json 2>/dev/null || true
 cp /tmp/cfg.bak data/parcoursup-config.json 2>/dev/null || true
 cp /tmp/rel.bak data/parcoursup-relances.json 2>/dev/null || true
