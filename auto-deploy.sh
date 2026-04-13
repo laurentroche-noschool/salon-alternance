@@ -33,6 +33,9 @@ fi
 
 echo "$LOG_PREFIX Nouveau commit detecte : $LOCAL -> $REMOTE"
 
+# Recupere tout stash precedent pour eviter de perdre .env.parcoursup
+git stash pop 2>/dev/null || true
+
 # Backup data ET fichiers env (ne jamais perdre .env.parcoursup)
 cp .env.parcoursup /tmp/envp.bak 2>/dev/null || true
 cp data/parcoursup-candidates.json /tmp/cand.bak 2>/dev/null || true
