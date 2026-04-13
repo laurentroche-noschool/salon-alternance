@@ -2131,18 +2131,25 @@
                     const resultInfo = config.relanceResults.find(x => x.id === r.result);
                     const typeColors = { telephone: '#3498DB', mail: '#E74C3C', whatsapp: '#25D366', courrier: '#9B59B6' };
                     const isReceived = r.notes && r.notes.startsWith('[REÇU]');
+                    const isSentWa = r.notes && r.notes.startsWith('[ENVOYE]') && r.type === 'whatsapp';
+                    const isWaMsg = isReceived || isSentWa;
+                    const waBg = isReceived ? '#E8F8F0' : (isSentWa ? '#F0F7FF' : '');
+                    const waBorder = isReceived ? '#25D366' : (isSentWa ? '#3498DB' : '');
                     return (
-                      <div key={r.id} className="timeline-item" style={isReceived ? {
-                        background: '#E8F8F0', borderLeft: '3px solid #25D366'
+                      <div key={r.id} className="timeline-item" style={isWaMsg ? {
+                        background: waBg, borderLeft: `3px solid ${waBorder}`
                       } : {}}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span className="type" style={{ color: isReceived ? '#25D366' : (typeColors[r.type] || '#555') }}>
-                            {isReceived ? 'WhatsApp recu' : (typeInfo?.label || r.type)}
+                          <span className="type" style={{ color: isReceived ? '#25D366' : (isSentWa ? '#3498DB' : (typeColors[r.type] || '#555')) }}>
+                            {isReceived ? 'WhatsApp recu' : isSentWa ? 'WhatsApp envoye' : (typeInfo?.label || r.type)}
                             {isReceived && <span style={{ marginLeft: 6, fontSize: 10, background: '#25D366', color: 'white', padding: '1px 6px', borderRadius: 8, fontWeight: 600 }}>REPONSE</span>}
+                            {isSentWa && <span style={{ marginLeft: 6, fontSize: 10, background: '#3498DB', color: 'white', padding: '1px 6px', borderRadius: 8, fontWeight: 600 }}>ENVOYE</span>}
                           </span>
                           <span className="date">{new Date(r.date).toLocaleDateString('fr-FR')} {new Date(r.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
-                        {r.notes && <div className="notes" style={isReceived ? { fontStyle: 'italic', color: '#1a7a42' } : {}}>{isReceived ? r.notes.replace('[REÇU] ', '') : r.notes}</div>}
+                        {r.notes && <div className="notes" style={isWaMsg ? { fontStyle: 'italic', color: isReceived ? '#1a7a42' : '#1e4d7a' } : {}}>
+                          {isReceived ? r.notes.replace('[REÇU] ', '') : isSentWa ? r.notes.replace('[ENVOYE] ', '') : r.notes}
+                        </div>}
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                           {resultInfo && <span className="result">{resultInfo.label}</span>}
                           {r.createdBy && <span style={{ fontSize: 11, color: '#888' }}>par {r.createdBy}</span>}
@@ -2645,11 +2652,35 @@
     function WhatsAppConfig() {
       const [status, setStatus] = useState({ status: 'disconnected' });
       const [loading, setLoading] = useState(false);
+      const [syncing, setSyncing] = useState(false);
+      const [syncMsg, setSyncMsg] = useState('');
 
       const authHeaders = { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' };
 
       const fetchStatus = () => {
         fetch('/parcoursup/api/whatsapp/status', { headers: authHeaders }).then(r => r.json()).then(d => { if (!d.error) setStatus(d); }).catch(() => {});
+      };
+
+      const handleSync = async () => {
+        setSyncing(true);
+        setSyncMsg('Récupération des conversations en cours...');
+        try {
+          const r = await fetch('/parcoursup/api/whatsapp/sync', {
+            method: 'POST',
+            headers: authHeaders,
+            body: JSON.stringify({ days: 7 })
+          });
+          const d = await r.json();
+          if (d.ok) {
+            setSyncMsg(`${d.imported} message(s) importé(s) sur ${d.scanned} conversation(s) scannée(s).`);
+          } else {
+            setSyncMsg('Erreur : ' + (d.error || 'inconnue'));
+          }
+        } catch (e) {
+          setSyncMsg('Erreur réseau : ' + e.message);
+        }
+        setSyncing(false);
+        setTimeout(() => setSyncMsg(''), 8000);
       };
 
       useEffect(() => {
@@ -2706,10 +2737,22 @@
                   </button>
                 )}
                 {status.status === 'connected' && (
+                  <button className="btn btn-sm" onClick={handleSync} disabled={syncing}
+                    style={{ background: '#25D366', color: 'white', border: 'none' }}
+                    title="Importer les messages reçus et envoyés (7 derniers jours) dans l'historique des candidats">
+                    {syncing ? 'Synchro...' : 'Synchroniser conversations'}
+                  </button>
+                )}
+                {status.status === 'connected' && (
                   <button className="btn btn-sm btn-outline" onClick={handleLogout}>Déconnecter</button>
                 )}
               </div>
             </div>
+            {syncMsg && (
+              <div style={{ padding: 10, background: '#e8f5e9', borderRadius: 8, fontSize: 13, color: '#2e7d32', marginBottom: 12 }}>
+                {syncMsg}
+              </div>
+            )}
 
             {status.status === 'qr_pending' && status.qrCode && (
               <div style={{ textAlign: 'center', padding: 20, background: '#f8f9fa', borderRadius: 12, marginBottom: 16 }}>

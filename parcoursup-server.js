@@ -861,16 +861,23 @@ function generateCourrierHTML({ title, pages, single }) {
   }).join('\n');
 
   return `<!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8">
+<html lang="fr"><head>
+<meta charset="utf-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>${title}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  @page { size: A4; margin: 15mm 18mm 15mm 18mm; }
+  /* Marges gérées par .page pour contrôle absolu du positionnement fenêtre enveloppe */
+  @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
   body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 10.5pt;
-    line-height: 1.4;
+    /* Inter supporte parfaitement les accents français (UTF-8 complet).
+       Fallback vers polices système robustes si Google Fonts indisponible. */
+    font-family: 'Inter', 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.3;
     color: #222;
     margin: 0;
     padding: 0;
@@ -884,16 +891,20 @@ function generateCourrierHTML({ title, pages, single }) {
   .print-toolbar button {
     padding: 8px 20px; border: none; border-radius: 6px;
     font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: 'Inter', sans-serif;
   }
   .btn-print { background: #9B59B6; color: white; }
   .btn-print:hover { background: #8E44AD; }
   .btn-close { background: #95A5A6; color: white; }
   .btn-close:hover { background: #7F8C8D; }
-  /* Page */
+  /* Page A4 - dimensions exactes pour calibrage précis
+     Padding interne : 15mm haut, 18mm droite, 12mm bas, 20mm gauche */
   .page {
-    width: 210mm; min-height: 270mm; max-height: 297mm;
-    padding: 12mm 15mm 10mm 15mm;
+    width: 210mm;
+    height: 297mm;
+    padding: 15mm 18mm 12mm 20mm;
     page-break-after: always;
+    position: relative;
     overflow: hidden;
     margin: 0 auto;
   }
@@ -901,41 +912,54 @@ function generateCourrierHTML({ title, pages, single }) {
   /* Double logos : ecole a gauche, Parcoursup a droite */
   .logos-bar {
     display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 8mm; padding-bottom: 3mm;
+    height: 18mm;
+    margin-bottom: 3mm;
+    padding-bottom: 2mm;
     border-bottom: 0.5pt solid #ddd;
   }
-  .logo-ecole { max-height: 50px; max-width: 180px; object-fit: contain; }
-  .logo-parcoursup { max-height: 40px; max-width: 150px; object-fit: contain; }
+  .logo-ecole { max-height: 16mm; max-width: 55mm; object-fit: contain; }
+  .logo-parcoursup { max-height: 14mm; max-width: 48mm; object-fit: contain; }
   /* Expediteur en haut a gauche */
   .expediteur {
-    font-size: 9pt; line-height: 1.4; color: #444;
-    margin-bottom: 5mm;
+    font-size: 8.5pt;
+    line-height: 1.3;
+    color: #444;
+    margin-bottom: 2mm;
+    max-width: 85mm;
   }
-  .expediteur strong { font-size: 10pt; color: #222; }
-  /* Destinataire : positionne pour fenetre enveloppe DL
-     Norme AFNOR : zone adresse a droite, env. 105mm du bord gauche, 50mm du haut
-     Sur notre mise en page avec marges : margin-left ~55% de la zone utile */
+  .expediteur strong { font-size: 9.5pt; color: #222; }
+  /* Destinataire : position absolue, calibrée sur la norme AFNOR NF Z 10-011
+     pour enveloppe DL à fenêtre droite (110x220mm).
+     - top: 45mm depuis le haut de la page A4
+     - left: 110mm depuis le bord gauche
+     - Taille zone adresse : 85mm x 35mm
+     Ces valeurs sont testées pour rester visibles dans la fenêtre lors du pliage
+     accordéon standard d'une feuille A4 en enveloppe DL. */
   .destinataire {
-    margin-left: 55%;
-    min-height: 25mm;
-    padding: 3mm 0;
+    position: absolute;
+    top: 45mm;
+    left: 110mm;
+    width: 85mm;
+    min-height: 35mm;
     font-size: 10pt;
     line-height: 1.4;
+    color: #000;
   }
   .destinataire strong { font-size: 10.5pt; }
-  /* Date + lieu */
+  /* Date + lieu - positionné en dessous de la zone d'adresse */
   .date-lieu {
     text-align: right;
-    margin: 5mm 0 6mm;
+    margin-top: 42mm;
+    margin-bottom: 5mm;
     font-size: 9.5pt;
     color: #555;
   }
-  /* Contenu lettre */
+  /* Contenu lettre - optimisé pour tenir sur 1 page */
   .content {
     white-space: pre-wrap;
     text-align: justify;
-    font-size: 10.5pt;
-    line-height: 1.35;
+    font-size: 9.5pt;
+    line-height: 1.3;
     word-wrap: break-word;
     overflow-wrap: break-word;
   }
@@ -943,7 +967,7 @@ function generateCourrierHTML({ title, pages, single }) {
   @media print {
     .print-toolbar { display: none !important; }
     body { padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .page { width: auto; min-height: auto; padding: 0; margin: 0; }
+    .page { margin: 0; box-shadow: none; }
   }
   /* Ecran : apercu avec ombre page */
   @media screen {
@@ -1746,6 +1770,81 @@ app.post('/parcoursup/api/whatsapp/logout', async (req, res) => {
     res.json({ ok: true });
   } catch(e) {
     res.json({ ok: false, error: e.message });
+  }
+});
+
+// ============ SYNCHRONISATION HISTORIQUE WHATSAPP ============
+// Récupère les messages récents (reçus + envoyés manuellement) pour tous les
+// candidats dont le téléphone correspond à un chat WhatsApp, et les injecte
+// dans l'historique des relances s'ils ne sont pas déjà présents.
+// Utile si le serveur a été down ou si le chargé a répondu depuis son téléphone.
+app.post('/parcoursup/api/whatsapp/sync', async (req, res) => {
+  if (!waClient || waStatus !== 'connected') {
+    return res.status(400).json({ error: 'WhatsApp non connecté. Connectez-vous d\'abord.' });
+  }
+  try {
+    const daysBack = Math.min(parseInt(req.body.days) || 7, 30);
+    const cutoff = Date.now() - daysBack * 24 * 3600 * 1000;
+    const candidates = loadJSON('parcoursup-candidates.json');
+    const relances = loadJSON('parcoursup-relances.json');
+    let imported = 0;
+    let scanned = 0;
+
+    for (const candidate of candidates) {
+      if (!candidate.telephone) continue;
+      let phone = candidate.telephone.replace(/[\s\-\.]/g, '');
+      if (phone.startsWith('0')) phone = '33' + phone.substring(1);
+      if (phone.startsWith('+')) phone = phone.substring(1);
+      if (!/^\d{8,15}$/.test(phone)) continue;
+      const chatId = phone + '@c.us';
+
+      try {
+        const chat = await waClient.getChatById(chatId);
+        const messages = await chat.fetchMessages({ limit: 50 });
+        scanned++;
+
+        for (const msg of messages) {
+          const msgTs = (msg.timestamp || 0) * 1000;
+          if (msgTs < cutoff) continue;
+          const msgBody = (msg.body || '').substring(0, 500);
+          if (!msgBody) continue;
+          const marker = msg.fromMe ? '[ENVOYE]' : '[REÇU]';
+
+          // Dedup : pas de doublon si même candidat + même type + fenêtre ±60s + même début de message
+          const bodyPrefix = msgBody.substring(0, 40);
+          const dup = relances.some(r =>
+            r.candidateId === candidate.id &&
+            r.type === 'whatsapp' &&
+            Math.abs(new Date(r.date).getTime() - msgTs) < 60000 &&
+            (r.notes || '').includes(bodyPrefix)
+          );
+          if (dup) continue;
+
+          relances.push({
+            id: genId(),
+            candidateId: candidate.id,
+            type: 'whatsapp',
+            date: new Date(msgTs).toISOString(),
+            notes: `${marker} ${msgBody}`,
+            result: msg.fromMe ? 'envoye' : 'repondu',
+            createdBy: msg.fromMe ? 'Synchro WhatsApp' : `${candidate.prenom || ''} ${candidate.nom || ''}`.trim()
+          });
+          imported++;
+        }
+      } catch (e) {
+        // Chat inexistant, candidat pas sur WhatsApp, ou erreur réseau : on ignore
+      }
+    }
+
+    if (imported > 0) {
+      saveJSON('parcoursup-relances.json', relances);
+      broadcast('relances');
+    }
+    console.log(`[WhatsApp Sync] ${scanned} chats scannés, ${imported} messages importés`);
+    res.json({ ok: true, imported, scanned, daysBack });
+  } catch (e) {
+    console.error('[WhatsApp Sync] Erreur:', e.message);
+    res.status(500).json({ error: e.message });
   }
 });
 
