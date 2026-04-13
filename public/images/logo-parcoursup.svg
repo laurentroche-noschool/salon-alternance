@@ -1,18 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 90" width="320" height="90">
-  <!-- Logo Parcoursup officiel : bleu marine #1B2A6B -->
-  <!-- Icone chapeau de graduation (mortarboard) a gauche -->
-  <g transform="translate(8,18) scale(0.6)" fill="#1B2A6B">
-    <!-- Plateau du chapeau (losange vu en perspective) -->
-    <polygon points="50,6 2,32 50,58 98,32" />
-    <!-- Calotte ronde sous le plateau -->
-    <path d="M18,38 Q18,62 50,62 Q82,62 82,38 L82,32 Q50,50 18,32 Z" />
-    <!-- Cordon qui pend a droite -->
-    <line x1="88" y1="32" x2="88" y2="58" stroke="#1B2A6B" stroke-width="3.5" />
-    <!-- Pompon au bout du cordon -->
-    <circle cx="88" cy="62" r="4" />
-  </g>
-  <!-- Mot "Parcoursup" en bleu marine, gras -->
-  <text x="78" y="56" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="800" fill="#1B2A6B" letter-spacing="-0.8">
-    Parcoursup
+  <!-- Symbole : 2 crochets en L superposes -->
+  <!-- Crochet rouge (en haut a droite) -->
+  <rect x="8"  y="8"  width="40" height="12" fill="#E5332A"/>
+  <rect x="36" y="8"  width="12" height="35" fill="#E5332A"/>
+  <!-- Crochet bleu marine (en bas a gauche) -->
+  <rect x="12" y="47" width="12" height="35" fill="#2E3A6E"/>
+  <rect x="12" y="71" width="40" height="12" fill="#2E3A6E"/>
+
+  <!-- Texte principal -->
+  <text y="60" font-family="'Arial Black', Arial, 'Helvetica Neue', sans-serif" font-size="40" font-weight="900" letter-spacing="-1">
+    <tspan x="68" fill="#2E3A6E">parcours</tspan><tspan fill="#E5332A">sup</tspan>
   </text>
+
+  <!-- Sous-titre -->
+  <text x="68" y="78" font-family="Arial, 'Helvetica Neue', sans-serif" font-size="10.5" font-weight="400" fill="#2E3A6E" letter-spacing="0.2">Entrez dans l&#x2019;enseignement sup&#233;rieur</text>
 </svg>
