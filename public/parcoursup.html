@@ -514,7 +514,7 @@
       const [showBulkSend, setShowBulkSend] = useState(null); // stageId or null
       const [queue, setQueue] = useState([]);
       const [toast, setToast] = useState(null);
-      const [filters, setFilters] = useState({ ecole: '', formation: '', charge: '', conseiller: '', search: '' });
+      const [filters, setFilters] = useState({ ecole: '', formation: '', charge: '', conseiller: '', search: '', multiType: '' });
       const [sortCol, setSortCol] = useState('nom');
       const [sortDir, setSortDir] = useState('asc');
 
@@ -568,6 +568,31 @@
         return () => { if (es) es.close(); clearTimeout(reconnectTimer); };
       }, [activeTab, loadData, loadStats, loadQueue]);
 
+      // Detecter les candidats multi-ecole, multi-formation, candidature seche
+      const candidateMultiInfo = useMemo(() => {
+        const byName = {};
+        candidates.forEach(c => {
+          const key = ((c.nom || '').trim().toLowerCase() + '|' + (c.prenom || '').trim().toLowerCase());
+          if (!key || key === '|') return;
+          if (!byName[key]) byName[key] = { ecoles: new Set(), formations: new Set(), ids: [] };
+          byName[key].ecoles.add(c.ecole);
+          byName[key].formations.add(c.formation);
+          byName[key].ids.push(c.id);
+        });
+        const info = {};
+        candidates.forEach(c => {
+          const key = ((c.nom || '').trim().toLowerCase() + '|' + (c.prenom || '').trim().toLowerCase());
+          const data = byName[key];
+          if (!data) { info[c.id] = { multiEcole: false, multiFormation: false, seche: true }; return; }
+          info[c.id] = {
+            multiEcole: data.ecoles.size > 1,
+            multiFormation: data.formations.size > 1,
+            seche: data.ids.length === 1
+          };
+        });
+        return info;
+      }, [candidates]);
+
       // Filter candidates
       const filteredCandidates = useMemo(() => {
         let list = [...candidates];
@@ -584,8 +609,15 @@
             (c.telephone || '').includes(s)
           );
         }
+        if (filters.multiType) {
+          const mi = candidateMultiInfo;
+          if (filters.multiType === 'multi_ecole') list = list.filter(c => mi[c.id]?.multiEcole);
+          else if (filters.multiType === 'multi_formation') list = list.filter(c => mi[c.id]?.multiFormation);
+          else if (filters.multiType === 'multi_both') list = list.filter(c => mi[c.id]?.multiEcole && mi[c.id]?.multiFormation);
+          else if (filters.multiType === 'seche') list = list.filter(c => mi[c.id]?.seche);
+        }
         return list;
-      }, [candidates, filters]);
+      }, [candidates, filters, candidateMultiInfo]);
 
       // Available formations based on selected school filter
       const availableFormations = useMemo(() => {
@@ -918,6 +950,7 @@
 
     // ============ FILTER BAR ============
     function FilterBar({ config, filters, setFilters, availableFormations, availableConseillers, count, total, filteredCandidates }) {
+      const hasFilters = filters.ecole || filters.formation || filters.charge || filters.conseiller || filters.search || filters.multiType;
       return (
         <div className="filter-bar">
           <Icon name="filter" size={16} color="#888" />
@@ -937,6 +970,14 @@
             <option value="">Tous les conseillers</option>
             {availableConseillers.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
+          <select value={filters.multiType} onChange={e => setFilters(f => ({ ...f, multiType: e.target.value }))}
+            style={filters.multiType ? { borderColor: '#E91E63', color: '#E91E63', fontWeight: 600 } : {}}>
+            <option value="">Type candidature</option>
+            <option value="multi_ecole">Multi-école</option>
+            <option value="multi_formation">Multi-formation</option>
+            <option value="multi_both">Multi-école + formation</option>
+            <option value="seche">Candidature sèche</option>
+          </select>
           <div style={{ position: 'relative' }}>
             <input
               type="text"
@@ -947,8 +988,8 @@
             />
             <Icon name="search" size={14} color="#aaa" />
           </div>
-          {(filters.ecole || filters.formation || filters.charge || filters.conseiller || filters.search) && (
-            <button className="btn btn-sm btn-outline" onClick={() => setFilters({ ecole: '', formation: '', charge: '', conseiller: '', search: '' })}>
+          {hasFilters && (
+            <button className="btn btn-sm btn-outline" onClick={() => setFilters({ ecole: '', formation: '', charge: '', conseiller: '', search: '', multiType: '' })}>
               Réinitialiser
             </button>
           )}
@@ -2089,15 +2130,19 @@
                     const typeInfo = config.relanceTypes.find(t => t.id === r.type);
                     const resultInfo = config.relanceResults.find(x => x.id === r.result);
                     const typeColors = { telephone: '#3498DB', mail: '#E74C3C', whatsapp: '#25D366', courrier: '#9B59B6' };
+                    const isReceived = r.notes && r.notes.startsWith('[REÇU]');
                     return (
-                      <div key={r.id} className="timeline-item">
+                      <div key={r.id} className="timeline-item" style={isReceived ? {
+                        background: '#E8F8F0', borderLeft: '3px solid #25D366'
+                      } : {}}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span className="type" style={{ color: typeColors[r.type] || '#555' }}>
-                            {typeInfo?.label || r.type}
+                          <span className="type" style={{ color: isReceived ? '#25D366' : (typeColors[r.type] || '#555') }}>
+                            {isReceived ? 'WhatsApp recu' : (typeInfo?.label || r.type)}
+                            {isReceived && <span style={{ marginLeft: 6, fontSize: 10, background: '#25D366', color: 'white', padding: '1px 6px', borderRadius: 8, fontWeight: 600 }}>REPONSE</span>}
                           </span>
                           <span className="date">{new Date(r.date).toLocaleDateString('fr-FR')} {new Date(r.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
-                        {r.notes && <div className="notes">{r.notes}</div>}
+                        {r.notes && <div className="notes" style={isReceived ? { fontStyle: 'italic', color: '#1a7a42' } : {}}>{isReceived ? r.notes.replace('[REÇU] ', '') : r.notes}</div>}
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                           {resultInfo && <span className="result">{resultInfo.label}</span>}
                           {r.createdBy && <span style={{ fontSize: 11, color: '#888' }}>par {r.createdBy}</span>}
@@ -3348,34 +3393,20 @@
           const ids = selectedFiches;
           const templateLabel = templates[templateType]?.label || 'Courrier';
 
-          if (ids.length === 1) {
-            // Generation simple
-            const result = await api('/courrier/pdf', {
-              method: 'POST',
-              body: { candidateId: ids[0], content, type: templateLabel, createdBy: '' }
-            });
-            if (result.ok) {
-              const printWindow = window.open('', '_blank', 'width=794,height=1123');
-              printWindow.document.write(result.html);
-              printWindow.document.close();
-              if (onAddRelance) onAddRelance();
-            } else {
-              alert(result.error || 'Erreur generation');
-            }
+          const endpoint = ids.length === 1 ? '/courrier/pdf' : '/courrier/pdf-multi';
+          const body = ids.length === 1
+            ? { candidateId: ids[0], content, type: templateLabel, createdBy: '' }
+            : { candidateIds: ids, content, type: templateLabel, createdBy: '' };
+          const result = await api(endpoint, { method: 'POST', body });
+          if (result.ok) {
+            // Utiliser Blob URL pour garantir l'encodage UTF-8 des accents
+            const blob = new Blob([result.html], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank', 'width=794,height=1123');
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+            if (onAddRelance) onAddRelance();
           } else {
-            // Generation multi-fiches
-            const result = await api('/courrier/pdf-multi', {
-              method: 'POST',
-              body: { candidateIds: ids, content, type: templateLabel, createdBy: '' }
-            });
-            if (result.ok) {
-              const printWindow = window.open('', '_blank', 'width=794,height=1123');
-              printWindow.document.write(result.html);
-              printWindow.document.close();
-              if (onAddRelance) onAddRelance();
-            } else {
-              alert(result.error || 'Erreur generation');
-            }
+            alert(result.error || 'Erreur generation');
           }
         } catch (e) {
           alert('Erreur: ' + e.message);
@@ -3516,18 +3547,17 @@
                     fontFamily: "'Helvetica Neue', Arial, sans-serif", whiteSpace: 'pre-wrap',
                     boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.08)'
                   }}>
-                    {/* Logo ecole */}
-                    {logoUrl && (
-                      <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                        <img src={logoUrl} alt={candidate.ecole} style={{ maxHeight: 60, maxWidth: 200 }} />
-                      </div>
-                    )}
+                    {/* Double logos : ecole gauche + Parcoursup droite */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid #eee' }}>
+                      {logoUrl ? <img src={logoUrl} alt={candidate.ecole} style={{ maxHeight: 45, maxWidth: 160 }} /> : <span></span>}
+                      <img src="/parcoursup/assets/images/logo-parcoursup.svg" alt="Parcoursup" style={{ maxHeight: 35, maxWidth: 120 }} />
+                    </div>
                     <div style={{ marginBottom: 16 }}>
                       <strong style={{ fontSize: 14 }}>{candidate.ecole}</strong><br/>
                       {ecoleAddr.adresse}<br/>
                       {ecoleAddr.codePostal} {ecoleAddr.ville}
                     </div>
-                    <div style={{ textAlign: 'right', marginBottom: 12 }}>
+                    <div style={{ marginLeft: '55%', marginBottom: 8, fontSize: 11, lineHeight: 1.4 }}>
                       <strong>{candidate.genre === 'F' ? 'Mme' : candidate.genre === 'G' ? 'M.' : ''} {candidate.prenom} {candidate.nom}</strong><br/>
                       {candidate.adresse && <>{candidate.adresse}<br/></>}
                       {(candidate.codePostal || candidate.ville) && <>{candidate.codePostal} {candidate.ville}</>}

@@ -50,6 +50,48 @@ function initWhatsApp() {
       console.log(`[WhatsApp] Connecté ! Numéro: ${waClient.info.wid.user}`);
     });
 
+    // ============ CAPTURE MESSAGES WHATSAPP ENTRANTS ============
+    waClient.on('message', async (msg) => {
+      try {
+        if (msg.fromMe) return; // Ignorer nos propres messages
+        const from = msg.from; // format: 33612345678@c.us
+        if (!from || !from.endsWith('@c.us')) return;
+        const phone = from.replace('@c.us', '');
+        // Convertir 33xxx en 0xxx pour matcher les candidats
+        let phoneLocal = phone;
+        if (phoneLocal.startsWith('33')) phoneLocal = '0' + phoneLocal.substring(2);
+
+        // Chercher le candidat par téléphone
+        const candidates = loadJSON('parcoursup-candidates.json');
+        const matchedCandidates = candidates.filter(c => {
+          const cp = (c.telephone || '').replace(/[\s\-\.]/g, '');
+          return cp === phoneLocal || cp === phone || cp === '+' + phone;
+        });
+        if (matchedCandidates.length === 0) return; // Pas un candidat connu
+
+        const relances = loadJSON('parcoursup-relances.json');
+        const now = new Date().toISOString();
+        const msgBody = (msg.body || '').substring(0, 500); // Limiter la taille
+
+        for (const candidate of matchedCandidates) {
+          relances.push({
+            id: genId(),
+            candidateId: candidate.id,
+            type: 'whatsapp',
+            date: now,
+            notes: `[REÇU] ${msgBody}`,
+            result: 'repondu',
+            createdBy: `${candidate.prenom || ''} ${candidate.nom || ''}`.trim()
+          });
+          console.log(`[WhatsApp] Message reçu de ${candidate.prenom} ${candidate.nom} (${phoneLocal}): ${msgBody.substring(0, 80)}...`);
+        }
+        saveJSON('parcoursup-relances.json', relances);
+        broadcast('relances');
+      } catch (e) {
+        console.error('[WhatsApp] Erreur capture message entrant:', e.message);
+      }
+    });
+
     waClient.on('authenticated', () => {
       console.log('[WhatsApp] Authentifié avec succès');
     });
@@ -406,8 +448,9 @@ const DEFAULT_PARCOURSUP_CONFIG = {
   }
 };
 
-// ============ LOGOS ECOLES (base64 pour courrier PDF) ============
+// ============ LOGOS ECOLES + PARCOURSUP (base64 pour courrier PDF) ============
 const LOGOS_BASE64 = {};
+let LOGO_PARCOURSUP_BASE64 = '';
 try {
   const logoNoschool = fs.readFileSync(path.join(__dirname, 'public/images/logo-noschool-courrier.png'));
   LOGOS_BASE64['NOSCHOOL'] = 'data:image/png;base64,' + logoNoschool.toString('base64');
@@ -417,6 +460,13 @@ try {
   console.log('[Courrier] Logos courrier chargés en base64');
 } catch(e) {
   console.log('[Courrier] Logos non trouvés:', e.message);
+}
+try {
+  const logoParcoursup = fs.readFileSync(path.join(__dirname, 'public/images/logo-parcoursup.svg'));
+  LOGO_PARCOURSUP_BASE64 = 'data:image/svg+xml;base64,' + logoParcoursup.toString('base64');
+  console.log('[Courrier] Logo Parcoursup chargé');
+} catch(e) {
+  console.log('[Courrier] Logo Parcoursup non trouvé:', e.message);
 }
 
 // ============ MODELES COURRIER PAR DEFAUT ============
@@ -784,6 +834,132 @@ app.post('/parcoursup/api/courrier/templates', requireAuth, (req, res) => {
   }
 });
 
+// ============ GENERATEUR HTML COURRIER (factorisation) ============
+function generateCourrierHTML({ title, pages, single }) {
+  const pageCount = pages.length;
+  const pagesHTML = pages.map((p, idx) => {
+    const civilite = p.candidate.genre === 'F' ? 'Mme' : p.candidate.genre === 'G' ? 'M.' : '';
+    return `
+      <div class="page">
+        <div class="logos-bar">
+          ${p.logoSrc ? `<img src="${p.logoSrc}" alt="Logo ${p.ecole}" class="logo-ecole">` : `<span></span>`}
+          ${LOGO_PARCOURSUP_BASE64 ? `<img src="${LOGO_PARCOURSUP_BASE64}" alt="Parcoursup" class="logo-parcoursup">` : ''}
+        </div>
+        <div class="expediteur">
+          <strong>${p.ecole}</strong><br>
+          ${p.ecoleAddr.adresse || ''}<br>
+          ${p.ecoleAddr.codePostal || ''} ${p.ecoleAddr.ville || ''}
+        </div>
+        <div class="destinataire">
+          <strong>${civilite} ${p.candidate.prenom || ''} ${p.candidate.nom || ''}</strong><br>
+          ${p.candidate.adresse || ''}<br>
+          ${p.candidate.codePostal || ''} ${p.candidate.ville || ''}
+        </div>
+        <div class="date-lieu">${p.ecoleAddr.ville || 'Bordeaux'}, le ${p.dateJour}</div>
+        <div class="content">${p.content}</div>
+      </div>`;
+  }).join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>${title}</title>
+<style>
+  @page { size: A4; margin: 15mm 18mm 15mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.4;
+    color: #222;
+    margin: 0;
+    padding: 0;
+  }
+  /* Toolbar impression */
+  .print-toolbar {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 10px 20px; background: #f8f9fa; border-bottom: 1px solid #ddd;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .print-toolbar button {
+    padding: 8px 20px; border: none; border-radius: 6px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn-print { background: #9B59B6; color: white; }
+  .btn-print:hover { background: #8E44AD; }
+  .btn-close { background: #95A5A6; color: white; }
+  .btn-close:hover { background: #7F8C8D; }
+  /* Page */
+  .page {
+    width: 210mm; min-height: 270mm; max-height: 297mm;
+    padding: 12mm 15mm 10mm 15mm;
+    page-break-after: always;
+    overflow: hidden;
+    margin: 0 auto;
+  }
+  .page:last-child { page-break-after: avoid; }
+  /* Double logos : ecole a gauche, Parcoursup a droite */
+  .logos-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8mm; padding-bottom: 3mm;
+    border-bottom: 0.5pt solid #ddd;
+  }
+  .logo-ecole { max-height: 50px; max-width: 180px; object-fit: contain; }
+  .logo-parcoursup { max-height: 40px; max-width: 150px; object-fit: contain; }
+  /* Expediteur en haut a gauche */
+  .expediteur {
+    font-size: 9pt; line-height: 1.4; color: #444;
+    margin-bottom: 5mm;
+  }
+  .expediteur strong { font-size: 10pt; color: #222; }
+  /* Destinataire : positionne pour fenetre enveloppe DL
+     Norme AFNOR : zone adresse a droite, env. 105mm du bord gauche, 50mm du haut
+     Sur notre mise en page avec marges : margin-left ~55% de la zone utile */
+  .destinataire {
+    margin-left: 55%;
+    min-height: 25mm;
+    padding: 3mm 0;
+    font-size: 10pt;
+    line-height: 1.4;
+  }
+  .destinataire strong { font-size: 10.5pt; }
+  /* Date + lieu */
+  .date-lieu {
+    text-align: right;
+    margin: 5mm 0 6mm;
+    font-size: 9.5pt;
+    color: #555;
+  }
+  /* Contenu lettre */
+  .content {
+    white-space: pre-wrap;
+    text-align: justify;
+    font-size: 10.5pt;
+    line-height: 1.35;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  /* Impression */
+  @media print {
+    .print-toolbar { display: none !important; }
+    body { padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { width: auto; min-height: auto; padding: 0; margin: 0; }
+  }
+  /* Ecran : apercu avec ombre page */
+  @media screen {
+    body { background: #e5e5e5; padding: 20px 0; }
+    .page { background: white; box-shadow: 0 2px 12px rgba(0,0,0,0.15); margin: 0 auto 20px; }
+  }
+</style>
+</head><body>
+<div class="print-toolbar">
+  <button class="btn-print" onclick="window.print()">Imprimer / PDF${pageCount > 1 ? ` (${pageCount} pages)` : ''}</button>
+  <button class="btn-close" onclick="window.close()">Fermer</button>
+</div>
+${pagesHTML}
+</body></html>`;
+}
+
 // ============ GENERATION PDF COURRIER ============
 app.post('/parcoursup/api/courrier/pdf', (req, res) => {
   try {
@@ -812,55 +988,19 @@ app.post('/parcoursup/api/courrier/pdf', (req, res) => {
     saveJSON('parcoursup-relances.json', relances);
     broadcast('relances');
 
-    // Générer le HTML du PDF avec logo + boutons impression
-    const html = `<!DOCTYPE html>
-<html><head><meta charset="utf-8">
-<title>Courrier - ${candidate.prenom || ''} ${candidate.nom || ''}</title>
-<style>
-  @page { size: A4; margin: 20mm 20mm 20mm 20mm; }
-  body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 12pt; line-height: 1.6; color: #333; margin: 0; padding: 20px 30px; }
-  .print-toolbar { display: flex; justify-content: flex-end; gap: 10px; padding: 10px 0; margin-bottom: 10px; border-bottom: 1px solid #eee; }
-  .print-toolbar button { padding: 8px 20px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
-  .btn-print { background: #9B59B6; color: white; }
-  .btn-print:hover { background: #8E44AD; }
-  .btn-close { background: #95A5A6; color: white; }
-  .btn-close:hover { background: #7F8C8D; }
-  .logo-container { text-align: center; margin-bottom: 20px; }
-  .logo-container img { max-height: 70px; max-width: 250px; }
-  .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
-  .expediteur { font-size: 11pt; line-height: 1.5; }
-  .expediteur strong { font-size: 13pt; color: #222; }
-  .destinataire { text-align: right; margin-top: 10px; font-size: 11pt; line-height: 1.5; }
-  .destinataire strong { font-size: 12pt; }
-  .date { text-align: right; margin: 20px 0 30px; font-size: 11pt; color: #555; }
-  .content { white-space: pre-wrap; margin-top: 15px; text-align: justify; }
-  .signature { margin-top: 40px; }
-  @media print {
-    .print-toolbar { display: none !important; }
-    body { padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  }
-</style>
-</head><body>
-<div class="print-toolbar">
-  <button class="btn-print" onclick="window.print()">Imprimer / PDF</button>
-  <button class="btn-close" onclick="window.close()">Fermer</button>
-</div>
-${logoSrc ? `<div class="logo-container"><img src="${logoSrc}" alt="Logo ${candidate.ecole || ''}"></div>` : ''}
-<div class="header">
-  <div class="expediteur">
-    <strong>${candidate.ecole || ''}</strong><br>
-    ${ecoleAddr.adresse || ''}<br>
-    ${ecoleAddr.codePostal || ''} ${ecoleAddr.ville || ''}
-  </div>
-</div>
-<div class="destinataire">
-  <strong>${candidate.genre === 'F' ? 'Mme' : candidate.genre === 'G' ? 'M.' : ''} ${candidate.prenom || ''} ${candidate.nom || ''}</strong><br>
-  ${candidate.adresse || ''}<br>
-  ${candidate.codePostal || ''} ${candidate.ville || ''}
-</div>
-<div class="date">${ecoleAddr.ville || 'Bordeaux'}, le ${dateJour}</div>
-<div class="content">${finalContent}</div>
-</body></html>`;
+    // Générer le HTML du PDF avec double logo + mise en page enveloppe
+    const html = generateCourrierHTML({
+      title: `Courrier - ${candidate.prenom || ''} ${candidate.nom || ''}`,
+      pages: [{
+        logoSrc,
+        ecole: candidate.ecole || '',
+        ecoleAddr,
+        candidate,
+        dateJour,
+        content: finalContent
+      }],
+      single: true
+    });
 
     res.json({ ok: true, html, candidateName: `${candidate.prenom} ${candidate.nom}` });
   } catch (e) {
@@ -899,65 +1039,24 @@ app.post('/parcoursup/api/courrier/pdf-multi', (req, res) => {
         createdBy: req.body.createdBy || ''
       });
 
-      pages.push(`
-        <div class="page">
-          ${logoSrc ? `<div class="logo-container"><img src="${logoSrc}" alt="Logo ${candidate.ecole || ''}"></div>` : ''}
-          <div class="header">
-            <div class="expediteur">
-              <strong>${candidate.ecole || ''}</strong><br>
-              ${ecoleAddr.adresse || ''}<br>
-              ${ecoleAddr.codePostal || ''} ${ecoleAddr.ville || ''}
-            </div>
-          </div>
-          <div class="destinataire">
-            <strong>${candidate.genre === 'F' ? 'Mme' : candidate.genre === 'G' ? 'M.' : ''} ${candidate.prenom || ''} ${candidate.nom || ''}</strong><br>
-            ${candidate.adresse || ''}<br>
-            ${candidate.codePostal || ''} ${candidate.ville || ''}
-          </div>
-          <div class="date">${ecoleAddr.ville || 'Bordeaux'}, le ${dateJour}</div>
-          <div class="content">${finalContent}</div>
-        </div>
-      `);
+      pages.push({
+        logoSrc,
+        ecole: candidate.ecole || '',
+        ecoleAddr,
+        candidate,
+        dateJour,
+        content: finalContent
+      });
     });
 
     saveJSON('parcoursup-relances.json', relances);
     broadcast('relances');
 
-    const html = `<!DOCTYPE html>
-<html><head><meta charset="utf-8">
-<title>Courriers - ${candidateIds.length} fiche(s)</title>
-<style>
-  @page { size: A4; margin: 20mm; }
-  body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 12pt; line-height: 1.6; color: #333; margin: 0; padding: 20px 30px; }
-  .print-toolbar { display: flex; justify-content: flex-end; gap: 10px; padding: 10px 0; margin-bottom: 10px; border-bottom: 1px solid #eee; }
-  .print-toolbar button { padding: 8px 20px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
-  .btn-print { background: #9B59B6; color: white; }
-  .btn-print:hover { background: #8E44AD; }
-  .btn-close { background: #95A5A6; color: white; }
-  .btn-close:hover { background: #7F8C8D; }
-  .logo-container { text-align: center; margin-bottom: 20px; }
-  .logo-container img { max-height: 70px; max-width: 250px; }
-  .page { page-break-after: always; padding-top: 10px; }
-  .page:last-child { page-break-after: avoid; }
-  .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
-  .expediteur { font-size: 11pt; line-height: 1.5; }
-  .expediteur strong { font-size: 13pt; color: #222; }
-  .destinataire { text-align: right; margin-top: 10px; font-size: 11pt; line-height: 1.5; }
-  .destinataire strong { font-size: 12pt; }
-  .date { text-align: right; margin: 20px 0 30px; font-size: 11pt; color: #555; }
-  .content { white-space: pre-wrap; margin-top: 15px; text-align: justify; }
-  @media print {
-    .print-toolbar { display: none !important; }
-    body { padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  }
-</style>
-</head><body>
-<div class="print-toolbar">
-  <button class="btn-print" onclick="window.print()">Imprimer / PDF (${candidateIds.length} page${candidateIds.length > 1 ? 's' : ''})</button>
-  <button class="btn-close" onclick="window.close()">Fermer</button>
-</div>
-${pages.join('\n')}
-</body></html>`;
+    const html = generateCourrierHTML({
+      title: `Courriers - ${candidateIds.length} fiche(s)`,
+      pages,
+      single: false
+    });
 
     res.json({ ok: true, html, count: pages.length });
   } catch (e) {
