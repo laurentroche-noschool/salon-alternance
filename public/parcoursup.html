@@ -1857,6 +1857,11 @@
       const [showCourrier, setShowCourrier] = useState(false);
       const saveTimeoutRef = useRef(null);
 
+      // Resynchroniser le form quand on change de candidat (ou quand ses donnees sont mises a jour)
+      useEffect(() => {
+        setForm({ ...candidate });
+      }, [candidate.id, candidate.updatedAt]);
+
       // Auto-save on form change (debounced)
       const handleChange = (field, value) => {
         const updated = { ...form, [field]: value };
@@ -3836,21 +3841,44 @@
         { key: 'conseillerFormation', label: 'Conseiller formation' },
       ];
 
-      const handleFile = (file) => {
-        Papa.parse(file, {
+      // Detection automatique de l'encodage: UTF-8 par defaut, fallback Windows-1252
+      // Resout le probleme classique des exports Excel Windows (CSV en cp1252)
+      // qui affichent "SAINT-ANDRÉ" comme "SAINT-ANDR?" une fois importes.
+      const readFileWithEncoding = async (file) => {
+        const buffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        // Detection BOM UTF-8 (EF BB BF)
+        if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+          return new TextDecoder('utf-8').decode(buffer.slice(3));
+        }
+        // Essai UTF-8 strict : si accents casses, fallback Windows-1252
+        try {
+          const utf8Text = new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+          return utf8Text;
+        } catch (e) {
+          // Fichier Excel Windows : decodage en Windows-1252
+          return new TextDecoder('windows-1252').decode(buffer);
+        }
+      };
+
+      const handleFile = async (file) => {
+        const text = await readFileWithEncoding(file);
+        Papa.parse(text, {
           header: true,
           skipEmptyLines: true,
           complete: (result) => {
             setCsvData(result.data);
             setHeaders(result.meta.fields || []);
-            // Auto-map by name similarity
+            // Auto-map by name similarity (insensible aux accents et ponctuation)
+            const clean = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
             const autoMap = {};
             targetFields.forEach(tf => {
-              const match = (result.meta.fields || []).find(h =>
-                h.toLowerCase().includes(tf.key.toLowerCase()) ||
-                tf.label.toLowerCase().includes(h.toLowerCase()) ||
-                h.toLowerCase().replace(/[^a-z]/g, '') === tf.key.toLowerCase()
-              );
+              const cleanKey = clean(tf.key);
+              const cleanLabel = clean(tf.label);
+              const match = (result.meta.fields || []).find(h => {
+                const ch = clean(h);
+                return ch.includes(cleanKey) || cleanKey.includes(ch) || ch.includes(cleanLabel) || cleanLabel.includes(ch);
+              });
               if (match) autoMap[tf.key] = match;
             });
             setMapping(autoMap);
@@ -3865,11 +3893,62 @@
         if (file) handleFile(file);
       };
 
+      // Normalisation du genre : accepte plusieurs formats et retourne F ou G
+      const normalizeGender = (val) => {
+        const v = (val || '').toString().toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f\.]/g, '');
+        if (!v) return '';
+        // Valeurs feminines (verifie en premier car "Mme"/"Madame"/"Mlle" commencent par 'm')
+        const fList = ['f', 'fille', 'femme', 'feminin', 'fem', 'female', 'mme', 'madame', 'mlle', 'mademoiselle'];
+        if (fList.includes(v) || v.startsWith('fem') || v.startsWith('fill') || v.startsWith('mme') || v.startsWith('mlle') || v.startsWith('madame') || v.startsWith('mademoiselle')) return 'F';
+        // Valeurs masculines
+        const gList = ['g', 'h', 'm', 'garcon', 'homme', 'masculin', 'masc', 'male', 'mr', 'monsieur'];
+        if (gList.includes(v) || v.startsWith('gar') || v.startsWith('hom') || v.startsWith('masc') || v.startsWith('monsieur') || v === 'mr' || v === 'm') return 'G';
+        return '';
+      };
+
+      // Conversion des dates : accepte DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD, DD/MM/YY
+      const convertDate = (val) => {
+        if (!val) return '';
+        const v = val.toString().trim();
+        // YYYY-MM-DD (format natif input[type=date])
+        if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+        // DD/MM/YYYY ou DD-MM-YYYY ou DD.MM.YYYY
+        let m = /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/.exec(v);
+        if (m) {
+          const day = m[1].padStart(2, '0'), month = m[2].padStart(2, '0');
+          return `${m[3]}-${month}-${day}`;
+        }
+        // DD/MM/YY (annee a 2 chiffres : < 30 = 2000s, >= 30 = 1900s)
+        m = /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2})$/.exec(v);
+        if (m) {
+          const day = m[1].padStart(2, '0'), month = m[2].padStart(2, '0');
+          const year = parseInt(m[3], 10);
+          const fullYear = year < 30 ? 2000 + year : 1900 + year;
+          return `${fullYear}-${month}-${day}`;
+        }
+        // YYYY/MM/DD
+        m = /^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/.exec(v);
+        if (m) {
+          return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+        }
+        return '';
+      };
+
       const generatePreview = () => {
         const mapped = csvData.map(row => {
           const candidate = {};
           targetFields.forEach(tf => {
-            candidate[tf.key] = mapping[tf.key] ? (row[mapping[tf.key]] || '').trim() : '';
+            const raw = mapping[tf.key] ? (row[mapping[tf.key]] || '').trim() : '';
+            if (tf.key === 'genre') {
+              candidate[tf.key] = normalizeGender(raw);
+            } else if (tf.key === 'dateNaissance') {
+              candidate[tf.key] = convertDate(raw);
+            } else if (tf.key === 'numeroDossier') {
+              // Retirer les caracteres non numeriques et limiter a 6
+              candidate[tf.key] = raw.replace(/\D/g, '').slice(0, 6);
+            } else {
+              candidate[tf.key] = raw;
+            }
           });
           if (!candidate.conseillerFormation && candidate.ecole && candidate.formation && config.ecoles[candidate.ecole]?.formations[candidate.formation]) {
             candidate.conseillerFormation = config.ecoles[candidate.ecole].formations[candidate.formation].conseiller || '';
