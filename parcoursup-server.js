@@ -862,20 +862,16 @@ function generateCourrierHTML({ title, pages, single }) {
 
   return `<!DOCTYPE html>
 <html lang="fr"><head>
-<meta charset="utf-8">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>${title}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Marges gérées par .page pour contrôle absolu du positionnement fenêtre enveloppe */
+  /* Police systeme 100% fiable pour accents francais (UTF-8 complet).
+     Pas de Google Fonts car stylesheet distante peut echouer dans popup Blob. */
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
   body {
-    /* Inter supporte parfaitement les accents français (UTF-8 complet).
-       Fallback vers polices système robustes si Google Fonts indisponible. */
-    font-family: 'Inter', 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
+    font-family: 'Segoe UI', 'Helvetica Neue', 'Arial Unicode MS', 'Liberation Sans', 'DejaVu Sans', Arial, sans-serif;
     font-size: 10pt;
     line-height: 1.3;
     color: #222;
@@ -891,7 +887,7 @@ function generateCourrierHTML({ title, pages, single }) {
   .print-toolbar button {
     padding: 8px 20px; border: none; border-radius: 6px;
     font-size: 13px; font-weight: 600; cursor: pointer;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Segoe UI', Arial, sans-serif;
   }
   .btn-print { background: #9B59B6; color: white; }
   .btn-print:hover { background: #8E44AD; }
