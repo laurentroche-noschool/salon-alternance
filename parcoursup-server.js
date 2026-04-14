@@ -942,7 +942,7 @@ function generateCourrierHTML({ title, pages, single }) {
   .destinataire strong { font-size: 10.5pt; }
   /* Date + lieu - positionné en dessous de la zone d'adresse */
   .date-lieu {
-    margin-left: 110mm;
+    margin-left: 90mm;
     margin-top: 55mm;
     margin-bottom: 5mm;
     font-size: 9.5pt;
