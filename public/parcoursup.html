@@ -3606,12 +3606,12 @@
                       {ecoleAddr.adresse}<br/>
                       {ecoleAddr.codePostal} {ecoleAddr.ville}
                     </div>
-                    <div style={{ marginLeft: '55%', marginBottom: 8, fontSize: 11, lineHeight: 1.4 }}>
+                    <div style={{ marginLeft: '55%', marginTop: 32, marginBottom: 8, fontSize: 11, lineHeight: 1.4 }}>
                       <strong>{candidate.genre === 'F' ? 'Mme' : candidate.genre === 'G' ? 'M.' : ''} {candidate.prenom} {candidate.nom}</strong><br/>
                       {candidate.adresse && <>{candidate.adresse}<br/></>}
                       {(candidate.codePostal || candidate.ville) && <>{candidate.codePostal} {candidate.ville}</>}
                     </div>
-                    <div style={{ textAlign: 'right', color: '#555', marginBottom: 16, fontSize: 11 }}>
+                    <div style={{ textAlign: 'right', color: '#555', marginTop: 20, marginBottom: 16, fontSize: 11 }}>
                       {ecoleAddr.ville || 'Bordeaux'}, le {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </div>
                     {previewText}

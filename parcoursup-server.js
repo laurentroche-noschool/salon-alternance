@@ -931,7 +931,7 @@ function generateCourrierHTML({ title, pages, single }) {
      accordéon standard d'une feuille A4 en enveloppe DL. */
   .destinataire {
     position: absolute;
-    top: 45mm;
+    top: 55mm;
     left: 110mm;
     width: 85mm;
     min-height: 35mm;
@@ -943,7 +943,7 @@ function generateCourrierHTML({ title, pages, single }) {
   /* Date + lieu - positionné en dessous de la zone d'adresse */
   .date-lieu {
     text-align: right;
-    margin-top: 42mm;
+    margin-top: 55mm;
     margin-bottom: 5mm;
     font-size: 9.5pt;
     color: #555;
