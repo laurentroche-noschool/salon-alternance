@@ -462,8 +462,8 @@ try {
   console.log('[Courrier] Logos non trouvés:', e.message);
 }
 try {
-  const logoParcoursup = fs.readFileSync(path.join(__dirname, 'public/images/logo-parcoursup.svg'));
-  LOGO_PARCOURSUP_BASE64 = 'data:image/svg+xml;base64,' + logoParcoursup.toString('base64');
+  const logoParcoursup = fs.readFileSync(path.join(__dirname, 'public/images/logo-parcoursup.png'));
+  LOGO_PARCOURSUP_BASE64 = 'data:image/png;base64,' + logoParcoursup.toString('base64');
   console.log('[Courrier] Logo Parcoursup chargé');
 } catch(e) {
   console.log('[Courrier] Logo Parcoursup non trouvé:', e.message);
