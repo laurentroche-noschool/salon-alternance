@@ -910,11 +910,9 @@ function generateCourrierHTML({ title, pages, single }) {
     display: flex; justify-content: space-between; align-items: center;
     height: 18mm;
     margin-bottom: 3mm;
-    padding-bottom: 2mm;
-    border-bottom: 0.5pt solid #ddd;
   }
   .logo-ecole { max-height: 16mm; max-width: 55mm; object-fit: contain; }
-  .logo-parcoursup { max-height: 14mm; max-width: 48mm; object-fit: contain; }
+  .logo-parcoursup { max-height: 14mm; max-width: 48mm; object-fit: contain; margin-right: 12mm; }
   /* Expediteur en haut a gauche */
   .expediteur {
     font-size: 8.5pt;
