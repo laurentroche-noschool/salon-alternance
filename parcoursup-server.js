@@ -912,7 +912,7 @@ function generateCourrierHTML({ title, pages, single }) {
     margin-bottom: 3mm;
   }
   .logo-ecole { max-height: 16mm; max-width: 55mm; object-fit: contain; }
-  .logo-parcoursup { max-height: 14mm; max-width: 48mm; object-fit: contain; margin-right: 12mm; }
+  .logo-parcoursup { max-height: 14mm; max-width: 45mm; object-fit: contain; margin-right: 25mm; }
   /* Expediteur en haut a gauche */
   .expediteur {
     font-size: 8.5pt;
