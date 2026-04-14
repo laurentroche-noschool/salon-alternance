@@ -3597,9 +3597,9 @@
                     boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.08)'
                   }}>
                     {/* Double logos : ecole gauche + Parcoursup droite */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid #eee' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                       {logoUrl ? <img src={logoUrl} alt={candidate.ecole} style={{ maxHeight: 45, maxWidth: 160 }} /> : <span></span>}
-                      <img src="/parcoursup/assets/images/logo-parcoursup.svg" alt="Parcoursup" style={{ maxHeight: 35, maxWidth: 120 }} />
+                      <img src="/parcoursup/assets/images/logo-parcoursup.svg" alt="Parcoursup" style={{ maxHeight: 35, maxWidth: 110, marginRight: 30 }} />
                     </div>
                     <div style={{ marginBottom: 16 }}>
                       <strong style={{ fontSize: 14 }}>{candidate.ecole}</strong><br/>
