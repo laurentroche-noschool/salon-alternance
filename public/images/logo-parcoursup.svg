@@ -1,17 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 90" width="360" height="90">
-  <!-- Symbole : 2 crochets en L superposes -->
-  <!-- Crochet rouge (en haut a droite) -->
-  <rect x="8"  y="8"  width="40" height="12" fill="#E5332A"/>
-  <rect x="36" y="8"  width="12" height="35" fill="#E5332A"/>
-  <!-- Crochet bleu marine (en bas a gauche) -->
-  <rect x="12" y="47" width="12" height="35" fill="#2E3A6E"/>
-  <rect x="12" y="71" width="40" height="12" fill="#2E3A6E"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 90" width="380" height="90">
+  <!-- Symbole : crochets -->
+  <!-- Crochet rouge (haut gauche) -->
+  <rect x="4"  y="5"  width="38" height="12" rx="2" ry="2" fill="#E5332A"/>
+  <rect x="30" y="5"  width="12" height="34" rx="2" ry="2" fill="#E5332A"/>
+  <!-- Crochet bleu marine (bas) -->
+  <rect x="8"  y="45" width="12" height="34" rx="2" ry="2" fill="#1E2B6B"/>
+  <rect x="8"  y="67" width="38" height="12" rx="2" ry="2" fill="#1E2B6B"/>
 
-  <!-- Texte principal -->
-  <text y="60" font-family="'Arial Black', Arial, 'Helvetica Neue', sans-serif" font-size="40" font-weight="900" letter-spacing="-1">
-    <tspan x="68" fill="#2E3A6E">parcours</tspan><tspan fill="#E5332A">sup</tspan>
-  </text>
-
-  <!-- Sous-titre -->
-  <text x="68" y="78" font-family="Arial, 'Helvetica Neue', sans-serif" font-size="10.5" font-weight="400" fill="#2E3A6E" letter-spacing="0.2">Entrez dans l&#x2019;enseignement sup&#233;rieur</text>
+  <!-- Texte principal tout en bleu marine, police arrondie -->
+  <text x="58" y="68" font-family="'Arial Rounded MT Bold', 'Helvetica Rounded', 'Nunito', 'Segoe UI', Arial, sans-serif" font-size="62" font-weight="900" fill="#1E2B6B" letter-spacing="-1">parcoursup</text>
 </svg>
