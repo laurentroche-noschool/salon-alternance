@@ -615,8 +615,8 @@
         }
         if (filters.multiType) {
           const mi = candidateMultiInfo;
-          if (filters.multiType === 'multi_ecole') list = list.filter(c => mi[c.id]?.multiEcole);
-          else if (filters.multiType === 'multi_formation') list = list.filter(c => mi[c.id]?.multiFormation);
+          if (filters.multiType === 'multi_ecole') list = list.filter(c => mi[c.id]?.multiEcole && !mi[c.id]?.multiFormation);
+          else if (filters.multiType === 'multi_formation') list = list.filter(c => mi[c.id]?.multiFormation && !mi[c.id]?.multiEcole);
           else if (filters.multiType === 'multi_both') list = list.filter(c => mi[c.id]?.multiEcole && mi[c.id]?.multiFormation);
           else if (filters.multiType === 'seche') list = list.filter(c => mi[c.id]?.seche);
         }
