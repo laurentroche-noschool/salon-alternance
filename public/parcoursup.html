@@ -571,18 +571,21 @@
 
       // Detecter les candidats multi-ecole, multi-formation, candidature seche
       const candidateMultiInfo = useMemo(() => {
+        const norm = (s) => (s || '').toString().trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const byName = {};
         candidates.forEach(c => {
-          const key = ((c.nom || '').trim().toLowerCase() + '|' + (c.prenom || '').trim().toLowerCase());
+          const key = norm(c.nom) + '|' + norm(c.prenom);
           if (!key || key === '|') return;
           if (!byName[key]) byName[key] = { ecoles: new Set(), formations: new Set(), ids: [] };
-          byName[key].ecoles.add(c.ecole);
-          byName[key].formations.add(c.formation);
+          const ecoleN = norm(c.ecole);
+          const formN = norm(c.formation);
+          if (ecoleN) byName[key].ecoles.add(ecoleN);
+          if (formN) byName[key].formations.add(formN);
           byName[key].ids.push(c.id);
         });
         const info = {};
         candidates.forEach(c => {
-          const key = ((c.nom || '').trim().toLowerCase() + '|' + (c.prenom || '').trim().toLowerCase());
+          const key = norm(c.nom) + '|' + norm(c.prenom);
           const data = byName[key];
           if (!data) { info[c.id] = { multiEcole: false, multiFormation: false, seche: true }; return; }
           info[c.id] = {
