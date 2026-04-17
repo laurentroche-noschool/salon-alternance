@@ -564,7 +564,7 @@ app.get('/api/registrations', async (req, res) => {
 app.post('/api/companies', async (req, res) => {
   try {
     const { pin, nom, filiere, contact, secteur, website } = req.body;
-    if (pin !== CRE_PIN) return res.status(401).json({ error: 'PIN incorrect' });
+    if (pin !== CRE_PIN && pin !== ADMIN_PIN) return res.status(401).json({ error: 'PIN incorrect' });
     if (!nom || !filiere) return res.status(400).json({ error: 'Nom et filière obligatoires' });
 
     // Get next ID
