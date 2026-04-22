@@ -506,6 +506,101 @@ app.get('/api/admin/companies/:id/detail', async (req, res) => {
   }
 });
 
+// GET diagnostic : lister les entreprises avec nom en doublon (case-insensitive)
+// Utile quand une entreprise « ne voit pas ses candidats » côté ENT : en général
+// il existe deux lignes companies avec le même nom/nomAffichage, les étudiants
+// sont rattachés à l'une et l'entreprise clique sur l'autre.
+app.get('/api/admin/companies/duplicates', async (req, res) => {
+  try {
+    const { pin } = req.query;
+    if (pin !== ADMIN_PIN) return res.status(401).json({ error: 'Non autorisé' });
+    const [companies, students] = await Promise.all([getCompanies(), getAllStudents()]);
+    const countByCid = {};
+    for (const s of students) {
+      const cid = s.company_id;
+      countByCid[cid] = (countByCid[cid] || 0) + 1;
+    }
+    const norm = (v) => (v || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+    const groups = {};
+    for (const c of companies) {
+      const key = norm(c.nomAffichage || c.nom);
+      if (!key) continue;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push({
+        id: c.id,
+        nom: c.nom,
+        nomAffichage: c.nomAffichage || '',
+        filiere: c.filiere || '',
+        logoFile: c.logoFile || '',
+        nbStudents: countByCid[c.id] || 0,
+        createdAt: c.created_at
+      });
+    }
+    const duplicates = Object.keys(groups)
+      .filter(k => groups[k].length > 1)
+      .map(k => ({ name: k, entries: groups[k].sort((a, b) => b.nbStudents - a.nbStudents) }));
+    res.json({ duplicates });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST fusionner une entreprise (source) dans une autre (target) : tous les
+// students et ratings de :sourceId sont réassignés à :targetId, puis l'entrée
+// source est supprimée. Réservé admin.
+app.post('/api/admin/companies/:sourceId/merge-into/:targetId', async (req, res) => {
+  try {
+    const { pin } = req.body;
+    if (pin !== ADMIN_PIN) return res.status(401).json({ error: 'Non autorisé' });
+    const sourceId = parseInt(req.params.sourceId);
+    const targetId = parseInt(req.params.targetId);
+    if (!sourceId || !targetId || sourceId === targetId) {
+      return res.status(400).json({ error: 'IDs invalides' });
+    }
+
+    // Vérifier que les deux entreprises existent
+    const checkSrc = await supabase.from('companies').select('id,nom').eq('id', sourceId).single();
+    const checkTgt = await supabase.from('companies').select('id,nom').eq('id', targetId).single();
+    if (checkSrc.error || !checkSrc.data) return res.status(404).json({ error: 'Source introuvable' });
+    if (checkTgt.error || !checkTgt.data) return res.status(404).json({ error: 'Cible introuvable' });
+
+    // Éviter les collisions (student_id,company_id) dans ratings : supprimer
+    // d'abord les ratings source déjà présents sur la cible.
+    const srcRatings = await supabase.from('ratings').select('student_id').eq('company_id', sourceId);
+    sbCheck(srcRatings, 'list src ratings');
+    const srcStudentIds = (srcRatings.data || []).map(r => r.student_id);
+    let conflictsDeleted = 0;
+    if (srcStudentIds.length > 0) {
+      const existing = await supabase.from('ratings').select('student_id').eq('company_id', targetId).in('student_id', srcStudentIds);
+      sbCheck(existing, 'list tgt ratings');
+      const dupIds = (existing.data || []).map(r => r.student_id);
+      if (dupIds.length > 0) {
+        const del = await supabase.from('ratings').delete().eq('company_id', sourceId).in('student_id', dupIds);
+        sbCheck(del, 'delete conflicting src ratings');
+        conflictsDeleted = dupIds.length;
+      }
+    }
+
+    const upStudents = await supabase.from('students').update({ company_id: targetId }).eq('company_id', sourceId).select('id');
+    sbCheck(upStudents, 'reassign students');
+    const upRatings = await supabase.from('ratings').update({ company_id: targetId }).eq('company_id', sourceId).select('student_id');
+    sbCheck(upRatings, 'reassign ratings');
+
+    await supabase.from('presence').delete().eq('id', sourceId);
+    const delCompany = await supabase.from('companies').delete().eq('id', sourceId);
+    sbCheck(delCompany, 'delete source company');
+
+    res.json({
+      success: true,
+      studentsMoved: (upStudents.data || []).length,
+      ratingsMoved: (upRatings.data || []).length,
+      conflictsDeleted
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET students detail for admin
 app.get('/api/admin/students', async (req, res) => {
   try {
