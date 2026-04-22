@@ -1566,4 +1566,17 @@ app.listen(PORT, () => {
   console.log(`Accès réseau : http://[votre-ip]:${PORT}`);
   console.log(`PIN CRE      : ${CRE_PIN}`);
   console.log('========================================\n');
+
+  // ─── Keep-alive : empêche Render de mettre l'instance en veille ──────────────
+  const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+  if (process.env.RENDER_EXTERNAL_URL) {
+    setInterval(() => {
+      require('https').get(`${SELF_URL}/health`, (res) => {
+        console.log(`[keep-alive] ping OK - ${new Date().toISOString()}`);
+      }).on('error', (err) => {
+        console.warn(`[keep-alive] ping failed: ${err.message}`);
+      });
+    }, 10 * 60 * 1000); // toutes les 10 minutes
+    console.log(`[keep-alive] Auto-ping activé sur ${SELF_URL}/health`);
+  }
 });
