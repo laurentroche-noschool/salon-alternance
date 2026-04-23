@@ -3,12 +3,15 @@ const fs = require('fs');
 const path = require('path');
 const nodemailer = require('nodemailer');
 let WAClient, WALocalAuth;
+let waLoadError = null; // diagnostic: error from require('whatsapp-web.js')
+let waInitError = null; // diagnostic: error from WhatsApp client init/launch
 try {
   const wwjs = require('whatsapp-web.js');
   WAClient = wwjs.Client;
   WALocalAuth = wwjs.LocalAuth;
 } catch(e) {
-  console.log('[WhatsApp] whatsapp-web.js non disponible (normal sur cloud sans Chromium)');
+  waLoadError = e.message;
+  console.log('[WhatsApp] whatsapp-web.js non disponible:', e.message);
 }
 let QRCode;
 try { QRCode = require('qrcode'); } catch(e) {}
@@ -117,12 +120,14 @@ function initWhatsApp() {
 
     waClient.initialize().catch(err => {
       waStatus = 'unavailable';
+      waInitError = err.message;
       waClient = null;
       console.error('[WhatsApp] Erreur init (Chromium absent ?):', err.message);
     });
     console.log('[WhatsApp] Initialisation en cours...');
   } catch (e) {
     waStatus = 'unavailable';
+    waInitError = e.message;
     waClient = null;
     console.error('[WhatsApp] Erreur init:', e.message);
   }
@@ -1945,7 +1950,28 @@ setInterval(processQueue, 30000);
 
 // ============ SERVE HTML ============
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', whatsapp: waStatus, ts: Date.now() });
+  // Diagnostic etendu : expose les erreurs WhatsApp et le chemin Chromium
+  // pour pouvoir debugger depuis l'exterieur (pas de donnees sensibles).
+  const chromiumPath = process.env.PUPPETEER_EXECUTABLE_PATH || null;
+  let chromiumExists = null;
+  try {
+    if (chromiumPath) chromiumExists = fs.existsSync(chromiumPath);
+  } catch(_) {}
+  let wwjsInstalled = null;
+  try {
+    wwjsInstalled = fs.existsSync(path.join(__dirname, 'node_modules', 'whatsapp-web.js'));
+  } catch(_) {}
+  res.json({
+    status: 'ok',
+    whatsapp: waStatus,
+    whatsappLoadError: waLoadError,
+    whatsappInitError: waInitError,
+    chromiumPath,
+    chromiumExists,
+    wwjsInstalled,
+    nodeVersion: process.version,
+    ts: Date.now(),
+  });
 });
 
 app.get('/', (req, res) => {
