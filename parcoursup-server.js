@@ -31,6 +31,25 @@ function initWhatsApp() {
     console.log('[WhatsApp] Client non disponible - emails uniquement');
     return;
   }
+  // Nettoie les lock files Chromium laisses par un crash precedent
+  // (cause typique d'erreur "The browser is already running for ... userDataDir").
+  // La session WhatsApp elle-meme (IndexedDB, cookies auth) reste intacte.
+  try {
+    const authDir = path.join(__dirname, 'data', '.wwebjs_auth');
+    if (fs.existsSync(authDir)) {
+      const sessions = fs.readdirSync(authDir).filter(n => n.startsWith('session'));
+      for (const sessionName of sessions) {
+        for (const lockName of ['SingletonLock', 'SingletonCookie', 'SingletonSocket']) {
+          const lockPath = path.join(authDir, sessionName, lockName);
+          try { if (fs.existsSync(lockPath)) fs.unlinkSync(lockPath); } catch(_) {}
+        }
+      }
+    }
+  } catch(e) {
+    console.log('[WhatsApp] Nettoyage des lock files echoue (non bloquant):', e.message);
+  }
+  // Reset waInitError for cette nouvelle tentative
+  waInitError = null;
   try {
     waClient = new WAClient({
       authStrategy: new WALocalAuth({ dataPath: path.join(__dirname, 'data', '.wwebjs_auth') }),
