@@ -31,9 +31,21 @@ function initWhatsApp() {
     console.log('[WhatsApp] Client non disponible - emails uniquement');
     return;
   }
-  // Nettoie les lock files Chromium laisses par un crash precedent
-  // (cause typique d'erreur "The browser is already running for ... userDataDir").
-  // La session WhatsApp elle-meme (IndexedDB, cookies auth) reste intacte.
+  // Nettoie les processus Chromium orphelins + les lock files laisses par un
+  // crash precedent (cause typique d'erreur "The browser is already running
+  // for ... userDataDir"). La session WhatsApp (IndexedDB, cookies auth) reste
+  // intacte car on ne touche qu'aux fichiers Singleton* et aux processus
+  // Chromium attaches a .wwebjs_auth.
+  try {
+    const { execSync } = require('child_process');
+    // 1. Tuer tout Chromium zombie qui tient encore la session WhatsApp
+    try {
+      execSync('pkill -9 -f wwebjs_auth', { stdio: 'ignore', timeout: 5000 });
+      console.log('[WhatsApp] Processus Chromium orphelins nettoyes');
+    } catch(_) { /* pkill retourne 1 si aucun process matche, ignore */ }
+  } catch(e) {
+    console.log('[WhatsApp] pkill indisponible (non bloquant):', e.message);
+  }
   try {
     const authDir = path.join(__dirname, 'data', '.wwebjs_auth');
     if (fs.existsSync(authDir)) {
@@ -1578,8 +1590,10 @@ app.post('/parcoursup/api/automations/trigger', (req, res) => {
 });
 
 // Trigger automation for ALL candidates currently in a stage (retroactive)
+// Accepte optionnellement candidateIds: string[] pour cibler un sous-ensemble
+// (par ex. seulement les candidats d'une formation precise).
 app.post('/parcoursup/api/automations/trigger-all', (req, res) => {
-  const { stageId } = req.body;
+  const { stageId, candidateIds } = req.body;
   const config = loadJSON('parcoursup-config.json');
   const candidates = loadJSON('parcoursup-candidates.json');
   const queue = loadJSON('parcoursup-queue.json');
@@ -1590,7 +1604,15 @@ app.post('/parcoursup/api/automations/trigger-all', (req, res) => {
     return res.json({ triggered: 0, reason: 'automation_disabled' });
   }
 
-  const stageCandidates = candidates.filter(c => c.stage === stageId);
+  // Si candidateIds fourni, on intersecte avec stage (l'automatisation est
+  // toujours liee au stage, on ne la deborde pas vers des candidats hors stage).
+  let stageCandidates;
+  if (Array.isArray(candidateIds) && candidateIds.length > 0) {
+    const idSet = new Set(candidateIds);
+    stageCandidates = candidates.filter(c => idSet.has(c.id) && c.stage === stageId);
+  } else {
+    stageCandidates = candidates.filter(c => c.stage === stageId);
+  }
   const stageInfo = (config.stages || []).find(s => s.id === stageId);
   const now = new Date();
   let totalTriggered = 0;
@@ -1632,14 +1654,23 @@ app.post('/parcoursup/api/automations/trigger-all', (req, res) => {
   res.json({ triggered: totalTriggered, candidates: stageCandidates.length });
 });
 
-// Bulk send to all candidates in a stage
+// Bulk send to candidates in a stage (avec filtrage optionnel)
+// Accepte optionnellement candidateIds: string[] pour cibler un sous-ensemble
+// du stage (par ex. uniquement la formation BTS MCO de la colonne PDR).
+// Si candidateIds est absent ou vide, comportement legacy: tous les candidats du stage.
 app.post('/parcoursup/api/queue/bulk-send', (req, res) => {
-  const { stageId, channel, subject, message, delayMinutes, imageUrl } = req.body;
+  const { stageId, channel, subject, message, delayMinutes, imageUrl, candidateIds } = req.body;
   const candidates = loadJSON('parcoursup-candidates.json');
   const config = loadJSON('parcoursup-config.json');
   const queue = loadJSON('parcoursup-queue.json');
 
-  const stageCandidates = candidates.filter(c => c.stage === stageId);
+  let stageCandidates;
+  if (Array.isArray(candidateIds) && candidateIds.length > 0) {
+    const idSet = new Set(candidateIds);
+    stageCandidates = candidates.filter(c => idSet.has(c.id));
+  } else {
+    stageCandidates = candidates.filter(c => c.stage === stageId);
+  }
   const stageInfo = (config.stages || []).find(s => s.id === stageId);
   const now = new Date();
   const delayMs = (delayMinutes || 0) * 60 * 1000;
