@@ -2534,6 +2534,25 @@
                     </div>
                   </div>
 
+                  {/* Note anti-ban pour les envois WhatsApp en masse */}
+                  {channel === 'whatsapp' && filteredCandidates.length > 0 && (
+                    <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', padding: 10, borderRadius: 8, marginBottom: 12, fontSize: 12, color: '#9a3412' }}>
+                      <Icon name="alert-triangle" size={12} /> <strong>Ralentissement anti-ban WhatsApp actif</strong> : pause aléatoire de 3-8s entre chaque envoi pour eviter d'etre flagge spam.
+                      {filteredCandidates.length > 1 && (
+                        <> Duree estimee pour {filteredCandidates.length} message(s) : <strong>{
+                          (() => {
+                            const totalSec = filteredCandidates.length * 5.5;
+                            if (totalSec < 60) return `${Math.round(totalSec)} sec`;
+                            if (totalSec < 3600) return `~${Math.round(totalSec/60)} min`;
+                            const h = Math.floor(totalSec/3600);
+                            const m = Math.round((totalSec - h*3600)/60);
+                            return `~${h}h${m > 0 ? ` ${m}min` : ''}`;
+                          })()
+                        }</strong>. Les envois continuent en arriere-plan, tu peux fermer la modale.</>
+                      )}
+                    </div>
+                  )}
+
                   {channel === 'mail' && (
                     <div className="form-group">
                       <label>Objet du mail</label>

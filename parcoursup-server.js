@@ -1970,6 +1970,17 @@ async function processQueue() {
         errors++;
         console.error(`[Queue] Erreur WhatsApp ${item.candidatePhone}: ${e.message}`);
       }
+      // Anti-ban: pause aleatoire entre chaque envoi WhatsApp pour eviter les
+      // flags anti-spam de WhatsApp lors d'envois en masse depuis un compte
+      // perso. Configurable via WHATSAPP_MIN_DELAY_MS / WHATSAPP_MAX_DELAY_MS,
+      // defaut 3-8 secondes.
+      const minDelay = parseInt(process.env.WHATSAPP_MIN_DELAY_MS) || 3000;
+      const maxDelay = parseInt(process.env.WHATSAPP_MAX_DELAY_MS) || 8000;
+      const wait = minDelay + Math.floor(Math.random() * Math.max(0, maxDelay - minDelay));
+      if (wait > 0) {
+        console.log(`[Queue] Pause anti-ban WhatsApp: ${Math.round(wait/100)/10}s`);
+        await new Promise(r => setTimeout(r, wait));
+      }
     } else {
       item.status = 'sent';
       item.sentAt = now.toISOString();
