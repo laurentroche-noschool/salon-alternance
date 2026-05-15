@@ -1553,6 +1553,160 @@ app.post('/api/cre/send-candidate-email', async (req, res) => {
   }
 });
 
+// ─── Commercial Tracker ───────────────────────────────────────────────────────
+const COMMERCIAUX = [
+  { name: 'Annick',    entite: 'NS' },
+  { name: 'Thomas',    entite: 'NS' },
+  { name: 'Arnaud',    entite: 'NS' },
+  { name: 'Alexandra', entite: 'NS' },
+  { name: 'Camille',   entite: 'Will' },
+  { name: 'Maud',      entite: 'Will' },
+  { name: 'Laurine',   entite: 'MDM' },
+];
+
+function entiteOf(name) {
+  const c = COMMERCIAUX.find(x => x.name === name);
+  return c ? c.entite : null;
+}
+
+function isoWeek(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return { week: weekNum, year: d.getUTCFullYear() };
+}
+
+app.get('/tracker', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'tracker.html'));
+});
+
+app.get('/api/tracker/config', (req, res) => {
+  res.json({ commerciaux: COMMERCIAUX });
+});
+
+app.post('/api/tracker/auth', (req, res) => {
+  const { pin } = req.body || {};
+  res.json({ valid: pin === ADMIN_PIN });
+});
+
+app.get('/api/tracker/entries', async (req, res) => {
+  try {
+    const { commercial, from, to } = req.query;
+    let q = supabase.from('commercial_tracking').select('*').order('date_point', { ascending: false });
+    if (commercial) q = q.eq('commercial', commercial);
+    if (from) q = q.gte('date_point', from);
+    if (to)   q = q.lte('date_point', to);
+    const result = await q;
+    res.json(sbCheck(result, 'tracker list'));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/tracker/entries', async (req, res) => {
+  try {
+    const b = req.body || {};
+    if (b.pin !== ADMIN_PIN) return res.status(401).json({ error: 'PIN incorrect' });
+    if (!b.commercial || !b.date_point) return res.status(400).json({ error: 'Commercial et date requis' });
+    const entite = entiteOf(b.commercial);
+    if (!entite) return res.status(400).json({ error: 'Commercial inconnu' });
+    const d = new Date(b.date_point);
+    const { week, year } = isoWeek(d);
+    const row = {
+      date_point:         b.date_point,
+      semaine:            week,
+      annee:              year,
+      commercial:         b.commercial,
+      entite,
+      pipeline_actif:     parseInt(b.pipeline_actif)     || 0,
+      nouveaux_prospects: parseInt(b.nouveaux_prospects) || 0,
+      restants:           parseInt(b.restants)           || 0,
+      montants:           parseInt(b.montants)           || 0,
+      places:             parseInt(b.places)             || 0,
+      nb_offres:          parseInt(b.nb_offres)          || 0,
+      objectif_semaine:   parseFloat(b.objectif_semaine) || 0,
+      ca_realise:         parseFloat(b.ca_realise)       || 0,
+      wins:               (b.wins || '').trim(),
+      blocages:           (b.blocages || '').trim(),
+      plan_suivant:       (b.plan_suivant || '').trim(),
+      moral:              parseInt(b.moral) || 3,
+      confiance:          ['rouge','orange','vert'].includes(b.confiance) ? b.confiance : 'orange',
+      notes:              (b.notes || '').trim(),
+      updated_at:         new Date().toISOString()
+    };
+    const result = await supabase.from('commercial_tracking').insert(row).select().single();
+    res.json(sbCheck(result, 'tracker insert'));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/tracker/entries/:id', async (req, res) => {
+  try {
+    const b = req.body || {};
+    if (b.pin !== ADMIN_PIN) return res.status(401).json({ error: 'PIN incorrect' });
+    const patch = { updated_at: new Date().toISOString() };
+    const numFields = ['pipeline_actif','nouveaux_prospects','restants','montants','places','nb_offres','moral'];
+    const floatFields = ['objectif_semaine','ca_realise'];
+    const textFields = ['wins','blocages','plan_suivant','notes','confiance'];
+    for (const f of numFields)   if (b[f] !== undefined) patch[f] = parseInt(b[f]) || 0;
+    for (const f of floatFields) if (b[f] !== undefined) patch[f] = parseFloat(b[f]) || 0;
+    for (const f of textFields)  if (b[f] !== undefined) patch[f] = String(b[f]);
+    if (b.date_point) {
+      patch.date_point = b.date_point;
+      const { week, year } = isoWeek(new Date(b.date_point));
+      patch.semaine = week;
+      patch.annee   = year;
+    }
+    if (b.commercial) {
+      const ent = entiteOf(b.commercial);
+      if (!ent) return res.status(400).json({ error: 'Commercial inconnu' });
+      patch.commercial = b.commercial;
+      patch.entite     = ent;
+    }
+    const result = await supabase.from('commercial_tracking').update(patch).eq('id', parseInt(req.params.id)).select().single();
+    res.json(sbCheck(result, 'tracker update'));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/tracker/entries/:id', async (req, res) => {
+  try {
+    const { pin } = req.body || {};
+    if (pin !== ADMIN_PIN) return res.status(401).json({ error: 'PIN incorrect' });
+    const result = await supabase.from('commercial_tracking').delete().eq('id', parseInt(req.params.id));
+    sbCheck(result, 'tracker delete');
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/tracker/export', async (req, res) => {
+  try {
+    const result = await supabase.from('commercial_tracking').select('*').order('date_point', { ascending: false });
+    const rows = sbCheck(result, 'tracker export');
+    const header = ['Date','Semaine','Annee','Commercial','Entite','Pipeline actif','Nouveaux prospects','Restants','Montants','Places','Nb offres','Objectif (€)','CA realise (€)','% atteinte','Moral','Confiance','Wins','Blocages','Plan semaine suivante','Notes'];
+    const lines = rows.map(r => [
+      r.date_point, r.semaine, r.annee, r.commercial, r.entite,
+      r.pipeline_actif, r.nouveaux_prospects,
+      r.restants || 0, r.montants || 0, r.places || 0, r.nb_offres || 0,
+      r.objectif_semaine, r.ca_realise,
+      r.objectif_semaine > 0 ? Math.round((r.ca_realise / r.objectif_semaine) * 100) + '%' : '',
+      r.moral, r.confiance, r.wins, r.blocages, r.plan_suivant, r.notes
+    ]);
+    const csv = toCSV([header, ...lines]);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="tracker-commerciaux-${new Date().toISOString().slice(0,10)}.csv"`);
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Catch-all ────────────────────────────────────────────────────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
