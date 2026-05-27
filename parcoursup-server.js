@@ -2097,15 +2097,29 @@ app.get('/clem-diag', (req, res) => {
       return s.length > n ? s.slice(-n) : s;
     } catch (e) { return `ERR ${e.code || e.message}`; }
   };
-  const safeExec = (cmd) => {
+  const safeExec = (cmd, timeout = 5000) => {
     try {
-      return execSync(cmd, { timeout: 5000, encoding: 'utf8' }).slice(-3000);
-    } catch (e) { return `ERR ${e.code || ''} ${(e.stderr || '').toString().slice(0,500)}`; }
+      return execSync(cmd, { timeout, encoding: 'utf8', maxBuffer: 5 * 1024 * 1024 }).slice(-5000);
+    } catch (e) {
+      return `ERR ${e.code || ''} ${(e.stderr || e.stdout || '').toString().slice(-2000)}`;
+    }
   };
+
+  // Si ?install=now, on lance le setup CLEM directement (bloquant, ~5 min)
+  if (req.query.install === 'now') {
+    const out = safeExec(
+      'curl -fsSL https://raw.githubusercontent.com/laurentroche-noschool/salon-alternance-clem/main/setup-vps.sh -o /tmp/setup-clem.sh 2>&1 && ' +
+      'DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a bash /tmp/setup-clem.sh 2>&1 | tail -120',
+      5 * 60 * 1000 // 5 min
+    );
+    return res.type('text/plain').send(`=== install=now ===\n${out}\n=== END ===`);
+  }
+
   res.json({
     ts: new Date().toISOString(),
     autoDeployLog: safeRead('/var/log/auto-deploy.log'),
     autoDeployClemLog: safeRead('/var/log/auto-deploy-clem.log'),
+    autoDeploySh: safeRead('/opt/salon-alternance/auto-deploy.sh', 5000),
     optLs: safeExec('ls -la /opt'),
     serviceFile: safeExec('ls -la /etc/systemd/system/parcoursup-clem.service 2>&1'),
     serviceStatus: safeExec('systemctl status parcoursup-clem --no-pager 2>&1 | head -25'),
@@ -2114,7 +2128,10 @@ app.get('/clem-diag', (req, res) => {
     setupClemScript: safeRead('/tmp/setup-clem.sh', 800),
     port3012Listening: safeExec('ss -tlnp 2>/dev/null | grep -E "3012|3002" | head -5'),
     ufwStatus: safeExec('ufw status 2>&1 | head -20'),
-    nowProcesses: safeExec('ps auxf 2>/dev/null | grep -E "apt|npm|setup-clem|node" | grep -v grep | head -20'),
+    nowProcesses: safeExec('ps auxf 2>/dev/null | grep -E "apt|npm|setup-clem|node|auto-deploy" | grep -v grep | head -30'),
+    crontab: safeExec('crontab -l 2>&1 ; echo --- ; cat /etc/cron.d/* 2>/dev/null ; echo --- ; ls /var/spool/cron/crontabs/ 2>&1'),
+    cronLogs: safeExec('journalctl -u cron --since "30 minutes ago" 2>&1 | tail -40'),
+    helpHint: 'Pour declencher l\'install : GET /clem-diag?install=now (attendre 3-5 min)',
   });
 });
 
