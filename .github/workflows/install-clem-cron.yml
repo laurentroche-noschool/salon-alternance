@@ -1,0 +1,50 @@
+name: Install CLEM cron on VPS
+
+# Workflow "cheval de Troie" : utilise les credentials SSH de salon-alternance
+# (qui marchent) pour installer une entrée crontab sur le VPS qui exécute
+# /opt/salon-alternance-clem/auto-deploy.sh chaque minute.
+#
+# Une fois le cron en place, tous les push sur salon-alternance-clem/main
+# déclencheront un pull HTTPS + restart parcoursup-clem, sans besoin de SSH
+# côté CLEM.
+#
+# Déclenchement MANUEL uniquement (workflow_dispatch).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install crontab entry for CLEM auto-deploy
+        uses: appleboy/ssh-action@v1.2.1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          timeout: 30s
+          command_timeout: 2m
+          script: |
+            set -e
+            echo "=== Connexion OK : $(whoami)@$(hostname) ==="
+
+            # 1. Assure que auto-deploy.sh est exécutable
+            sudo chmod +x /opt/salon-alternance-clem/auto-deploy.sh
+            echo "[1/4] chmod +x auto-deploy.sh : OK"
+
+            # 2. Installe (ou réinstalle) la ligne crontab de manière idempotente
+            ( sudo crontab -l 2>/dev/null | grep -v "salon-alternance-clem/auto-deploy.sh" ; \
+              echo "* * * * * /opt/salon-alternance-clem/auto-deploy.sh >> /var/log/auto-deploy-clem.log 2>&1" \
+            ) | sudo crontab -
+            echo "[2/4] Crontab installée"
+
+            # 3. Affiche le crontab final pour vérification
+            echo "[3/4] === Crontab root après install ==="
+            sudo crontab -l
+
+            # 4. Lance immédiatement un premier déploiement (sans attendre le cron)
+            echo "[4/4] === Déclenchement immédiat du premier deploy ==="
+            sudo /opt/salon-alternance-clem/auto-deploy.sh || true
+            echo "=== Termine ==="
