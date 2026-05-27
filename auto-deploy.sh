@@ -18,6 +18,29 @@ LOG_PREFIX="[$(date '+%Y-%m-%d %H:%M:%S')]"
 exec 9>"$LOCK"
 flock -n 9 || exit 0
 
+# === Hook one-shot : installation CLEM ===
+# Si le service parcoursup-clem n'existe pas encore, on le provisionne en
+# telechargeant et executant le setup du repo salon-alternance-clem. Une fois
+# le service systemd cree, ce bloc devient un no-op (idempotent).
+if [ ! -f /etc/systemd/system/parcoursup-clem.service ]; then
+    echo "$LOG_PREFIX [CLEM] Installation initiale du service parcoursup-clem..."
+    curl -fsSL https://raw.githubusercontent.com/laurentroche-noschool/salon-alternance-clem/main/setup-vps.sh \
+        -o /tmp/setup-clem.sh 2>/dev/null
+    if [ -s /tmp/setup-clem.sh ]; then
+        bash /tmp/setup-clem.sh 2>&1 | tail -20
+        echo "$LOG_PREFIX [CLEM] Installation terminee."
+    else
+        echo "$LOG_PREFIX [CLEM] Telechargement de setup-vps.sh impossible, on reessaiera plus tard."
+    fi
+fi
+
+# === Hook one-shot : cron auto-deploy CLEM ===
+# Une fois CLEM installe, on s'assure que son propre cron auto-deploy tourne aussi.
+if [ -d /opt/salon-alternance-clem ] && ! crontab -l 2>/dev/null | grep -q "salon-alternance-clem/auto-deploy.sh"; then
+    echo "$LOG_PREFIX [CLEM] Ajout du cron auto-deploy CLEM..."
+    ( crontab -l 2>/dev/null ; echo "* * * * * /opt/salon-alternance-clem/auto-deploy.sh >> /var/log/auto-deploy-clem.log 2>&1" ) | crontab -
+fi
+
 cd "$REPO_DIR" || { echo "$LOG_PREFIX ERREUR: cd $REPO_DIR"; exit 1; }
 
 # Recupere les commits distants sans toucher au working tree

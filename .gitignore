@@ -8,3 +8,6 @@ Thumbs.db
 data/.wwebjs_auth/
 data/parcoursup-config.json
 .claude/settings.local.json
+
+# Dossier de bootstrap pour la duplication CLEM (local uniquement)
+_clem-bootstrap/
