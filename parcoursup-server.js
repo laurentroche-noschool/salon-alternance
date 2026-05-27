@@ -68,6 +68,10 @@ function initWhatsApp() {
       puppeteer: {
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--no-first-run'],
+        // Augmente le timeout RPC Chromium (defaut 30s) — evite l'erreur
+        // "Runtime.callFunctionOn timed out" quand WhatsApp Web est en pleine
+        // sync au moment d'un envoi (typique apres reconnexion).
+        protocolTimeout: 120000,
       }
     });
 
@@ -178,12 +182,9 @@ async function sendWhatsApp(phone, message) {
   // WhatsApp format: countrycode + number + @c.us
   const chatId = cleanPhone + '@c.us';
 
-  // Check if number is registered on WhatsApp
-  const isRegistered = await waClient.isRegisteredUser(chatId);
-  if (!isRegistered) {
-    throw new Error(`${phone} n'est pas sur WhatsApp`);
-  }
-
+  // Note: on a retire le pre-flight isRegisteredUser, qui est lent et peut
+  // timeout sur Puppeteer. Si le numero n'est pas sur WhatsApp, sendMessage
+  // levera une erreur explicite qui sera catchee par l'appelant.
   await waClient.sendMessage(chatId, message);
   return chatId;
 }
@@ -1802,6 +1803,58 @@ app.get('/parcoursup/api/whatsapp/status', (req, res) => {
   });
 });
 
+// Envoi WhatsApp manuel a 1 candidat (depuis la fiche). Permet d'envoyer
+// un message personnalise (eventuellement issu d'un modele par stage) via
+// le compte WhatsApp connecte au serveur. Log automatiquement une relance.
+app.post('/parcoursup/api/whatsapp/send-individual', async (req, res) => {
+  const { candidateId, message } = req.body || {};
+  if (!candidateId || !message || !String(message).trim()) {
+    return res.status(400).json({ ok: false, error: 'candidateId et message requis' });
+  }
+  const candidates = loadJSON('parcoursup-candidates.json');
+  const candidate = candidates.find(c => c.id === candidateId);
+  if (!candidate) return res.status(404).json({ ok: false, error: 'Candidat introuvable' });
+  if (!candidate.telephone) return res.status(400).json({ ok: false, error: 'Aucun telephone sur la fiche du candidat' });
+
+  // Substitution des variables du template ({{prenom}}, etc.)
+  const config = loadJSON('parcoursup-config.json');
+  const finalMessage = replaceTemplateVars(String(message), candidate, config);
+
+  try {
+    const chatId = await sendWhatsApp(candidate.telephone, finalMessage);
+    // Log relance
+    const relances = loadJSON('parcoursup-relances.json');
+    relances.push({
+      id: genId(),
+      candidateId: candidate.id,
+      type: 'whatsapp',
+      date: new Date().toISOString(),
+      notes: `[INDIVIDUEL] ${finalMessage.substring(0, 200)}${finalMessage.length > 200 ? '...' : ''}`,
+      result: 'envoye',
+      createdBy: 'Manuel'
+    });
+    saveJSON('parcoursup-relances.json', relances);
+    broadcast('relances');
+    res.json({ ok: true, chatId, sent: finalMessage });
+  } catch (e) {
+    console.error('[WhatsApp individuel] Erreur envoi a', candidate.telephone, ':', e.message);
+    // Log la tentative ratee aussi
+    const relances = loadJSON('parcoursup-relances.json');
+    relances.push({
+      id: genId(),
+      candidateId: candidate.id,
+      type: 'whatsapp',
+      date: new Date().toISOString(),
+      notes: `[INDIVIDUEL ECHEC] ${e.message}`,
+      result: 'echoue',
+      createdBy: 'Manuel'
+    });
+    saveJSON('parcoursup-relances.json', relances);
+    broadcast('relances');
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 app.post('/parcoursup/api/whatsapp/reconnect', (req, res) => {
   if (waClient) {
     try { waClient.destroy(); } catch(e) {}
@@ -2032,6 +2085,36 @@ app.get('/health', (req, res) => {
     wwjsInstalled,
     nodeVersion: process.version,
     ts: Date.now(),
+  });
+});
+
+// ============ DIAG TEMPORAIRE pour debug de l'install CLEM (peut etre retire apres) ============
+app.get('/clem-diag', (req, res) => {
+  const { execSync } = require('child_process');
+  const safeRead = (p, n = 8000) => {
+    try {
+      const s = fs.readFileSync(p, 'utf8');
+      return s.length > n ? s.slice(-n) : s;
+    } catch (e) { return `ERR ${e.code || e.message}`; }
+  };
+  const safeExec = (cmd) => {
+    try {
+      return execSync(cmd, { timeout: 5000, encoding: 'utf8' }).slice(-3000);
+    } catch (e) { return `ERR ${e.code || ''} ${(e.stderr || '').toString().slice(0,500)}`; }
+  };
+  res.json({
+    ts: new Date().toISOString(),
+    autoDeployLog: safeRead('/var/log/auto-deploy.log'),
+    autoDeployClemLog: safeRead('/var/log/auto-deploy-clem.log'),
+    optLs: safeExec('ls -la /opt'),
+    serviceFile: safeExec('ls -la /etc/systemd/system/parcoursup-clem.service 2>&1'),
+    serviceStatus: safeExec('systemctl status parcoursup-clem --no-pager 2>&1 | head -25'),
+    clemRepoExists: fs.existsSync('/opt/salon-alternance-clem'),
+    clemServiceExists: fs.existsSync('/etc/systemd/system/parcoursup-clem.service'),
+    setupClemScript: safeRead('/tmp/setup-clem.sh', 800),
+    port3012Listening: safeExec('ss -tlnp 2>/dev/null | grep -E "3012|3002" | head -5'),
+    ufwStatus: safeExec('ufw status 2>&1 | head -20'),
+    nowProcesses: safeExec('ps auxf 2>/dev/null | grep -E "apt|npm|setup-clem|node" | grep -v grep | head -20'),
   });
 });
 

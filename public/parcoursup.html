@@ -1863,6 +1863,24 @@
       const [showCourrier, setShowCourrier] = useState(false);
       const saveTimeoutRef = useRef(null);
 
+      // === Message WhatsApp editable par etape ===
+      // Template par defaut applique si aucun modele sauvegarde pour ce stage.
+      const getDefaultWaTemplate = (cand) =>
+        `Bonjour {{prenom}},\n\nNous échangeons à propos de votre candidature pour {{formation}} chez {{ecole}}.\n\nCordialement,\nService Admissions`;
+      const stageTemplate = (config.individualWhatsappTemplates || {})[candidate.stage]
+        || getDefaultWaTemplate(candidate);
+      const [waMessage, setWaMessage] = useState(stageTemplate);
+      const [sendingWa, setSendingWa] = useState(false);
+      const [savingWaTemplate, setSavingWaTemplate] = useState(false);
+      const [waResult, setWaResult] = useState(null);
+
+      // Resynchronise le template a chaque changement de candidat OU de stage
+      useEffect(() => {
+        const t = (config.individualWhatsappTemplates || {})[candidate.stage] || getDefaultWaTemplate(candidate);
+        setWaMessage(t);
+        setWaResult(null);
+      }, [candidate.id, candidate.stage]);
+
       // Resynchroniser le form quand on change de candidat (ou quand ses donnees sont mises a jour)
       useEffect(() => {
         setForm({ ...candidate });
@@ -1889,6 +1907,49 @@
         if (!relanceForm.type) return;
         onAddRelance({ ...relanceForm, candidateId: candidate.id });
         setRelanceForm({ type: 'telephone', notes: '', result: 'autre', createdBy: '' });
+      };
+
+      // === Handlers du message WhatsApp individuel ===
+      const stageLabelForWa = (config.stages || []).find(s => s.id === candidate.stage)?.label || candidate.stage || '?';
+
+      const handleSaveWaTemplate = async () => {
+        setSavingWaTemplate(true);
+        setWaResult(null);
+        try {
+          const newConfig = {
+            ...config,
+            individualWhatsappTemplates: {
+              ...(config.individualWhatsappTemplates || {}),
+              [candidate.stage]: waMessage
+            }
+          };
+          await api('/config', { method: 'POST', body: newConfig });
+          setWaResult({ ok: true, message: `Modele sauvegarde pour l'etape "${stageLabelForWa}"` });
+        } catch (e) {
+          setWaResult({ ok: false, message: 'Erreur sauvegarde : ' + (e.message || e) });
+        }
+        setSavingWaTemplate(false);
+      };
+
+      const handleSendWaIndividual = async () => {
+        if (!waMessage.trim()) return;
+        setSendingWa(true);
+        setWaResult(null);
+        try {
+          const r = await api('/whatsapp/send-individual', {
+            method: 'POST',
+            body: { candidateId: candidate.id, message: waMessage }
+          });
+          if (r && r.ok) {
+            setWaResult({ ok: true, message: `WhatsApp envoye a ${form.prenom || ''} ${form.nom || ''} (${form.telephone || ''})` });
+            if (onReloadRelances) onReloadRelances();
+          } else {
+            setWaResult({ ok: false, message: 'Echec : ' + (r?.error || 'erreur inconnue') });
+          }
+        } catch (e) {
+          setWaResult({ ok: false, message: 'Erreur reseau : ' + (e.message || e) });
+        }
+        setSendingWa(false);
       };
 
       const formations = form.ecole && config.ecoles[form.ecole]
@@ -2090,6 +2151,59 @@
                   onClose={() => setShowCourrier(false)}
                   onAddRelance={() => { if (onReloadRelances) onReloadRelances(); }}
                 />
+              )}
+
+              {/* ===== Message WhatsApp individuel editable par etape ===== */}
+              {form.telephone && (
+                <div className="drawer-section">
+                  <h3>
+                    <Icon name="message-circle" size={14} color="#25D366" /> Message WhatsApp personnalise
+                  </h3>
+                  <p style={{ fontSize: 11, color: '#999', marginBottom: 8 }}>
+                    Modele pre-rempli pour l'etape <strong>{stageLabelForWa}</strong>.
+                    Editez le texte puis envoyez via le compte WhatsApp connecte au serveur.
+                    Sauvegardez votre version pour la reutiliser sur les prochaines fiches de cette etape.
+                  </p>
+                  <textarea
+                    value={waMessage}
+                    onChange={e => setWaMessage(e.target.value)}
+                    rows={7}
+                    placeholder="Bonjour {{prenom}}, ..."
+                    style={{ width: '100%', fontFamily: 'inherit', fontSize: 13, padding: 10, borderRadius: 6, border: '1px solid #ddd' }}
+                  />
+                  <div style={{ fontSize: 11, color: '#888', marginTop: 4, lineHeight: 1.6 }}>
+                    <strong>Variables (clic pour inserer) :</strong>{' '}
+                    {['{{prenom}}','{{nom}}','{{formation}}','{{ecole}}','{{telephone}}','{{email}}','{{chargeAdmission}}','{{conseillerFormation}}','{{dateJour}}'].map(v => (
+                      <code key={v}
+                        style={{ background: '#f0f0f0', padding: '1px 6px', borderRadius: 4, cursor: 'pointer', marginRight: 4, fontSize: 11 }}
+                        onClick={() => setWaMessage(m => m + v)}>{v}</code>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                    <button className="btn btn-sm btn-outline"
+                      onClick={handleSaveWaTemplate}
+                      disabled={savingWaTemplate || !waMessage.trim()}
+                      title={`Enregistre ce texte comme modele par defaut pour l'etape "${stageLabelForWa}"`}>
+                      <Icon name="check" size={12} /> {savingWaTemplate ? 'Sauvegarde...' : `Sauvegarder pour "${stageLabelForWa}"`}
+                    </button>
+                    <button className="btn btn-sm btn-primary"
+                      style={{ background: '#25D366', borderColor: '#25D366' }}
+                      onClick={handleSendWaIndividual}
+                      disabled={sendingWa || !waMessage.trim()}>
+                      <Icon name="send" size={12} /> {sendingWa ? 'Envoi en cours...' : 'Envoyer ce WhatsApp'}
+                    </button>
+                  </div>
+                  {waResult && (
+                    <div style={{
+                      marginTop: 10, padding: 10, borderRadius: 6, fontSize: 12,
+                      background: waResult.ok ? '#dcfce7' : '#fee2e2',
+                      color: waResult.ok ? '#065f46' : '#991b1b',
+                      border: '1px solid ' + (waResult.ok ? '#86efac' : '#fca5a5')
+                    }}>
+                      {waResult.ok ? '✅ ' : '❌ '}{waResult.message}
+                    </div>
+                  )}
+                </div>
               )}
 
               <div className="drawer-section">
