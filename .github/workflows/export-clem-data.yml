@@ -1,0 +1,93 @@
+name: Export CLEM data from VPS
+
+# Workflow de migration : se connecte au VPS, archive tous les fichiers
+# de données sensibles de l'app CLEM (data + .env + uploads + auth WhatsApp),
+# rapatrie l'archive sur le runner et l'expose comme artifact téléchargeable.
+#
+# Déclenchement MANUEL uniquement (workflow_dispatch).
+#
+# À utiliser une fois pour préparer la migration vers une nouvelle infra.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Préparer l'archive sur le VPS
+        uses: appleboy/ssh-action@v1.2.1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          timeout: 30s
+          command_timeout: 5m
+          script: |
+            set -e
+            echo "=== Préparation de l'export CLEM ==="
+            STAMP=$(date +%Y%m%d-%H%M%S)
+            OUT=/tmp/clem-migration-$STAMP.tar.gz
+            cd /opt/salon-alternance-clem
+
+            # Liste ce qu'on va archiver
+            echo "=== Contenu à archiver ==="
+            echo "[.env]" && sudo ls -la .env.parcoursup 2>&1 || echo "(absent)"
+            echo "[data/]" && sudo du -sh data/ 2>&1 || echo "(absent)"
+
+            # Crée l'archive : data complète + .env + scripts utiles
+            sudo tar czf $OUT \
+              -C /opt/salon-alternance-clem \
+              .env.parcoursup \
+              data \
+              auto-deploy.sh \
+              setup-vps.sh 2>&1 | tail -20 || true
+
+            sudo chmod 644 $OUT
+            echo "=== Archive créée ==="
+            ls -lh $OUT
+            echo "=== Contenu (top-level) ==="
+            sudo tar tzf $OUT | head -40
+            echo "=== TOTAL FICHIERS ==="
+            sudo tar tzf $OUT | wc -l
+
+            # Expose le chemin via stdout pour le step suivant
+            echo "EXPORT_PATH=$OUT" | sudo tee /tmp/clem-export-path
+
+      - name: Télécharger l'archive depuis le VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          source: "/tmp/clem-migration-*.tar.gz"
+          target: "."
+          strip_components: 2
+
+      - name: Nettoyer l'archive temporaire sur le VPS
+        if: always()
+        uses: appleboy/ssh-action@v1.2.1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          timeout: 30s
+          script: |
+            sudo rm -f /tmp/clem-migration-*.tar.gz /tmp/clem-export-path
+            echo "Cleanup OK"
+
+      - name: Lister les fichiers téléchargés
+        run: |
+          ls -lh clem-migration-*.tar.gz
+          echo "Taille totale : $(du -sh clem-migration-*.tar.gz)"
+
+      - name: Upload comme artifact GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: clem-migration-data
+          path: clem-migration-*.tar.gz
+          retention-days: 7
+          if-no-files-found: error
