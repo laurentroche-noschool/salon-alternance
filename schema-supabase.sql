@@ -88,6 +88,45 @@ create table if not exists public.self_registrations (
   created_at  timestamptz default now()
 );
 
+-- TABLE: commercial_tracking (suivi hebdo des commerciaux)
+-- KPI métier :
+--   restants   : étudiants qui poursuivent dans l'année supérieure naturellement (ex: BTS1 -> BTS2)
+--   montants   : étudiants qui terminent un cycle et montent (ex: BTS2 -> Bachelor)
+--   places     : étudiants placés en alternance (contrats signés)
+--   nb_offres  : nombre d'offres d'alternance disponibles
+create table if not exists public.commercial_tracking (
+  id                 serial primary key,
+  date_point         date not null,
+  semaine            integer not null,
+  annee              integer not null,
+  commercial         text not null,
+  entite             text not null,
+  pipeline_actif     integer default 0,
+  nouveaux_prospects integer default 0,
+  restants           integer default 0,
+  montants           integer default 0,
+  places             integer default 0,
+  nb_offres          integer default 0,
+  objectif_semaine   numeric default 0,
+  ca_realise         numeric default 0,
+  wins               text default '',
+  blocages           text default '',
+  plan_suivant       text default '',
+  moral              integer default 3,
+  confiance          text default 'orange',
+  notes              text default '',
+  created_at         timestamptz default now(),
+  updated_at         timestamptz default now()
+);
+create index if not exists idx_ct_commercial on public.commercial_tracking(commercial);
+create index if not exists idx_ct_date on public.commercial_tracking(date_point);
+
+-- Migration douce pour bases existantes : ajout colonnes si manquantes
+alter table public.commercial_tracking add column if not exists restants  integer default 0;
+alter table public.commercial_tracking add column if not exists montants  integer default 0;
+alter table public.commercial_tracking add column if not exists places    integer default 0;
+alter table public.commercial_tracking add column if not exists nb_offres integer default 0;
+
 -- ============================================================
 -- POLICIES RLS (Row Level Security) — autoriser tout depuis service key
 -- ============================================================
@@ -97,6 +136,7 @@ alter table public.ratings          enable row level security;
 alter table public.presence         enable row level security;
 alter table public.sheet_local      enable row level security;
 alter table public.self_registrations enable row level security;
+alter table public.commercial_tracking enable row level security;
 
 -- Autoriser toutes les opérations via la service key (backend Node.js)
 create policy "allow_all_companies"          on public.companies          for all using (true) with check (true);
@@ -105,3 +145,4 @@ create policy "allow_all_ratings"            on public.ratings            for al
 create policy "allow_all_presence"           on public.presence           for all using (true) with check (true);
 create policy "allow_all_sheet_local"        on public.sheet_local        for all using (true) with check (true);
 create policy "allow_all_self_registrations" on public.self_registrations for all using (true) with check (true);
+create policy "allow_all_commercial_tracking" on public.commercial_tracking for all using (true) with check (true);

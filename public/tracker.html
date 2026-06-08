@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#6366f1">
+<title>Tracker Commerciaux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --bg: #f8fafc;
+    --card: #fff;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --green: #16a34a;
+    --orange: #f59e0b;
+    --red: #dc2626;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.05);
+  }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; padding: 16px 20px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 10; }
+  .header h1 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .header h1 i { font-size: 20px; }
+  .header .sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+
+  /* Tabs */
+  .tabs { display: flex; background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 60px; z-index: 9; }
+  .tab { flex: 1; padding: 14px; text-align: center; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; font-size: 14px; }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .tab i { margin-right: 6px; }
+
+  /* Container */
+  .container { max-width: 720px; margin: 0 auto; padding: 16px; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Cards */
+  .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .card-title .badge { background: var(--primary); color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 11px; text-transform: none; letter-spacing: 0; }
+
+  /* Form */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .field label .opt { color: var(--text-muted); font-weight: 400; font-size: 11px; }
+  input, select, textarea {
+    width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+    font-size: 16px; font-family: inherit; background: #fff; color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+  textarea { resize: vertical; min-height: 70px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Pill toggles */
+  .pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pill { flex: 1; min-width: 60px; padding: 12px 8px; border: 1.5px solid var(--border); border-radius: 10px; background: #fff; text-align: center; cursor: pointer; font-size: 20px; transition: all 0.15s; user-select: none; }
+  .pill:hover { border-color: var(--primary); }
+  .pill.active { border-color: var(--primary); background: rgba(99,102,241,0.08); }
+  .pill .lbl { display: block; font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: 600; }
+  .pill.conf-rouge.active  { border-color: var(--red);    background: rgba(220,38,38,0.08); }
+  .pill.conf-orange.active { border-color: var(--orange); background: rgba(245,158,11,0.10); }
+  .pill.conf-vert.active   { border-color: var(--green);  background: rgba(22,163,74,0.10); }
+
+  /* Entité badge */
+  .entite-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+  .entite-NS  { background: #dbeafe; color: #1e40af; }
+  .entite-Will{ background: #fce7f3; color: #be185d; }
+  .entite-MDM { background: #d1fae5; color: #065f46; }
+
+  /* Buttons */
+  button.btn { border: none; padding: 14px 18px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: inherit; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+  button.btn-primary { background: var(--primary); color: #fff; width: 100%; }
+  button.btn-primary:hover { background: var(--primary-dark); }
+  button.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.btn-secondary { background: #fff; color: var(--text); border: 1.5px solid var(--border); }
+  button.btn-ghost { background: transparent; color: var(--text-muted); padding: 6px 10px; font-size: 13px; }
+  button.btn-ghost:hover { color: var(--red); }
+
+  /* KPI grid */
+  .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+  .kpi { background: var(--card); border-radius: 12px; padding: 14px; box-shadow: var(--shadow); }
+  .kpi-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-value { font-size: 24px; font-weight: 800; color: var(--text); margin-top: 4px; }
+  .kpi-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .kpi-value.green { color: var(--green); }
+  .kpi-value.orange { color: var(--orange); }
+  .kpi-value.red { color: var(--red); }
+
+  /* Filters */
+  .filters { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .filters select { flex: 1; min-width: 130px; padding: 10px 12px; font-size: 14px; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { background: #f1f5f9; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.4px; }
+  tr:hover { background: #f8fafc; }
+  td.actions { text-align: right; }
+
+  /* PIN screen */
+  .pin-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; padding: 20px; }
+  .pin-screen .card { width: 100%; max-width: 360px; padding: 28px; text-align: center; }
+  .pin-screen i.lock { font-size: 40px; color: var(--primary); margin-bottom: 14px; }
+  .pin-screen h2 { font-size: 20px; margin-bottom: 6px; }
+  .pin-screen p { color: var(--text-muted); font-size: 13px; margin-bottom: 18px; }
+  .pin-screen input { text-align: center; letter-spacing: 4px; font-weight: 700; font-size: 18px; }
+  .err { color: var(--red); font-size: 13px; margin-top: 8px; min-height: 18px; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 14px; font-weight: 500; box-shadow: var(--shadow-lg); opacity: 0; transition: all 0.3s; z-index: 100; }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.success { background: var(--green); }
+  .toast.error { background: var(--red); }
+
+  /* Chart container */
+  .chart-card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .chart-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .chart-card h3 i { color: var(--primary); }
+  .chart-wrap { position: relative; height: 260px; }
+
+  @media (max-width: 480px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .header h1 { font-size: 16px; }
+    .container { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PIN screen -->
+<div id="pinView" class="pin-screen">
+  <div class="card">
+    <i class="lock fa-solid fa-lock"></i>
+    <h2>Tracker commerciaux</h2>
+    <p>Saisir le PIN admin pour continuer</p>
+    <input id="pinInput" type="password" inputmode="numeric" maxlength="20" placeholder="••••••" autocomplete="off">
+    <div class="err" id="pinErr"></div>
+    <button class="btn btn-primary" style="margin-top:12px" onclick="checkPin()">Entrer</button>
+  </div>
+</div>
+
+<!-- Main app -->
+<div id="appView" style="display:none">
+
+  <div class="header">
+    <h1><i class="fa-solid fa-chart-line"></i> Tracker Commerciaux
+      <span style="margin-left:auto;font-size:12px;font-weight:500;opacity:.8" id="weekNow"></span>
+    </h1>
+    <div class="sub">Suivi hebdo • Pipeline · Signatures · Objectifs</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-view="saisie"><i class="fa-solid fa-pen"></i>Saisie</div>
+    <div class="tab" data-view="dashboard"><i class="fa-solid fa-gauge"></i>Dashboard</div>
+    <div class="tab" data-view="historique"><i class="fa-solid fa-clock-rotate-left"></i>Historique</div>
+  </div>
+
+  <div class="container">
+
+    <!-- SAISIE -->
+    <div id="saisieView" class="view active">
+      <form id="saisieForm" onsubmit="return saveEntry(event)">
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-user-tie"></i>Commercial <span class="badge" id="entiteBadge" style="display:none"></span></div>
+          <div class="grid-2">
+            <div class="field">
+              <label>Commercial</label>
+              <select id="f_commercial" required onchange="updateEntiteBadge()">
+                <option value="">— Choisir —</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Date du point</label>
+              <input type="date" id="f_date" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-users"></i>Étudiants — flux</div>
+          <div class="grid-2">
+            <div class="field">
+              <label>🔁 Restants <span class="opt">(année sup naturelle)</span></label>
+              <input type="number" id="f_restants" min="0" inputmode="numeric" value="0">
+            </div>
+            <div class="field">
+              <label>⬆️ Montants <span class="opt">(BTS2 → Bachelor…)</span></label>
+              <input type="number" id="f_montants" min="0" inputmode="numeric" value="0">
+            </div>
+            <div class="field">
+              <label>✅ Placés <span class="opt">(contrats signés)</span></label>
+              <input type="number" id="f_places" min="0" inputmode="numeric" value="0">
+            </div>
+            <div class="field">
+              <label>📋 Nb d'offres <span class="opt">(disponibles)</span></label>
+              <input type="number" id="f_nb_offres" min="0" inputmode="numeric" value="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-chart-simple"></i>Pipeline & objectifs</div>
+          <div class="grid-2">
+            <div class="field">
+              <label>Pipeline actif <span class="opt">(dossiers en cours)</span></label>
+              <input type="number" id="f_pipeline_actif" min="0" inputmode="numeric" value="0">
+            </div>
+            <div class="field">
+              <label>Nouveaux prospects</label>
+              <input type="number" id="f_nouveaux_prospects" min="0" inputmode="numeric" value="0">
+            </div>
+            <div class="field">
+              <label>Objectif semaine (€)</label>
+              <input type="number" id="f_objectif_semaine" min="0" step="100" inputmode="decimal" value="0">
+            </div>
+            <div class="field">
+              <label>CA réalisé (€)</label>
+              <input type="number" id="f_ca_realise" min="0" step="100" inputmode="decimal" value="0">
+            </div>
+            <div class="field" style="grid-column:1/-1">
+              <div id="atteintePreview" style="font-size:13px;color:var(--text-muted)"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-comment-dots"></i>Qualitatif</div>
+          <div class="field">
+            <label>🟢 Wins de la semaine</label>
+            <textarea id="f_wins" placeholder="Ce qui a bien marché…"></textarea>
+          </div>
+          <div class="field">
+            <label>🔴 Blocages / freins</label>
+            <textarea id="f_blocages" placeholder="Difficultés rencontrées…"></textarea>
+          </div>
+          <div class="field">
+            <label>🎯 Plan semaine suivante</label>
+            <textarea id="f_plan_suivant" placeholder="Top 3 actions à mener…"></textarea>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-heart-pulse"></i>Moral & confiance</div>
+          <div class="field">
+            <label>Moral / énergie</label>
+            <div class="pills" id="moralPills">
+              <div class="pill" data-moral="1">😟<span class="lbl">Bas</span></div>
+              <div class="pill" data-moral="2">😐<span class="lbl">Moyen</span></div>
+              <div class="pill active" data-moral="3">🙂<span class="lbl">Bien</span></div>
+              <div class="pill" data-moral="4">😄<span class="lbl">Top</span></div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Confiance objectif mois</label>
+            <div class="pills" id="confPills">
+              <div class="pill conf-rouge"  data-conf="rouge">🔴<span class="lbl">Risque</span></div>
+              <div class="pill conf-orange active" data-conf="orange">🟠<span class="lbl">Incertain</span></div>
+              <div class="pill conf-vert"   data-conf="vert">🟢<span class="lbl">Atteint</span></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" type="submit" id="submitBtn">
+          <i class="fa-solid fa-paper-plane"></i> Enregistrer le point
+        </button>
+      </form>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboardView" class="view">
+      <div class="filters">
+        <select id="filt_commercial" onchange="renderDashboard()"><option value="">Tous commerciaux</option></select>
+        <select id="filt_period" onchange="renderDashboard()">
+          <option value="4">4 dernières semaines</option>
+          <option value="8" selected>8 dernières semaines</option>
+          <option value="12">12 dernières semaines</option>
+          <option value="0">Tout l'historique</option>
+        </select>
+      </div>
+
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="chart-card">
+        <h3><i class="fa-solid fa-chart-line"></i> Évolution hebdomadaire</h3>
+        <div class="chart-wrap"><canvas id="chartEvolution"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <h3><i class="fa-solid fa-chart-column"></i> Performance par commercial</h3>
+        <div class="chart-wrap"><canvas id="chartByCommercial"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <h3><i class="fa-solid fa-building"></i> Comparatif par entité</h3>
+        <div class="chart-wrap"><canvas id="chartByEntite"></canvas></div>
+      </div>
+
+      <button class="btn btn-secondary" onclick="exportCSV()" style="width:100%">
+        <i class="fa-solid fa-file-export"></i> Exporter en CSV
+      </button>
+    </div>
+
+    <!-- HISTORIQUE -->
+    <div id="historiqueView" class="view">
+      <div class="filters">
+        <select id="hist_commercial" onchange="renderHistorique()"><option value="">Tous commerciaux</option></select>
+      </div>
+      <div class="card" style="padding:0">
+        <div class="table-wrap">
+          <table id="histTable">
+            <thead>
+              <tr>
+                <th>Date</th><th>Sem.</th><th>Commercial</th><th>Entité</th>
+                <th>🔁 Rest.</th><th>⬆️ Mont.</th><th>✅ Placés</th><th>📋 Offres</th>
+                <th>Pipeline</th><th>Obj. €</th><th>CA €</th><th>%</th><th>Moral</th><th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+let PIN = '';
+let COMMERCIAUX = [];
+let ENTRIES = [];
+let charts = {};
+
+// ─── PIN ──────────────────────────────────────────────────────────────────────
+function showError(msg) { document.getElementById('pinErr').textContent = msg; }
+async function checkPin() {
+  const pin = document.getElementById('pinInput').value.trim();
+  if (!pin) return showError('PIN requis');
+  try {
+    const r = await fetch('/api/tracker/auth', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ pin }) });
+    const data = await r.json();
+    if (!data.valid) return showError('PIN incorrect');
+    PIN = pin;
+    sessionStorage.setItem('trackerPin', pin);
+    document.getElementById('pinView').style.display = 'none';
+    document.getElementById('appView').style.display = 'block';
+    initApp();
+  } catch (e) { showError('Erreur réseau'); }
+}
+document.getElementById('pinInput').addEventListener('keydown', e => { if (e.key === 'Enter') checkPin(); });
+
+// Auto-login si PIN en session
+const cachedPin = sessionStorage.getItem('trackerPin');
+if (cachedPin) {
+  document.getElementById('pinInput').value = cachedPin;
+  checkPin();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+async function initApp() {
+  // Date par défaut = aujourd'hui
+  document.getElementById('f_date').value = new Date().toISOString().slice(0,10);
+
+  // Semaine courante
+  const now = new Date();
+  document.getElementById('weekNow').textContent = 'Semaine ' + isoWeekNum(now);
+
+  // Charger commerciaux
+  const r = await fetch('/api/tracker/config');
+  const cfg = await r.json();
+  COMMERCIAUX = cfg.commerciaux;
+  const selSaisie = document.getElementById('f_commercial');
+  const selFilt   = document.getElementById('filt_commercial');
+  const selHist   = document.getElementById('hist_commercial');
+  COMMERCIAUX.forEach(c => {
+    selSaisie.add(new Option(`${c.name} (${c.entite})`, c.name));
+    selFilt.add(new Option(`${c.name} (${c.entite})`, c.name));
+    selHist.add(new Option(`${c.name} (${c.entite})`, c.name));
+  });
+
+  // Pills
+  document.querySelectorAll('#moralPills .pill').forEach(p => p.onclick = () => {
+    document.querySelectorAll('#moralPills .pill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+  });
+  document.querySelectorAll('#confPills .pill').forEach(p => p.onclick = () => {
+    document.querySelectorAll('#confPills .pill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+  });
+
+  // % atteinte live
+  document.getElementById('f_objectif_semaine').addEventListener('input', updateAtteinte);
+  document.getElementById('f_ca_realise').addEventListener('input', updateAtteinte);
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach(t => t.onclick = () => switchTab(t.dataset.view));
+
+  // Chargement initial
+  await loadEntries();
+}
+
+function switchTab(view) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(view + 'View').classList.add('active');
+  if (view === 'dashboard') renderDashboard();
+  if (view === 'historique') renderHistorique();
+}
+
+function updateEntiteBadge() {
+  const name = document.getElementById('f_commercial').value;
+  const c = COMMERCIAUX.find(x => x.name === name);
+  const b = document.getElementById('entiteBadge');
+  if (c) {
+    b.textContent = c.entite;
+    b.className = 'badge entite-badge entite-' + c.entite;
+    b.style.display = 'inline-block';
+  } else {
+    b.style.display = 'none';
+  }
+}
+
+function updateAtteinte() {
+  const obj = parseFloat(document.getElementById('f_objectif_semaine').value) || 0;
+  const ca  = parseFloat(document.getElementById('f_ca_realise').value) || 0;
+  const div = document.getElementById('atteintePreview');
+  if (obj > 0) {
+    const pct = Math.round((ca / obj) * 100);
+    let color = pct >= 100 ? 'var(--green)' : pct >= 70 ? 'var(--orange)' : 'var(--red)';
+    div.innerHTML = `<strong style="color:${color}">${pct}%</strong> d'atteinte`;
+  } else {
+    div.textContent = '';
+  }
+}
+
+// ─── Save ─────────────────────────────────────────────────────────────────────
+async function saveEntry(e) {
+  e.preventDefault();
+  const moralEl = document.querySelector('#moralPills .pill.active');
+  const confEl  = document.querySelector('#confPills .pill.active');
+  const payload = {
+    pin: PIN,
+    commercial:         document.getElementById('f_commercial').value,
+    date_point:         document.getElementById('f_date').value,
+    pipeline_actif:     document.getElementById('f_pipeline_actif').value,
+    nouveaux_prospects: document.getElementById('f_nouveaux_prospects').value,
+    restants:           document.getElementById('f_restants').value,
+    montants:           document.getElementById('f_montants').value,
+    places:             document.getElementById('f_places').value,
+    nb_offres:          document.getElementById('f_nb_offres').value,
+    objectif_semaine:   document.getElementById('f_objectif_semaine').value,
+    ca_realise:         document.getElementById('f_ca_realise').value,
+    wins:               document.getElementById('f_wins').value,
+    blocages:           document.getElementById('f_blocages').value,
+    plan_suivant:       document.getElementById('f_plan_suivant').value,
+    moral:              moralEl ? moralEl.dataset.moral : 3,
+    confiance:          confEl  ? confEl.dataset.conf   : 'orange',
+  };
+  if (!payload.commercial) return toast('Choisir un commercial', 'error');
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enregistrement…';
+  try {
+    const r = await fetch('/api/tracker/entries', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    toast('Point enregistré ✓', 'success');
+    // Reset
+    document.getElementById('saisieForm').reset();
+    document.getElementById('f_date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('entiteBadge').style.display = 'none';
+    document.getElementById('atteintePreview').textContent = '';
+    document.querySelectorAll('#moralPills .pill').forEach((x,i) => x.classList.toggle('active', i === 2));
+    document.querySelectorAll('#confPills .pill').forEach((x,i) => x.classList.toggle('active', i === 1));
+    await loadEntries();
+  } catch (err) {
+    toast('Erreur : ' + err.message, 'error');
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enregistrer le point';
+  }
+}
+
+// ─── Load entries ─────────────────────────────────────────────────────────────
+async function loadEntries() {
+  const r = await fetch('/api/tracker/entries');
+  ENTRIES = await r.json();
+  if (document.getElementById('dashboardView').classList.contains('active')) renderDashboard();
+  if (document.getElementById('historiqueView').classList.contains('active')) renderHistorique();
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+function filteredEntries() {
+  const commercial = document.getElementById('filt_commercial').value;
+  const period = parseInt(document.getElementById('filt_period').value);
+  let rows = ENTRIES.slice();
+  if (commercial) rows = rows.filter(r => r.commercial === commercial);
+  if (period > 0) {
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - period * 7);
+    rows = rows.filter(r => new Date(r.date_point) >= cutoff);
+  }
+  return rows;
+}
+
+function renderDashboard() {
+  const rows = filteredEntries();
+  // KPIs
+  const sum = (k) => rows.reduce((s,r) => s + (Number(r[k]) || 0), 0);
+  const totalRest = sum('restants');
+  const totalMont = sum('montants');
+  const totalPlac = sum('places');
+  const totalOffr = sum('nb_offres');
+  const totalCA   = sum('ca_realise');
+  const totalObj  = sum('objectif_semaine');
+  const pct = totalObj > 0 ? Math.round((totalCA / totalObj) * 100) : 0;
+  const pctClass = pct >= 100 ? 'green' : pct >= 70 ? 'orange' : 'red';
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi"><div class="kpi-label">🔁 Restants</div><div class="kpi-value">${totalRest}</div><div class="kpi-sub">année sup naturelle</div></div>
+    <div class="kpi"><div class="kpi-label">⬆️ Montants</div><div class="kpi-value">${totalMont}</div><div class="kpi-sub">passage cycle sup</div></div>
+    <div class="kpi"><div class="kpi-label">✅ Placés</div><div class="kpi-value green">${totalPlac}</div><div class="kpi-sub">contrats signés</div></div>
+    <div class="kpi"><div class="kpi-label">📋 Offres dispo</div><div class="kpi-value">${totalOffr}</div><div class="kpi-sub">cumul période</div></div>
+    <div class="kpi"><div class="kpi-label">💶 CA réalisé</div><div class="kpi-value">${fmtEur(totalCA)}</div><div class="kpi-sub">sur ${fmtEur(totalObj)} obj.</div></div>
+    <div class="kpi"><div class="kpi-label">🎯 % Atteinte</div><div class="kpi-value ${pctClass}">${pct}%</div><div class="kpi-sub">${rows.length} point(s)</div></div>
+  `;
+
+  renderEvolutionChart(rows);
+  renderByCommercialChart(rows);
+  renderByEntiteChart(rows);
+}
+
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function renderEvolutionChart(rows) {
+  destroyChart('evolution');
+  const byWeek = {};
+  rows.forEach(r => {
+    const key = r.annee + '-S' + String(r.semaine).padStart(2,'0');
+    if (!byWeek[key]) byWeek[key] = { restants: 0, montants: 0, places: 0, offres: 0 };
+    byWeek[key].restants += r.restants || 0;
+    byWeek[key].montants += r.montants || 0;
+    byWeek[key].places   += r.places   || 0;
+    byWeek[key].offres   += r.nb_offres|| 0;
+  });
+  const labels = Object.keys(byWeek).sort();
+  charts.evolution = new Chart(document.getElementById('chartEvolution'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: '🔁 Restants', data: labels.map(l => byWeek[l].restants), borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,0.12)', tension: 0.3 },
+        { label: '⬆️ Montants', data: labels.map(l => byWeek[l].montants), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.12)', tension: 0.3 },
+        { label: '✅ Placés',   data: labels.map(l => byWeek[l].places),   borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.15)', tension: 0.3 },
+        { label: '📋 Offres',   data: labels.map(l => byWeek[l].offres),   borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.10)', tension: 0.3, borderDash: [4,4] },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true, title: { display: true, text: 'Étudiants / Offres' } } },
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+
+function renderByCommercialChart(rows) {
+  destroyChart('byCommercial');
+  const byCom = {};
+  COMMERCIAUX.forEach(c => byCom[c.name] = { restants: 0, montants: 0, places: 0, offres: 0 });
+  rows.forEach(r => {
+    if (!byCom[r.commercial]) byCom[r.commercial] = { restants: 0, montants: 0, places: 0, offres: 0 };
+    byCom[r.commercial].restants += r.restants  || 0;
+    byCom[r.commercial].montants += r.montants  || 0;
+    byCom[r.commercial].places   += r.places    || 0;
+    byCom[r.commercial].offres   += r.nb_offres || 0;
+  });
+  const labels = Object.keys(byCom);
+  charts.byCommercial = new Chart(document.getElementById('chartByCommercial'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Restants', data: labels.map(l => byCom[l].restants), backgroundColor: '#0ea5e9' },
+        { label: 'Montants', data: labels.map(l => byCom[l].montants), backgroundColor: '#8b5cf6' },
+        { label: 'Placés',   data: labels.map(l => byCom[l].places),   backgroundColor: '#16a34a' },
+        { label: 'Offres',   data: labels.map(l => byCom[l].offres),   backgroundColor: '#f59e0b' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true, stacked: false } },
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+
+function renderByEntiteChart(rows) {
+  destroyChart('byEntite');
+  const byEnt = { NS: { rest: 0, mont: 0, plac: 0, offr: 0 }, Will: { rest: 0, mont: 0, plac: 0, offr: 0 }, MDM: { rest: 0, mont: 0, plac: 0, offr: 0 } };
+  rows.forEach(r => {
+    if (!byEnt[r.entite]) return;
+    byEnt[r.entite].rest += r.restants  || 0;
+    byEnt[r.entite].mont += r.montants  || 0;
+    byEnt[r.entite].plac += r.places    || 0;
+    byEnt[r.entite].offr += r.nb_offres || 0;
+  });
+  const labels = ['NS', 'Will', 'MDM'];
+  charts.byEntite = new Chart(document.getElementById('chartByEntite'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Restants', data: labels.map(l => byEnt[l].rest), backgroundColor: '#0ea5e9' },
+        { label: 'Montants', data: labels.map(l => byEnt[l].mont), backgroundColor: '#8b5cf6' },
+        { label: 'Placés',   data: labels.map(l => byEnt[l].plac), backgroundColor: '#16a34a' },
+        { label: 'Offres',   data: labels.map(l => byEnt[l].offr), backgroundColor: '#f59e0b' },
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+  });
+}
+
+// ─── Historique ───────────────────────────────────────────────────────────────
+function renderHistorique() {
+  const com = document.getElementById('hist_commercial').value;
+  let rows = ENTRIES.slice();
+  if (com) rows = rows.filter(r => r.commercial === com);
+  const tbody = document.querySelector('#histTable tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;padding:24px;color:var(--text-muted)">Aucune entrée</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const pct = r.objectif_semaine > 0 ? Math.round((r.ca_realise / r.objectif_semaine) * 100) : 0;
+    const pctCol = pct >= 100 ? 'var(--green)' : pct >= 70 ? 'var(--orange)' : 'var(--red)';
+    const moralEmoji = ['','😟','😐','🙂','😄'][r.moral] || '🙂';
+    return `<tr>
+      <td>${r.date_point}</td>
+      <td>S${r.semaine}</td>
+      <td>${r.commercial}</td>
+      <td><span class="entite-badge entite-${r.entite}">${r.entite}</span></td>
+      <td>${r.restants || 0}</td>
+      <td>${r.montants || 0}</td>
+      <td><strong style="color:var(--green)">${r.places || 0}</strong></td>
+      <td>${r.nb_offres || 0}</td>
+      <td>${r.pipeline_actif}</td>
+      <td>${fmtEur(r.objectif_semaine)}</td>
+      <td>${fmtEur(r.ca_realise)}</td>
+      <td style="color:${pctCol};font-weight:700">${r.objectif_semaine > 0 ? pct + '%' : '–'}</td>
+      <td>${moralEmoji}</td>
+      <td class="actions"><button class="btn btn-ghost" onclick="deleteEntry(${r.id})" title="Supprimer"><i class="fa-solid fa-trash"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function deleteEntry(id) {
+  if (!confirm('Supprimer ce point ?')) return;
+  try {
+    const r = await fetch('/api/tracker/entries/' + id, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ pin: PIN }) });
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    toast('Supprimé', 'success');
+    await loadEntries();
+  } catch (e) {
+    toast('Erreur : ' + e.message, 'error');
+  }
+}
+
+function exportCSV() {
+  window.location.href = '/api/tracker/export';
+}
+
+// ─── Utils ────────────────────────────────────────────────────────────────────
+function fmtEur(n) {
+  n = Number(n) || 0;
+  if (n >= 1000) return Math.round(n / 100) / 10 + 'k€';
+  return n + '€';
+}
+function isoWeekNum(d) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return Math.ceil((((t - yearStart) / 86400000) + 1) / 7);
+}
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + (type || '');
+  setTimeout(() => el.className = 'toast', 2500);
+}
+</script>
+
+</body>
+</html>
